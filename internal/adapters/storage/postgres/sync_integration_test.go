@@ -129,8 +129,8 @@ func TestRiverRunsM0SynchronizationAndLeavesGatewayIndependent(t *testing.T) {
 	if storedRelation.SyncStatus != "active" || storedRelation.LastConfirmedAt == nil {
 		t.Fatalf("site supplier was not confirmed: %#v", storedRelation)
 	}
-	if gateway.createCount() != 1 || !gateway.isEnabled() || gateway.groupRatio(relation.GroupKey) != "1.25" || !gateway.groupVisible(relation.GroupKey) {
-		t.Fatalf("gateway state is incomplete: create=%d enabled=%v ratio=%q visible=%v", gateway.createCount(), gateway.isEnabled(), gateway.groupRatio(relation.GroupKey), gateway.groupVisible(relation.GroupKey))
+	if gateway.createCount() != 1 || gateway.updateCount() != 1 || !gateway.isEnabled() || gateway.groupRatio(relation.GroupKey) != "1.25" || !gateway.groupVisible(relation.GroupKey) {
+		t.Fatalf("gateway state is incomplete: create=%d update=%d enabled=%v ratio=%q visible=%v", gateway.createCount(), gateway.updateCount(), gateway.isEnabled(), gateway.groupRatio(relation.GroupKey), gateway.groupVisible(relation.GroupKey))
 	}
 
 	repeated, err := synchronizationService.RequestSync(ctx, relation.ID)
@@ -175,6 +175,7 @@ type fakeNewAPI struct {
 	userGroups map[string]string
 	channel    map[string]any
 	created    int
+	updated    int
 }
 
 func newFakeNewAPI() *fakeNewAPI {
@@ -252,6 +253,23 @@ func (f *fakeNewAPI) ServeHTTP(writer http.ResponseWriter, request *http.Request
 		payload.Channel["id"] = 42
 		f.channel = payload.Channel
 		f.write(writer, map[string]any{"success": true, "message": ""})
+	case request.Method == http.MethodPut && request.URL.Path == "/api/channel/":
+		payload := make(map[string]any)
+		if !f.decode(writer, request, &payload) {
+			return
+		}
+		id, idOK := payload["id"].(float64)
+		if f.channel == nil || !idOK || int(id) != 42 || payload["key"] != fakeSupplierKey || payload["base_url"] != "https://upstream.example" {
+			f.write(writer, map[string]any{"success": false, "message": "invalid channel update"})
+			return
+		}
+		status := f.channel["status"]
+		for key, value := range payload {
+			f.channel[key] = value
+		}
+		f.channel["status"] = status
+		f.updated++
+		f.write(writer, map[string]any{"success": true, "message": ""})
 	case request.Method == http.MethodGet && request.URL.Path == "/api/channel/test/42":
 		f.write(writer, map[string]any{"success": true, "message": "", "time": 0.01})
 	case request.Method == http.MethodPost && request.URL.Path == "/api/channel/42/status":
@@ -297,6 +315,12 @@ func (f *fakeNewAPI) createCount() int {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 	return f.created
+}
+
+func (f *fakeNewAPI) updateCount() int {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+	return f.updated
 }
 
 func (f *fakeNewAPI) isEnabled() bool {

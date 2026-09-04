@@ -124,7 +124,7 @@ func TestCreateSiteSupplierAndRelationBuildsCredentialFreePlan(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if siteData.NewAPIBaseURL != "https://gateway.example" || supplierData.UpstreamBaseURL != "https://upstream.example/v1" {
+	if siteData.NewAPIBaseURL != "https://gateway.example" || supplierData.UpstreamBaseURL != "https://upstream.example" {
 		t.Fatalf("base URLs were not normalized: site=%q supplier=%q", siteData.NewAPIBaseURL, supplierData.UpstreamBaseURL)
 	}
 	if supplierData.Models[0].Name != "model-a" || relation.GroupKey != routing.GroupKey(relation.ID) {

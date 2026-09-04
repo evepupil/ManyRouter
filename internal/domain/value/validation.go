@@ -53,3 +53,22 @@ func NormalizeHTTPBaseURL(raw string) (string, error) {
 	parsed.Path = strings.TrimRight(parsed.Path, "/")
 	return parsed.String(), nil
 }
+
+func NormalizeOpenAICompatibleBaseURL(raw string) (string, error) {
+	normalized, err := NormalizeHTTPBaseURL(raw)
+	if err != nil {
+		return "", err
+	}
+	parsed, err := url.Parse(normalized)
+	if err != nil {
+		return "", errors.New("base URL is invalid")
+	}
+	if parsed.Path == "/v1" {
+		parsed.Path = ""
+		parsed.RawPath = ""
+	} else if strings.HasSuffix(parsed.Path, "/v1") {
+		parsed.Path = strings.TrimSuffix(parsed.Path, "/v1")
+		parsed.RawPath = ""
+	}
+	return parsed.String(), nil
+}

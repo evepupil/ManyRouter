@@ -9,7 +9,18 @@ verification:
   real_new_api_contract: passed
   new_api_user_key_with_mock_upstream: passed
   legacy_root_header_preflight: passed
-  real_supplier_call: pending
+  real_site_reconciliation: passed
+  real_supplier_call: passed
+  repeated_sync_idempotency: passed
+  request_after_manyrouter_stop: passed
+  unmanaged_state_preservation: passed
+  temporary_user_key_cleanup: passed
+acceptance:
+  date: 2026-09-05
+  new_api_version: v1.0.0-rc.20
+  existing_channels_before: 6
+  existing_channels_preserved: 6
+  managed_channels_created: 1
 capabilities:
   status_and_version: implemented
   channel_list: implemented
@@ -20,6 +31,8 @@ capabilities:
   group_ratio_read_merge_write: implemented
   user_usable_groups_read_merge_write: implemented
   legacy_root_user_header: implemented
+  openai_base_url_normalization: implemented
+  channel_create_cache_refresh: implemented
 limitations:
   - M0 uses an existing high-privilege New API access token.
   - New API releases that require New-Api-User are supported for the initial root account with user ID 1.

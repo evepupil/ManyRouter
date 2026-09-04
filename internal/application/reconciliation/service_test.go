@@ -213,8 +213,8 @@ func TestRunCreatesTestsEnablesAndConfirmsChannel(t *testing.T) {
 	if !store.completed || store.boundID == nil || *store.boundID != 42 {
 		t.Fatalf("operation was not confirmed: completed=%v bound=%v", store.completed, store.boundID)
 	}
-	if gateway.createCount != 1 || gateway.testCount != 1 || gateway.enableCount != 1 || gateway.ratioCount != 1 || gateway.userGroupCount != 1 {
-		t.Fatalf("unexpected gateway calls: create=%d test=%d enable=%d ratio=%d user_groups=%d", gateway.createCount, gateway.testCount, gateway.enableCount, gateway.ratioCount, gateway.userGroupCount)
+	if gateway.createCount != 1 || gateway.updateCount != 1 || gateway.testCount != 1 || gateway.enableCount != 1 || gateway.ratioCount != 1 || gateway.userGroupCount != 1 {
+		t.Fatalf("unexpected gateway calls: create=%d update=%d test=%d enable=%d ratio=%d user_groups=%d", gateway.createCount, gateway.updateCount, gateway.testCount, gateway.enableCount, gateway.ratioCount, gateway.userGroupCount)
 	}
 	if gateway.state.GroupRatios["default"] != "1" || gateway.state.GroupRatios[bundle.Plan.Snapshot.Group.Key] != "1.25" {
 		t.Fatalf("group ratios were not preserved: %#v", gateway.state.GroupRatios)

@@ -82,7 +82,7 @@ func New(
 	if err != nil {
 		return Supplier{}, err
 	}
-	normalizedURL, err := value.NormalizeHTTPBaseURL(baseURL)
+	normalizedURL, err := value.NormalizeOpenAICompatibleBaseURL(baseURL)
 	if err != nil {
 		return Supplier{}, err
 	}

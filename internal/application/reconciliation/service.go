@@ -159,6 +159,7 @@ func (s *Service) Run(ctx context.Context, operationID uuid.UUID) (runErr error)
 	}
 
 	created := false
+	channelUpdated := false
 	if actualChannel == nil {
 		stepStarted := s.now().UTC()
 		if err := gateway.CreateChannel(ctx, bundle.Plan.Snapshot.Channel, supplierSecret); err != nil {
@@ -173,6 +174,7 @@ func (s *Service) Run(ctx context.Context, operationID uuid.UUID) (runErr error)
 		if err := gateway.UpdateChannel(ctx, actualChannel.ID, bundle.Plan.Snapshot.Channel, supplierSecret); err != nil {
 			return s.finishFailure(ctx, bundle, "update_channel", err)
 		}
+		channelUpdated = true
 		if err := s.recordSuccess(ctx, operationID, "update_channel", map[string]any{"channel_id": actualChannel.ID}, map[string]any{"managed_tag": bundle.Plan.Snapshot.Channel.ManagedTag}, stepStarted); err != nil {
 			return err
 		}
@@ -206,6 +208,15 @@ func (s *Service) Run(ctx context.Context, operationID uuid.UUID) (runErr error)
 	}
 	if err := s.recordSuccess(ctx, operationID, "test_channel", nil, map[string]any{"channel_id": actualChannel.ID, "model": testModel}, testStarted); err != nil {
 		return err
+	}
+	if bundle.ManagedChannel.LastConfirmedPlanVersion == nil && actualChannel.Status != ChannelEnabled && !channelUpdated {
+		prepareStarted := s.now().UTC()
+		if err := gateway.UpdateChannel(ctx, actualChannel.ID, bundle.Plan.Snapshot.Channel, supplierSecret); err != nil {
+			return s.finishFailure(ctx, bundle, "prepare_channel_activation", err)
+		}
+		if err := s.recordSuccess(ctx, operationID, "prepare_channel_activation", map[string]any{"channel_id": actualChannel.ID}, map[string]any{"cache_ready": true}, prepareStarted); err != nil {
+			return err
+		}
 	}
 
 	if actualChannel.Status != ChannelEnabled {

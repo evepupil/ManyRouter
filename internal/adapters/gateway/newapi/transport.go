@@ -13,6 +13,8 @@ import (
 	"github.com/evepupil/ManyRouter/internal/application/reconciliation"
 )
 
+const legacyRootUserID = "1"
+
 func (c *Client) request(ctx context.Context, method, path string, body any, target any, write bool, redactions ...string) error {
 	var requestBody io.Reader
 	if body != nil {
@@ -29,6 +31,7 @@ func (c *Client) request(ctx context.Context, method, path string, body any, tar
 	}
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Authorization", "Bearer "+c.accessToken)
+	request.Header.Set("New-Api-User", legacyRootUserID)
 	if body != nil {
 		request.Header.Set("Content-Type", "application/json")
 	}

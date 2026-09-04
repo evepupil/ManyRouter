@@ -21,6 +21,10 @@ func TestReadActualStateReadsOptionsAndPaginatedChannels(t *testing.T) {
 			http.Error(writer, "unauthorized", http.StatusUnauthorized)
 			return
 		}
+		if request.Header.Get("New-Api-User") != "1" {
+			http.Error(writer, "missing legacy root user ID", http.StatusUnauthorized)
+			return
+		}
 		writer.Header().Set("Content-Type", "application/json")
 		switch request.URL.Path {
 		case "/api/status":

@@ -1,0 +1,26 @@
+schema_version: 1
+adapter: new_api_existing_admin_v1
+source:
+  repository: https://github.com/QuantumNous/new-api
+  inspected_commit: 0ed497f0
+verification:
+  source_inspection: passed
+  simulated_http_contract: passed
+  real_new_api_contract: passed
+  new_api_user_key_with_mock_upstream: passed
+  real_supplier_call: pending
+capabilities:
+  status_and_version: implemented
+  channel_list: implemented
+  channel_create: implemented
+  channel_update: implemented
+  channel_test: implemented
+  channel_status: implemented
+  group_ratio_read_merge_write: implemented
+  user_usable_groups_read_merge_write: implemented
+limitations:
+  - M0 uses an existing high-privilege New API access token.
+  - Existing channel creation has no server-side idempotency key.
+  - GroupRatio updates replace one whole option and require a single automatic writer.
+  - M0 expects the acceptance user's group to have no special rule that removes the managed group.
+  - User groups, user API keys, Auto groups, and request logs remain outside M0.

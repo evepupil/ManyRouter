@@ -1,0 +1,12 @@
+{
+  "name": "manyrouter",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.34.5",
+  "scripts": {
+    "generate": "go generate ./...",
+    "gate": "node scripts/gate.mjs",
+    "test:integration": "go test -tags=integration ./internal/adapters/storage/postgres",
+    "test:contract": "go test -tags=contract ./compatibility"
+  }
+}

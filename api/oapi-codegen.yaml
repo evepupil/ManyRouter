@@ -1,0 +1,6 @@
+package: apispec
+generate:
+  gin-server: true
+  models: true
+  embedded-spec: true
+output: ../internal/transport/http/apispec/openapi.gen.go

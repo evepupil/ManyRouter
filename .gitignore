@@ -12,6 +12,8 @@
 *.log
 /dist/
 /coverage/
+/.cache/
+/bin/
 
 # Operating system and editor files.
 .DS_Store

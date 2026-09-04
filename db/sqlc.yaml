@@ -1,0 +1,21 @@
+version: "2"
+sql:
+  - engine: postgresql
+    schema: migrations
+    queries: query
+    gen:
+      go:
+        package: sqlc
+        out: ../internal/adapters/storage/postgres/sqlc
+        sql_package: pgx/v5
+        emit_json_tags: true
+        emit_empty_slices: true
+        overrides:
+          - db_type: uuid
+            go_type:
+              import: github.com/google/uuid
+              type: UUID
+          - db_type: pg_catalog.numeric
+            go_type:
+              import: github.com/shopspring/decimal
+              type: Decimal

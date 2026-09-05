@@ -1,0 +1,38 @@
+{
+  "name": "@manyrouter/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "rsbuild dev",
+    "build": "rsbuild build",
+    "check": "tsc --noEmit",
+    "generate": "openapi-typescript ../api/operations.yaml --output src/api/operations.gen.ts",
+    "test": "node --experimental-strip-types --test src/features/operations/snapshot-diff.test.ts src/features/deployments/selection.test.ts src/app/scope-state.test.ts src/api/request-attempt.test.ts",
+    "preview": "rsbuild preview",
+    "format": "prettier --write src rsbuild.config.ts tsconfig.json package.json",
+    "format:check": "prettier --check src rsbuild.config.ts tsconfig.json package.json"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.0.0",
+    "@tanstack/react-query": "^5.90.0",
+    "@tanstack/react-router": "^1.130.0",
+    "i18next": "^25.4.0",
+    "lucide-react": "^0.577.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-i18next": "^16.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "openapi-typescript": "^7.10.0",
+    "@rsbuild/core": "^2.0.0",
+    "@rsbuild/plugin-react": "^1.4.0",
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "prettier": "^3.6.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.9.0"
+  }
+}

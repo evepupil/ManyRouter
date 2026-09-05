@@ -11,6 +11,9 @@
 !.env.example
 *.log
 /dist/
+node_modules/
+/web/dist/
+/.impeccable/review/
 /coverage/
 /.cache/
 /bin/

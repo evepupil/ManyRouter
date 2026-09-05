@@ -16,7 +16,7 @@ function output(command, args) {
 function goFiles(directory) {
   const files = []
   for (const entry of readdirSync(directory)) {
-    if (entry === '.cache' || entry === '.git' || entry === 'new-api') continue
+    if (['.cache', '.git', 'new-api', 'node_modules', '.pnpm-store', 'dist'].includes(entry)) continue
     const path = join(directory, entry)
     const stat = statSync(path)
     if (stat.isDirectory()) files.push(...goFiles(path))
@@ -83,14 +83,32 @@ run('go', ['test', '-tags=contract', './compatibility'])
 mkdirSync(join(root, 'bin'), { recursive: true })
 run('go', ['build', '-o', 'bin/manyrouter.exe', './cmd/manyrouter'])
 
+function pnpm(args) {
+  if (process.platform === 'win32') run('cmd.exe', ['/d', '/s', '/c', 'pnpm', ...args])
+  else run('pnpm', args)
+}
+const frontendTypes = join(root, 'web/src/api/operations.gen.ts')
+const frontendTypesBefore = readFileSync(frontendTypes, 'utf8')
+pnpm(['--dir', 'web', 'generate'])
+pnpm(['--dir', 'web', 'exec', 'prettier', '--write', 'src/api/operations.gen.ts'])
+if (frontendTypesBefore !== readFileSync(frontendTypes, 'utf8')) throw new Error('Generated frontend API types are stale')
+pnpm(['--dir', 'web', 'check'])
+pnpm(['--dir', 'web', 'test'])
+pnpm(['--dir', 'web', 'format:check'])
+pnpm(['--dir', 'web', 'build'])
+
 const roadmap = readFileSync(join(root, 'docs/roadmap.md'), 'utf8')
 for (const moduleDocument of [
   '站点与供应商接入.md',
   '单站线路方案.md',
   'New API同步与核对.md',
+  '人工策略管理.md',
+  '稳定价格管理.md',
+  '运营账号与权限.md',
+  '运营控制台.md',
 ]) {
   const contents = readFileSync(join(root, 'docs/模块设计', moduleDocument), 'utf8')
-  if (!roadmap.includes(moduleDocument.replace(' ', '%20')) || !contents.includes('../roadmap.md#m0')) {
-    throw new Error(`M0 document link is incomplete: ${moduleDocument}`)
+  if (!roadmap.includes(moduleDocument.replace(' ', '%20')) || !contents.includes('../roadmap.md#m1')) {
+    throw new Error(`M1 document link is incomplete: ${moduleDocument}`)
   }
 }

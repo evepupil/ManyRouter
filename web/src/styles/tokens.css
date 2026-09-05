@@ -1,0 +1,129 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --font-ui: "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+  --font-xs: 0.75rem;
+  --font-sm: 0.875rem;
+  --font-md: 1rem;
+  --font-lg: 1.375rem;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --page: #f5f7f6;
+  --surface: #ffffff;
+  --surface-muted: #eff3f1;
+  --text: #202a26;
+  --text-muted: #58665f;
+  --border: #d7dfda;
+  --accent: #18634a;
+  --accent-hover: #124c39;
+  --accent-soft: #e2f1e9;
+  --nav: #202a27;
+  --nav-text: #d6e0db;
+  --nav-active: #344a3f;
+  --danger: #b32934;
+  --danger-soft: #ffebed;
+  --warning: #845908;
+  --warning-soft: #fff2cf;
+  --info: #235b92;
+  --info-soft: #e7f0fb;
+  --radius-control: 4px;
+  --radius-tool: 6px;
+  --radius-dialog: 8px;
+  --control: 2.25rem;
+  --row: 2.75rem;
+  --sidebar: 14rem;
+  --topbar: 3.5rem;
+  --shadow-dialog: 0 16px 56px #17291d33;
+  --duration: 160ms;
+}
+
+* {
+  box-sizing: border-box;
+}
+html {
+  min-width: 320px;
+  font-family: var(--font-ui);
+  font-size: 16px;
+  letter-spacing: 0;
+}
+body {
+  margin: 0;
+  color: var(--text);
+  background: var(--page);
+  font-size: var(--font-sm);
+  line-height: 1.5;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  letter-spacing: 0;
+}
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+::selection {
+  color: var(--text);
+  background: #c8e6d5;
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+input,
+textarea {
+  caret-color: var(--accent);
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+h1 {
+  font-size: var(--font-lg);
+  font-weight: 650;
+  line-height: 1.35;
+}
+h2,
+h3 {
+  font-size: var(--font-md);
+  font-weight: 650;
+}
+svg {
+  flex-shrink: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}

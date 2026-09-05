@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-05T06:02:30Z",
+  "title": "Design System: ManyRouter 运营控制台",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "深运营绿", "canonical": "#18634a", "tonalRamp": ["oklch(15% 0.083 166.1)", "oklch(26% 0.083 166.1)", "oklch(37% 0.083 166.1)", "oklch(49% 0.083 166.1)", "oklch(61% 0.083 166.1)", "oklch(73% 0.083 166.1)", "oklch(84% 0.083 166.1)", "oklch(95% 0.083 166.1)"] },
+      "primary-hover": { "role": "primary", "displayName": "压暗运营绿", "canonical": "#124c39", "tonalRamp": ["oklch(15% 0.068 166.8)", "oklch(26% 0.068 166.8)", "oklch(37% 0.068 166.8)", "oklch(49% 0.068 166.8)", "oklch(61% 0.068 166.8)", "oklch(73% 0.068 166.8)", "oklch(84% 0.068 166.8)", "oklch(95% 0.068 166.8)"] },
+      "primary-soft": { "role": "primary", "displayName": "浅确认绿", "canonical": "#e2f1e9", "tonalRamp": ["oklch(15% 0.019 162.9)", "oklch(26% 0.019 162.9)", "oklch(37% 0.019 162.9)", "oklch(49% 0.019 162.9)", "oklch(61% 0.019 162.9)", "oklch(73% 0.019 162.9)", "oklch(84% 0.019 162.9)", "oklch(95% 0.019 162.9)"] },
+      "page": { "role": "neutral", "displayName": "工作底色", "canonical": "#f5f7f6", "tonalRamp": ["oklch(15% 0.002 165.1)", "oklch(26% 0.002 165.1)", "oklch(37% 0.002 165.1)", "oklch(49% 0.002 165.1)", "oklch(61% 0.002 165.1)", "oklch(73% 0.002 165.1)", "oklch(84% 0.002 165.1)", "oklch(95% 0.002 165.1)"] },
+      "surface": { "role": "neutral", "displayName": "操作面白", "canonical": "#ffffff", "tonalRamp": ["oklch(15% 0 0)", "oklch(26% 0 0)", "oklch(37% 0 0)", "oklch(49% 0 0)", "oklch(61% 0 0)", "oklch(73% 0 0)", "oklch(84% 0 0)", "oklch(95% 0 0)"] },
+      "surface-muted": { "role": "neutral", "displayName": "静默表面", "canonical": "#eff3f1", "tonalRamp": ["oklch(15% 0.005 165)", "oklch(26% 0.005 165)", "oklch(37% 0.005 165)", "oklch(49% 0.005 165)", "oklch(61% 0.005 165)", "oklch(73% 0.005 165)", "oklch(84% 0.005 165)", "oklch(95% 0.005 165)"] },
+      "text": { "role": "neutral", "displayName": "石墨正文", "canonical": "#202a26", "tonalRamp": ["oklch(15% 0.016 168.9)", "oklch(26% 0.016 168.9)", "oklch(37% 0.016 168.9)", "oklch(49% 0.016 168.9)", "oklch(61% 0.016 168.9)", "oklch(73% 0.016 168.9)", "oklch(84% 0.016 168.9)", "oklch(95% 0.016 168.9)"] },
+      "text-muted": { "role": "neutral", "displayName": "次要文字", "canonical": "#58665f", "tonalRamp": ["oklch(15% 0.02 164)", "oklch(26% 0.02 164)", "oklch(37% 0.02 164)", "oklch(49% 0.02 164)", "oklch(61% 0.02 164)", "oklch(73% 0.02 164)", "oklch(84% 0.02 164)", "oklch(95% 0.02 164)"] },
+      "border": { "role": "neutral", "displayName": "浅分隔线", "canonical": "#d7dfda", "tonalRamp": ["oklch(15% 0.011 158.8)", "oklch(26% 0.011 158.8)", "oklch(37% 0.011 158.8)", "oklch(49% 0.011 158.8)", "oklch(61% 0.011 158.8)", "oklch(73% 0.011 158.8)", "oklch(84% 0.011 158.8)", "oklch(95% 0.011 158.8)"] },
+      "navigation": { "role": "secondary", "displayName": "石墨导航", "canonical": "#202a27", "tonalRamp": ["oklch(15% 0.015 175)", "oklch(26% 0.015 175)", "oklch(37% 0.015 175)", "oklch(49% 0.015 175)", "oklch(61% 0.015 175)", "oklch(73% 0.015 175)", "oklch(84% 0.015 175)", "oklch(95% 0.015 175)"] },
+      "navigation-text": { "role": "secondary", "displayName": "柔白导航文字", "canonical": "#d6e0db", "tonalRamp": ["oklch(15% 0.013 164.8)", "oklch(26% 0.013 164.8)", "oklch(37% 0.013 164.8)", "oklch(49% 0.013 164.8)", "oklch(61% 0.013 164.8)", "oklch(73% 0.013 164.8)", "oklch(84% 0.013 164.8)", "oklch(95% 0.013 164.8)"] },
+      "navigation-active": { "role": "secondary", "displayName": "苔绿选中面", "canonical": "#344a3f", "tonalRamp": ["oklch(15% 0.033 162.6)", "oklch(26% 0.033 162.6)", "oklch(37% 0.033 162.6)", "oklch(49% 0.033 162.6)", "oklch(61% 0.033 162.6)", "oklch(73% 0.033 162.6)", "oklch(84% 0.033 162.6)", "oklch(95% 0.033 162.6)"] },
+      "danger": { "role": "tertiary", "displayName": "危险红", "canonical": "#b32934", "tonalRamp": ["oklch(15% 0.174 22.2)", "oklch(26% 0.174 22.2)", "oklch(37% 0.174 22.2)", "oklch(49% 0.174 22.2)", "oklch(61% 0.174 22.2)", "oklch(73% 0.174 22.2)", "oklch(84% 0.174 22.2)", "oklch(95% 0.174 22.2)"] },
+      "danger-soft": { "role": "tertiary", "displayName": "危险浅红", "canonical": "#ffebed", "tonalRamp": ["oklch(15% 0.022 10.6)", "oklch(26% 0.022 10.6)", "oklch(37% 0.022 10.6)", "oklch(49% 0.022 10.6)", "oklch(61% 0.022 10.6)", "oklch(73% 0.022 10.6)", "oklch(84% 0.022 10.6)", "oklch(95% 0.022 10.6)"] },
+      "warning": { "role": "tertiary", "displayName": "待处理黄", "canonical": "#845908", "tonalRamp": ["oklch(15% 0.102 75.3)", "oklch(26% 0.102 75.3)", "oklch(37% 0.102 75.3)", "oklch(49% 0.102 75.3)", "oklch(61% 0.102 75.3)", "oklch(73% 0.102 75.3)", "oklch(84% 0.102 75.3)", "oklch(95% 0.102 75.3)"] },
+      "warning-soft": { "role": "tertiary", "displayName": "待处理浅黄", "canonical": "#fff2cf", "tonalRamp": ["oklch(15% 0.048 90.1)", "oklch(26% 0.048 90.1)", "oklch(37% 0.048 90.1)", "oklch(49% 0.048 90.1)", "oklch(61% 0.048 90.1)", "oklch(73% 0.048 90.1)", "oklch(84% 0.048 90.1)", "oklch(95% 0.048 90.1)"] },
+      "info": { "role": "tertiary", "displayName": "核对蓝", "canonical": "#235b92", "tonalRamp": ["oklch(15% 0.107 251)", "oklch(26% 0.107 251)", "oklch(37% 0.107 251)", "oklch(49% 0.107 251)", "oklch(61% 0.107 251)", "oklch(73% 0.107 251)", "oklch(84% 0.107 251)", "oklch(95% 0.107 251)"] },
+      "info-soft": { "role": "tertiary", "displayName": "核对浅蓝", "canonical": "#e7f0fb", "tonalRamp": ["oklch(15% 0.018 253.3)", "oklch(26% 0.018 253.3)", "oklch(37% 0.018 253.3)", "oklch(49% 0.018 253.3)", "oklch(61% 0.018 253.3)", "oklch(73% 0.018 253.3)", "oklch(84% 0.018 253.3)", "oklch(95% 0.018 253.3)"] }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "页面标题", "purpose": "当前业务对象的单一页面标题。" },
+      "title": { "displayName": "区段标题", "purpose": "弹窗、区段和紧凑信息组标题。" },
+      "body": { "displayName": "运营正文", "purpose": "表格、表单、按钮和主要业务内容。" },
+      "label": { "displayName": "紧凑标签", "purpose": "表头、徽标和辅助标签。" }
+    },
+    "shadows": [
+      { "name": "modal", "value": "0 16px 56px #17291d33", "purpose": "隔离需要中断当前任务的弹窗；普通业务区域保持平面。" }
+    ],
+    "motion": [
+      { "name": "state-transition", "value": "160ms", "purpose": "按钮背景和描边状态变化；减少动态效果偏好下停止过渡。" },
+      { "name": "pending-rotation", "value": "0.8s linear infinite", "purpose": "写请求进行时旋转加载图标；减少动态效果偏好下停止动画。" }
+    ],
+    "breakpoints": [
+      { "name": "compact-shell", "value": "960px" },
+      { "name": "mobile-detail", "value": "640px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "主要命令",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "新增、保存、发布和同步使用的高辨识度常规命令。",
+      "html": "<button class=\"ds-button-primary\"><svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M5 12h14\"/><path d=\"M12 5v14\"/></svg>新增站点</button>",
+      "css": ".ds-button-primary { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:36px; padding:8px 12px; border:1px solid var(--accent); border-radius:var(--radius-control); color:#fff; background:var(--accent); font-weight:600; transition:background var(--duration),border-color var(--duration); } .ds-button-primary:hover,.ds-button-primary:active { background:var(--accent-hover); border-color:var(--accent-hover); } .ds-button-primary:focus-visible { outline:2px solid var(--accent); outline-offset:3px; } .ds-button-primary:disabled { opacity:.55; cursor:not-allowed; }"
+    },
+    {
+      "name": "危险停用",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "站点停用、Auto 停用、站点供应商下线、入口关闭和线路恢复等需要谨慎确认的动作。",
+      "html": "<button class=\"ds-button-danger\"><svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M12 2v10\"/><path d=\"M18.4 6.6a9 9 0 1 1-12.77.04\"/></svg>保存并停用站点</button>",
+      "css": ".ds-button-danger { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:36px; padding:8px 12px; border:1px solid #e1b4b8; border-radius:var(--radius-control); color:var(--danger); background:var(--surface); font-weight:600; transition:background var(--duration),border-color var(--duration); } .ds-button-danger:hover,.ds-button-danger:active { background:var(--danger-soft); } .ds-button-danger:focus-visible { outline:2px solid var(--accent); outline-offset:3px; } .ds-button-danger:disabled { opacity:.55; cursor:not-allowed; }"
+    },
+    {
+      "name": "业务输入框",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "表单、选择和搜索共用的紧凑输入边界。",
+      "html": "<input class=\"ds-input\" aria-label=\"名称\" placeholder=\"输入名称\" />",
+      "css": ".ds-input { width:280px; max-width:100%; min-height:36px; padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-control); background:var(--surface); color:var(--text); } .ds-input:hover { border-color:#9daca3; } .ds-input:focus-visible { border-color:var(--accent); outline:2px solid var(--accent); outline-offset:3px; } .ds-input:disabled { background:var(--surface-muted); color:var(--text-muted); }"
+    },
+    {
+      "name": "当前导航项",
+      "kind": "nav",
+      "refersTo": "navigation-item-active",
+      "description": "桌面侧栏与移动抽屉共用的当前业务入口。",
+      "html": "<a class=\"ds-nav-item\" href=\"#\"><svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect width=\"20\" height=\"8\" x=\"2\" y=\"2\" rx=\"2\"/><rect width=\"20\" height=\"8\" x=\"2\" y=\"14\" rx=\"2\"/><path d=\"M6 6h.01\"/><path d=\"M6 18h.01\"/></svg>供应商</a>",
+      "css": ".ds-nav-item { display:flex; align-items:center; gap:12px; padding:12px; border-radius:var(--radius-control); color:#fff; background:var(--nav-active); text-decoration:none; font-weight:500; } .ds-nav-item:hover,.ds-nav-item:active { background:#2a3831; } .ds-nav-item:focus-visible { outline:2px solid var(--nav-text); outline-offset:3px; }"
+    },
+    {
+      "name": "肯定状态",
+      "kind": "chip",
+      "refersTo": "status-success",
+      "description": "已启用、已生效、已发布和已核对等肯定状态。",
+      "html": "<span class=\"ds-status-success\">已启用</span>",
+      "css": ".ds-status-success { display:inline-flex; align-items:center; min-height:22px; padding:2px 8px; border-radius:var(--radius-control); background:var(--accent-soft); color:var(--accent); font-size:12px; font-weight:600; white-space:nowrap; }"
+    },
+    {
+      "name": "运营数据表",
+      "kind": "custom",
+      "refersTo": "table-header",
+      "description": "高密度扫描数据；手机端固定右侧操作并提示横向滚动。",
+      "html": "<div class=\"ds-table-wrap\"><div class=\"ds-table-scroll\" role=\"region\" aria-label=\"数据表\" tabindex=\"0\"><table class=\"ds-table\"><thead><tr><th>供应商</th><th>状态</th><th class=\"ds-table-actions\">操作</th></tr></thead><tbody><tr><td><strong>示例供应商</strong><small>supplier-code</small></td><td><span class=\"ds-status-success\">已启用</span></td><td class=\"ds-table-actions\">编辑</td></tr></tbody></table></div><div class=\"ds-table-hint\" aria-hidden=\"true\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M8 3 4 7l4 4\"/><path d=\"M4 7h16\"/><path d=\"m16 21 4-4-4-4\"/><path d=\"M20 17H4\"/></svg></div></div>",
+      "css": ".ds-table-scroll { width:100%; overflow-x:auto; border-top:1px solid var(--border); border-bottom:1px solid var(--border); background:var(--surface); scrollbar-color:#71847a var(--surface-muted); } .ds-table { width:100%; min-width:520px; border-collapse:collapse; text-align:left; } .ds-table th { height:44px; padding:8px 16px; background:var(--surface-muted); color:var(--text-muted); font-size:12px; font-weight:600; white-space:nowrap; } .ds-table td { min-height:44px; padding:12px 16px; border-top:1px solid var(--border); } .ds-table small { display:block; color:var(--text-muted); overflow-wrap:anywhere; } .ds-status-success { display:inline-flex; padding:2px 8px; border-radius:var(--radius-control); background:var(--accent-soft); color:var(--accent); font-size:12px; font-weight:600; } .ds-table-hint { display:none; color:var(--text-muted); text-align:right; padding:4px 8px; } .ds-table-scroll:focus-visible { outline:2px solid var(--accent); outline-offset:3px; } @media (max-width:640px) { .ds-table-actions { position:sticky; right:0; z-index:1; width:1%; white-space:nowrap; border-left:1px solid var(--border); background:var(--surface); } th.ds-table-actions { z-index:2; background:var(--surface-muted); } .ds-table-hint { display:block; } }"
+    },
+    {
+      "name": "入口关闭提示",
+      "kind": "custom",
+      "refersTo": "notice-warning",
+      "description": "入口关闭时说明已有密钥也会停止调用。",
+      "html": "<div class=\"ds-notice-warning\" role=\"note\"><svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/></svg><span>关闭后，该组已有密钥也无法调用。</span></div>",
+      "css": ".ds-notice-warning { display:flex; align-items:flex-start; gap:8px; padding:12px 16px; border:1px solid #dbc584; border-radius:var(--radius-control); background:var(--warning-soft); color:var(--warning); overflow-wrap:anywhere; } .ds-notice-warning svg { flex-shrink:0; margin-top:2px; }"
+    },
+    {
+      "name": "忙碌弹窗",
+      "kind": "custom",
+      "refersTo": "dialog",
+      "description": "写请求期间锁定关闭动作并保留提交上下文。",
+      "html": "<section class=\"ds-dialog\" role=\"dialog\" aria-labelledby=\"ds-dialog-title\" aria-busy=\"true\"><header><strong id=\"ds-dialog-title\">发布售价</strong><button aria-label=\"关闭\" disabled>×</button></header><p>正在提交，请等待服务端确认。</p></section>",
+      "css": ".ds-dialog { width:min(680px,calc(100% - 32px)); max-height:calc(100dvh - 48px); overflow-y:auto; padding:24px; border-radius:var(--radius-dialog); background:var(--surface); color:var(--text); box-shadow:var(--shadow-dialog); } .ds-dialog header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:24px; } .ds-dialog strong { font-size:16px; font-weight:650; overflow-wrap:anywhere; } .ds-dialog button { width:36px; height:36px; border:1px solid transparent; border-radius:var(--radius-control); color:var(--text); background:transparent; opacity:.55; } .ds-dialog button:focus-visible { outline:2px solid var(--accent); outline-offset:3px; } .ds-dialog p { margin:0; color:var(--text-muted); } @media (max-width:640px) { .ds-dialog { padding:16px; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "运营台账",
+    "overview": "ManyRouter 的界面像一份持续更新的运营台账：导航位置稳定，站点范围持续在场，表格提供紧凑对比，编辑与确认只在需要时浮出。它服务高频操作，优先保证归属清楚、控件位置稳定、状态可以核对。\n\n视觉由石墨绿导航、浅灰工作底色和白色操作面构成。品牌感来自深绿命令色、克制的小圆角与整齐的行列；界面不加入营销区块、说明卡、装饰图表或大号宣传标题。适用范围为 `web/` 内全部运营界面；产品事实见 [PRODUCT.md](./PRODUCT.md)，业务职责见 [运营控制台](./docs/模块设计/运营控制台.md)。",
+    "keyCharacteristics": [
+      "高密度列表、短工具栏和页内站点范围，适合反复扫描与操作。",
+      "绿色承载常规命令与肯定状态，红色承载危险停用与失败，蓝色承载同步和历史确认。",
+      "桌面使用常驻侧栏，移动端使用模态导航；两端保持同一信息顺序。",
+      "加载、失败、空结果、处理中和已确认都有独立的文字与视觉反馈。"
+    ],
+    "rules": [
+      { "name": "稀缺强调色", "body": "绿色只标记可执行的常规命令与肯定状态；红色只标记危险动作与失败；蓝色只标记同步过程和历史核对信息。", "section": "colors" },
+      { "name": "固定字号", "body": "字号不随视口宽度缩放；移动端通过换行、单列布局与横向表格容纳内容。", "section": "typography" },
+      { "name": "站点在场", "body": "站点相关页面在标题或确认内容中显示当前站点，切换站点后重新建立该站点的编辑上下文。", "section": "layout" },
+      { "name": "移动操作可达", "body": "手机端行操作始终停留在可见区域，数据列仍可横向滚动，滚动容器保留可见滚动条和键盘入口。", "section": "layout" },
+      { "name": "平面工作台", "body": "静态业务区域依靠底色和分隔线分层，阴影只服务模态浮层。", "section": "elevation" },
+      { "name": "小圆角", "body": "小圆角用于表达可操作边界，不把页面区段塑造成独立卡片。", "section": "shapes" },
+      { "name": "请求状态", "body": "服务端确认前不显示成功；处理中锁定提交上下文，失败时保留输入并提供可执行的重试入口。", "section": "components" },
+      { "name": "历史确认", "body": "“最近确认”始终与核对时间一起出现，任何待同步或失败状态都不能借用它表达当前外部状态。", "section": "components" }
+    ],
+    "dos": [
+      "Do 保持站点范围、目标对象和动作结果可见。",
+      "Do 用绿色表达常规命令，用红色表达危险停用，用状态文字补足颜色含义。",
+      "Do 在手机端保留右侧操作列、横向滚动条和双向滚动提示。",
+      "Do 明确区分加载、失败、空结果、处理中和服务端确认成功。",
+      "Do 完整使用入口开放语义，并把“最近确认”限定为历史核对信息。"
+    ],
+    "donts": [
+      "Don't 添加营销区块、说明卡、虚构指标、装饰图表或大号宣传标题。",
+      "Don't 把普通业务区包装成漂浮卡片，也不要为静态区域添加阴影。",
+      "Don't 让手机端行操作随着数据列滚出首屏。",
+      "Don't 允许写请求进行时关闭弹窗或重复提交。",
+      "Don't 把本地提交、待同步或历史核对展示成当前外部状态。"
+    ]
+  }
+}

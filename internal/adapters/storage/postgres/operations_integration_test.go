@@ -94,6 +94,18 @@ func TestM1OperationsAcrossSites(t *testing.T) {
 		Name: "supplier-one", BaseURL: "https://upstream.example", Status: "enabled", Version: 1, Reason: "purchase price correction",
 		Models: []domain.ModelInput{{Model: "model-a", UpstreamModel: "model-a", InputPrice: "1.10", OutputPrice: "2.20", Currency: "USD", Enabled: true}},
 	}})
+	var priceHistoryCount, currentPriceCount int
+	var latestPriceVersion int64
+	if err := store.pool.QueryRow(ctx, `
+		SELECT count(*), max(version), count(*) FILTER (WHERE valid_to IS NULL)
+		FROM supplier_model_price_history
+		WHERE supplier_id=$1 AND model='model-a'
+	`, supplierIDs[0]).Scan(&priceHistoryCount, &latestPriceVersion, &currentPriceCount); err != nil {
+		t.Fatal(err)
+	}
+	if priceHistoryCount != 2 || latestPriceVersion != 2 || currentPriceCount != 1 {
+		t.Fatalf("supplier price history was reset during edit: count=%d latest=%d current=%d", priceHistoryCount, latestPriceVersion, currentPriceCount)
+	}
 	for _, siteID := range siteIDs {
 		var version int64
 		if err := store.pool.QueryRow(ctx, `SELECT max(version) FROM route_plan_versions WHERE site_id=$1`, siteID).Scan(&version); err != nil {

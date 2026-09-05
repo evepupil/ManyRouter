@@ -396,6 +396,134 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/OpAuditPage' }
         default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/collection-status:
+    get:
+      operationId: opListCollectionStatus
+      parameters:
+        - { $ref: '#/components/parameters/OpSiteFilter' }
+      responses:
+        '200':
+          description: Per-site measurement collection freshness and cursor state
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpCollectionStatusList' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/collection-runs:
+    post:
+      operationId: opRunCollection
+      security: *writeSecurity
+      parameters: [{ $ref: '#/components/parameters/OpIdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OpCollectionRunInput' }
+      responses:
+        '200':
+          description: Completed idempotent collection pass for one site
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpCollectionRunResult' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/evaluation-runs:
+    get:
+      operationId: opListEvaluationRuns
+      parameters:
+        - { $ref: '#/components/parameters/OpSiteFilter' }
+        - { $ref: '#/components/parameters/OpSupplierFilter' }
+        - { name: model, in: query, schema: { type: string, maxLength: 191 } }
+        - { name: purpose, in: query, schema: { type: string, enum: [health, authenticity, quality, recovery] } }
+        - { $ref: '#/components/parameters/OpLimit' }
+        - { $ref: '#/components/parameters/OpOffset' }
+      responses:
+        '200':
+          description: Evaluation runs without private prompts or raw answers
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpEvaluationRunPage' }
+        default: { $ref: '#/components/responses/OpError' }
+    post:
+      operationId: opRequestEvaluationRun
+      security: *writeSecurity
+      parameters: [{ $ref: '#/components/parameters/OpIdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OpEvaluationRunInput' }
+      responses:
+        '202':
+          description: Durable evaluation run accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpEvaluationRun' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/evaluation-runs/{id}:
+    parameters: [{ $ref: '#/components/parameters/OpID' }]
+    get:
+      operationId: opGetEvaluationRun
+      responses:
+        '200':
+          description: Evaluation run progress and safe summary
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpEvaluationRun' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/evaluation-runs/{id}/reference:
+    parameters: [{ $ref: '#/components/parameters/OpID' }]
+    post:
+      operationId: opPromoteEvaluationReference
+      security: *writeSecurity
+      parameters: [{ $ref: '#/components/parameters/OpIdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OpTrustedReferenceInput' }
+      responses:
+        '201':
+          description: Fingerprint promoted to a versioned trusted reference
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpTrustedReference' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/score-insights:
+    get:
+      operationId: opListScoreInsights
+      parameters:
+        - { $ref: '#/components/parameters/OpSiteFilter' }
+        - { $ref: '#/components/parameters/OpSupplierFilter' }
+        - { name: model, in: query, schema: { type: string, maxLength: 191 } }
+        - { $ref: '#/components/parameters/OpLimit' }
+        - { $ref: '#/components/parameters/OpOffset' }
+      responses:
+        '200':
+          description: Latest explainable shadow score for each site supplier model
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpScoreInsightPage' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/score-runs:
+    post:
+      operationId: opRefreshScores
+      security: *writeSecurity
+      parameters: [{ $ref: '#/components/parameters/OpIdempotencyKey' }]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: false }
+      responses:
+        '200':
+          description: Measurement aggregates and shadow scores refreshed
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { type: string, enum: [completed] }
+        default: { $ref: '#/components/responses/OpError' }
 components:
   securitySchemes:
     OpBearer: { type: http, scheme: bearer }
@@ -444,6 +572,165 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/OpPlanResult' }
   schemas:
+    OpCollectionRunInput:
+      type: object
+      required: [site_id]
+      additionalProperties: false
+      properties:
+        site_id: { type: string, format: uuid }
+    OpCollectionRunResult:
+      type: object
+      required: [site_id, site_name, read_records, saved_requests, saved_attempts, data_gap]
+      properties:
+        site_id: { type: string, format: uuid }
+        site_name: { type: string }
+        read_records: { type: integer, minimum: 0 }
+        saved_requests: { type: integer, minimum: 0 }
+        saved_attempts: { type: integer, minimum: 0 }
+        cursor_time: { type: string, format: date-time, nullable: true }
+        scanned_through: { type: string, format: date-time, nullable: true }
+        source_latest: { type: string, format: date-time, nullable: true }
+        data_gap: { type: boolean }
+        error_code: { type: string }
+    OpCollectionStatus:
+      type: object
+      required: [site_id, site_name, source_kind, contract_version, consecutive_failures, data_gap]
+      properties:
+        site_id: { type: string, format: uuid }
+        site_name: { type: string }
+        source_kind: { type: string }
+        contract_version: { type: string }
+        cursor_time: { type: string, format: date-time, nullable: true }
+        scanned_through: { type: string, format: date-time, nullable: true }
+        source_latest: { type: string, format: date-time, nullable: true }
+        last_read_at: { type: string, format: date-time, nullable: true }
+        last_success_at: { type: string, format: date-time, nullable: true }
+        last_error_at: { type: string, format: date-time, nullable: true }
+        last_error_code: { type: string }
+        last_error_message: { type: string }
+        consecutive_failures: { type: integer, minimum: 0 }
+        data_gap: { type: boolean }
+        updated_at: { type: string, format: date-time, nullable: true }
+    OpCollectionStatusList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/OpCollectionStatus' }
+    OpEvaluationRunInput:
+      type: object
+      required: [supplier_id, model, purpose, reason]
+      additionalProperties: false
+      properties:
+        supplier_id: { type: string, format: uuid }
+        model: { type: string, maxLength: 191 }
+        purpose: { type: string, enum: [health, authenticity, quality, recovery] }
+        target_kind: { type: string, enum: [supplier_direct], default: supplier_direct }
+        reason: { type: string, minLength: 1, maxLength: 500 }
+    OpEvaluationRun:
+      type: object
+      required: [id, supplier_id, model, upstream_model, target_kind, purpose, status, suite_version, algorithm_version, planned_samples, completed_samples, requested_by, request_reason, requested_at]
+      properties:
+        id: { type: string, format: uuid }
+        supplier_id: { type: string, format: uuid }
+        supplier_name: { type: string }
+        relation_id: { type: string, format: uuid, nullable: true }
+        site_id: { type: string, format: uuid, nullable: true }
+        model: { type: string }
+        upstream_model: { type: string }
+        target_kind: { type: string, enum: [supplier_direct, site_route] }
+        purpose: { type: string, enum: [health, authenticity, quality, recovery] }
+        status: { type: string, enum: [pending, running, succeeded, failed, uncertain, cancelled] }
+        suite_version: { type: string }
+        algorithm_version: { type: string }
+        reference_id: { type: string, format: uuid, nullable: true }
+        planned_samples: { type: integer, minimum: 1 }
+        completed_samples: { type: integer, minimum: 0 }
+        requested_by: { type: string }
+        request_reason: { type: string }
+        error_code: { type: string }
+        error_message: { type: string }
+        requested_at: { type: string, format: date-time }
+        started_at: { type: string, format: date-time, nullable: true }
+        completed_at: { type: string, format: date-time, nullable: true }
+        next_retry_at: { type: string, format: date-time, nullable: true }
+    OpEvaluationRunPage:
+      allOf:
+        - { $ref: '#/components/schemas/OpPagination' }
+        - type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/OpEvaluationRun' } }
+    OpTrustedReferenceInput:
+      type: object
+      required: [trust, reason, valid_days]
+      additionalProperties: false
+      properties:
+        trust: { type: string, enum: [official, operator_trusted, community] }
+        reason: { type: string, minLength: 1, maxLength: 500 }
+        valid_days: { type: integer, minimum: 1, maximum: 90 }
+    OpTrustedReference:
+      type: object
+      required: [id, model, supplier_id, trust, expires_at]
+      properties:
+        id: { type: string, format: uuid }
+        model: { type: string }
+        supplier_id: { type: string, format: uuid }
+        trust: { type: string, enum: [official, operator_trusted, community] }
+        expires_at: { type: string, format: date-time }
+    OpShadowRecommendation:
+      type: object
+      required: [strategy_kind, action, current_member, confidence, reasons]
+      properties:
+        strategy_kind: { type: string, enum: [lowest_price, low_latency, high_sla, high_quality, balanced] }
+        action: { type: string, enum: [join, keep, exit, watch, exclude] }
+        current_member: { type: boolean }
+        score: { type: number, minimum: 0, maximum: 100, nullable: true }
+        confidence: { type: string, enum: [high, medium, low, insufficient] }
+        reasons:
+          type: array
+          items: { type: string }
+    OpScoreInsight:
+      type: object
+      required: [snapshot_id, policy_version, site_id, supplier_id, supplier_name, model, passive_samples, active_samples, confidence, eligibility, hard_reasons, authenticity_verdict, window_start, window_end, created_at, explanation, recommendations]
+      properties:
+        snapshot_id: { type: string, format: uuid }
+        policy_version: { type: string }
+        site_id: { type: string, format: uuid }
+        supplier_id: { type: string, format: uuid }
+        supplier_name: { type: string }
+        model: { type: string }
+        passive_samples: { type: integer, format: int64, minimum: 0 }
+        active_samples: { type: integer, format: int64, minimum: 0 }
+        price_score: { type: number, minimum: 0, maximum: 100, nullable: true }
+        latency_score: { type: number, minimum: 0, maximum: 100, nullable: true }
+        sla_score: { type: number, minimum: 0, maximum: 100, nullable: true }
+        quality_score: { type: number, minimum: 0, maximum: 100, nullable: true }
+        total_score: { type: number, minimum: 0, maximum: 100, nullable: true }
+        confidence: { type: string, enum: [high, medium, low, insufficient] }
+        eligibility: { type: string, enum: [eligible, excluded, insufficient] }
+        hard_reasons:
+          type: array
+          items: { type: string }
+        authenticity_verdict: { type: string, enum: [consistent, suspicious, inconsistent, insufficient] }
+        facts_through: { type: string, format: date-time, nullable: true }
+        window_start: { type: string, format: date-time }
+        window_end: { type: string, format: date-time }
+        created_at: { type: string, format: date-time }
+        explanation:
+          type: object
+          additionalProperties: true
+        recommendations:
+          type: array
+          items: { $ref: '#/components/schemas/OpShadowRecommendation' }
+    OpScoreInsightPage:
+      allOf:
+        - { $ref: '#/components/schemas/OpPagination' }
+        - type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/OpScoreInsight' } }
     OpError:
       type: object
       required: [code, message, request_id]

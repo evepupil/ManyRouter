@@ -80,6 +80,117 @@ func (e OpCreateSupplierInputStatus) Valid() bool {
 	}
 }
 
+// Defines values for OpEvaluationRunPurpose.
+const (
+	OpEvaluationRunPurposeAuthenticity OpEvaluationRunPurpose = "authenticity"
+	OpEvaluationRunPurposeHealth       OpEvaluationRunPurpose = "health"
+	OpEvaluationRunPurposeQuality      OpEvaluationRunPurpose = "quality"
+	OpEvaluationRunPurposeRecovery     OpEvaluationRunPurpose = "recovery"
+)
+
+// Valid indicates whether the value is a known member of the OpEvaluationRunPurpose enum.
+func (e OpEvaluationRunPurpose) Valid() bool {
+	switch e {
+	case OpEvaluationRunPurposeAuthenticity:
+		return true
+	case OpEvaluationRunPurposeHealth:
+		return true
+	case OpEvaluationRunPurposeQuality:
+		return true
+	case OpEvaluationRunPurposeRecovery:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpEvaluationRunStatus.
+const (
+	OpEvaluationRunStatusCancelled OpEvaluationRunStatus = "cancelled"
+	OpEvaluationRunStatusFailed    OpEvaluationRunStatus = "failed"
+	OpEvaluationRunStatusPending   OpEvaluationRunStatus = "pending"
+	OpEvaluationRunStatusRunning   OpEvaluationRunStatus = "running"
+	OpEvaluationRunStatusSucceeded OpEvaluationRunStatus = "succeeded"
+	OpEvaluationRunStatusUncertain OpEvaluationRunStatus = "uncertain"
+)
+
+// Valid indicates whether the value is a known member of the OpEvaluationRunStatus enum.
+func (e OpEvaluationRunStatus) Valid() bool {
+	switch e {
+	case OpEvaluationRunStatusCancelled:
+		return true
+	case OpEvaluationRunStatusFailed:
+		return true
+	case OpEvaluationRunStatusPending:
+		return true
+	case OpEvaluationRunStatusRunning:
+		return true
+	case OpEvaluationRunStatusSucceeded:
+		return true
+	case OpEvaluationRunStatusUncertain:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpEvaluationRunTargetKind.
+const (
+	OpEvaluationRunTargetKindSiteRoute      OpEvaluationRunTargetKind = "site_route"
+	OpEvaluationRunTargetKindSupplierDirect OpEvaluationRunTargetKind = "supplier_direct"
+)
+
+// Valid indicates whether the value is a known member of the OpEvaluationRunTargetKind enum.
+func (e OpEvaluationRunTargetKind) Valid() bool {
+	switch e {
+	case OpEvaluationRunTargetKindSiteRoute:
+		return true
+	case OpEvaluationRunTargetKindSupplierDirect:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpEvaluationRunInputPurpose.
+const (
+	OpEvaluationRunInputPurposeAuthenticity OpEvaluationRunInputPurpose = "authenticity"
+	OpEvaluationRunInputPurposeHealth       OpEvaluationRunInputPurpose = "health"
+	OpEvaluationRunInputPurposeQuality      OpEvaluationRunInputPurpose = "quality"
+	OpEvaluationRunInputPurposeRecovery     OpEvaluationRunInputPurpose = "recovery"
+)
+
+// Valid indicates whether the value is a known member of the OpEvaluationRunInputPurpose enum.
+func (e OpEvaluationRunInputPurpose) Valid() bool {
+	switch e {
+	case OpEvaluationRunInputPurposeAuthenticity:
+		return true
+	case OpEvaluationRunInputPurposeHealth:
+		return true
+	case OpEvaluationRunInputPurposeQuality:
+		return true
+	case OpEvaluationRunInputPurposeRecovery:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpEvaluationRunInputTargetKind.
+const (
+	OpEvaluationRunInputTargetKindSupplierDirect OpEvaluationRunInputTargetKind = "supplier_direct"
+)
+
+// Valid indicates whether the value is a known member of the OpEvaluationRunInputTargetKind enum.
+func (e OpEvaluationRunInputTargetKind) Valid() bool {
+	switch e {
+	case OpEvaluationRunInputTargetKindSupplierDirect:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for OpModelInputCurrency.
 const (
 	OpModelInputCurrencyCNY OpModelInputCurrency = "CNY"
@@ -212,6 +323,153 @@ func (e OpRelationInputDesiredStatus) Valid() bool {
 	case OpRelationInputDesiredStatusDisabled:
 		return true
 	case OpRelationInputDesiredStatusEnabled:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpScoreInsightAuthenticityVerdict.
+const (
+	OpScoreInsightAuthenticityVerdictConsistent   OpScoreInsightAuthenticityVerdict = "consistent"
+	OpScoreInsightAuthenticityVerdictInconsistent OpScoreInsightAuthenticityVerdict = "inconsistent"
+	OpScoreInsightAuthenticityVerdictInsufficient OpScoreInsightAuthenticityVerdict = "insufficient"
+	OpScoreInsightAuthenticityVerdictSuspicious   OpScoreInsightAuthenticityVerdict = "suspicious"
+)
+
+// Valid indicates whether the value is a known member of the OpScoreInsightAuthenticityVerdict enum.
+func (e OpScoreInsightAuthenticityVerdict) Valid() bool {
+	switch e {
+	case OpScoreInsightAuthenticityVerdictConsistent:
+		return true
+	case OpScoreInsightAuthenticityVerdictInconsistent:
+		return true
+	case OpScoreInsightAuthenticityVerdictInsufficient:
+		return true
+	case OpScoreInsightAuthenticityVerdictSuspicious:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpScoreInsightConfidence.
+const (
+	OpScoreInsightConfidenceHigh         OpScoreInsightConfidence = "high"
+	OpScoreInsightConfidenceInsufficient OpScoreInsightConfidence = "insufficient"
+	OpScoreInsightConfidenceLow          OpScoreInsightConfidence = "low"
+	OpScoreInsightConfidenceMedium       OpScoreInsightConfidence = "medium"
+)
+
+// Valid indicates whether the value is a known member of the OpScoreInsightConfidence enum.
+func (e OpScoreInsightConfidence) Valid() bool {
+	switch e {
+	case OpScoreInsightConfidenceHigh:
+		return true
+	case OpScoreInsightConfidenceInsufficient:
+		return true
+	case OpScoreInsightConfidenceLow:
+		return true
+	case OpScoreInsightConfidenceMedium:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpScoreInsightEligibility.
+const (
+	OpScoreInsightEligibilityEligible     OpScoreInsightEligibility = "eligible"
+	OpScoreInsightEligibilityExcluded     OpScoreInsightEligibility = "excluded"
+	OpScoreInsightEligibilityInsufficient OpScoreInsightEligibility = "insufficient"
+)
+
+// Valid indicates whether the value is a known member of the OpScoreInsightEligibility enum.
+func (e OpScoreInsightEligibility) Valid() bool {
+	switch e {
+	case OpScoreInsightEligibilityEligible:
+		return true
+	case OpScoreInsightEligibilityExcluded:
+		return true
+	case OpScoreInsightEligibilityInsufficient:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpShadowRecommendationAction.
+const (
+	OpShadowRecommendationActionExclude OpShadowRecommendationAction = "exclude"
+	OpShadowRecommendationActionExit    OpShadowRecommendationAction = "exit"
+	OpShadowRecommendationActionJoin    OpShadowRecommendationAction = "join"
+	OpShadowRecommendationActionKeep    OpShadowRecommendationAction = "keep"
+	OpShadowRecommendationActionWatch   OpShadowRecommendationAction = "watch"
+)
+
+// Valid indicates whether the value is a known member of the OpShadowRecommendationAction enum.
+func (e OpShadowRecommendationAction) Valid() bool {
+	switch e {
+	case OpShadowRecommendationActionExclude:
+		return true
+	case OpShadowRecommendationActionExit:
+		return true
+	case OpShadowRecommendationActionJoin:
+		return true
+	case OpShadowRecommendationActionKeep:
+		return true
+	case OpShadowRecommendationActionWatch:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpShadowRecommendationConfidence.
+const (
+	OpShadowRecommendationConfidenceHigh         OpShadowRecommendationConfidence = "high"
+	OpShadowRecommendationConfidenceInsufficient OpShadowRecommendationConfidence = "insufficient"
+	OpShadowRecommendationConfidenceLow          OpShadowRecommendationConfidence = "low"
+	OpShadowRecommendationConfidenceMedium       OpShadowRecommendationConfidence = "medium"
+)
+
+// Valid indicates whether the value is a known member of the OpShadowRecommendationConfidence enum.
+func (e OpShadowRecommendationConfidence) Valid() bool {
+	switch e {
+	case OpShadowRecommendationConfidenceHigh:
+		return true
+	case OpShadowRecommendationConfidenceInsufficient:
+		return true
+	case OpShadowRecommendationConfidenceLow:
+		return true
+	case OpShadowRecommendationConfidenceMedium:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpShadowRecommendationStrategyKind.
+const (
+	OpShadowRecommendationStrategyKindBalanced    OpShadowRecommendationStrategyKind = "balanced"
+	OpShadowRecommendationStrategyKindHighQuality OpShadowRecommendationStrategyKind = "high_quality"
+	OpShadowRecommendationStrategyKindHighSla     OpShadowRecommendationStrategyKind = "high_sla"
+	OpShadowRecommendationStrategyKindLowLatency  OpShadowRecommendationStrategyKind = "low_latency"
+	OpShadowRecommendationStrategyKindLowestPrice OpShadowRecommendationStrategyKind = "lowest_price"
+)
+
+// Valid indicates whether the value is a known member of the OpShadowRecommendationStrategyKind enum.
+func (e OpShadowRecommendationStrategyKind) Valid() bool {
+	switch e {
+	case OpShadowRecommendationStrategyKindBalanced:
+		return true
+	case OpShadowRecommendationStrategyKindHighQuality:
+		return true
+	case OpShadowRecommendationStrategyKindHighSla:
+		return true
+	case OpShadowRecommendationStrategyKindLowLatency:
+		return true
+	case OpShadowRecommendationStrategyKindLowestPrice:
 		return true
 	default:
 		return false
@@ -380,6 +638,48 @@ func (e OpSyncStepStatus) Valid() bool {
 	}
 }
 
+// Defines values for OpTrustedReferenceTrust.
+const (
+	OpTrustedReferenceTrustCommunity       OpTrustedReferenceTrust = "community"
+	OpTrustedReferenceTrustOfficial        OpTrustedReferenceTrust = "official"
+	OpTrustedReferenceTrustOperatorTrusted OpTrustedReferenceTrust = "operator_trusted"
+)
+
+// Valid indicates whether the value is a known member of the OpTrustedReferenceTrust enum.
+func (e OpTrustedReferenceTrust) Valid() bool {
+	switch e {
+	case OpTrustedReferenceTrustCommunity:
+		return true
+	case OpTrustedReferenceTrustOfficial:
+		return true
+	case OpTrustedReferenceTrustOperatorTrusted:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpTrustedReferenceInputTrust.
+const (
+	OpTrustedReferenceInputTrustCommunity       OpTrustedReferenceInputTrust = "community"
+	OpTrustedReferenceInputTrustOfficial        OpTrustedReferenceInputTrust = "official"
+	OpTrustedReferenceInputTrustOperatorTrusted OpTrustedReferenceInputTrust = "operator_trusted"
+)
+
+// Valid indicates whether the value is a known member of the OpTrustedReferenceInputTrust enum.
+func (e OpTrustedReferenceInputTrust) Valid() bool {
+	switch e {
+	case OpTrustedReferenceInputTrustCommunity:
+		return true
+	case OpTrustedReferenceInputTrustOfficial:
+		return true
+	case OpTrustedReferenceInputTrustOperatorTrusted:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for OpUpdateSiteInputStatus.
 const (
 	OpUpdateSiteInputStatusDisabled OpUpdateSiteInputStatus = "disabled"
@@ -410,6 +710,45 @@ func (e OpUpdateSupplierInputStatus) Valid() bool {
 	case OpUpdateSupplierInputStatusDisabled:
 		return true
 	case OpUpdateSupplierInputStatusEnabled:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpListEvaluationRunsParamsPurpose.
+const (
+	OpListEvaluationRunsParamsPurposeAuthenticity OpListEvaluationRunsParamsPurpose = "authenticity"
+	OpListEvaluationRunsParamsPurposeHealth       OpListEvaluationRunsParamsPurpose = "health"
+	OpListEvaluationRunsParamsPurposeQuality      OpListEvaluationRunsParamsPurpose = "quality"
+	OpListEvaluationRunsParamsPurposeRecovery     OpListEvaluationRunsParamsPurpose = "recovery"
+)
+
+// Valid indicates whether the value is a known member of the OpListEvaluationRunsParamsPurpose enum.
+func (e OpListEvaluationRunsParamsPurpose) Valid() bool {
+	switch e {
+	case OpListEvaluationRunsParamsPurposeAuthenticity:
+		return true
+	case OpListEvaluationRunsParamsPurposeHealth:
+		return true
+	case OpListEvaluationRunsParamsPurposeQuality:
+		return true
+	case OpListEvaluationRunsParamsPurposeRecovery:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpRefreshScores200JSONResponseBodyStatus.
+const (
+	OpRefreshScores200JSONResponseBodyStatusCompleted OpRefreshScores200JSONResponseBodyStatus = "completed"
+)
+
+// Valid indicates whether the value is a known member of the OpRefreshScores200JSONResponseBodyStatus enum.
+func (e OpRefreshScores200JSONResponseBodyStatus) Valid() bool {
+	switch e {
+	case OpRefreshScores200JSONResponseBodyStatusCompleted:
 		return true
 	default:
 		return false
@@ -464,6 +803,49 @@ type OpAuthUser struct {
 
 // OpAuthUserRole defines model for OpAuthUser.Role.
 type OpAuthUserRole string
+
+// OpCollectionRunInput defines model for OpCollectionRunInput.
+type OpCollectionRunInput struct {
+	SiteId openapi_types.UUID `json:"site_id"`
+}
+
+// OpCollectionRunResult defines model for OpCollectionRunResult.
+type OpCollectionRunResult struct {
+	CursorTime     *time.Time         `json:"cursor_time,omitempty"`
+	DataGap        bool               `json:"data_gap"`
+	ErrorCode      *string            `json:"error_code,omitempty"`
+	ReadRecords    int                `json:"read_records"`
+	SavedAttempts  int                `json:"saved_attempts"`
+	SavedRequests  int                `json:"saved_requests"`
+	ScannedThrough *time.Time         `json:"scanned_through,omitempty"`
+	SiteId         openapi_types.UUID `json:"site_id"`
+	SiteName       string             `json:"site_name"`
+	SourceLatest   *time.Time         `json:"source_latest,omitempty"`
+}
+
+// OpCollectionStatus defines model for OpCollectionStatus.
+type OpCollectionStatus struct {
+	ConsecutiveFailures int                `json:"consecutive_failures"`
+	ContractVersion     string             `json:"contract_version"`
+	CursorTime          *time.Time         `json:"cursor_time,omitempty"`
+	DataGap             bool               `json:"data_gap"`
+	LastErrorAt         *time.Time         `json:"last_error_at,omitempty"`
+	LastErrorCode       *string            `json:"last_error_code,omitempty"`
+	LastErrorMessage    *string            `json:"last_error_message,omitempty"`
+	LastReadAt          *time.Time         `json:"last_read_at,omitempty"`
+	LastSuccessAt       *time.Time         `json:"last_success_at,omitempty"`
+	ScannedThrough      *time.Time         `json:"scanned_through,omitempty"`
+	SiteId              openapi_types.UUID `json:"site_id"`
+	SiteName            string             `json:"site_name"`
+	SourceKind          string             `json:"source_kind"`
+	SourceLatest        *time.Time         `json:"source_latest,omitempty"`
+	UpdatedAt           *time.Time         `json:"updated_at,omitempty"`
+}
+
+// OpCollectionStatusList defines model for OpCollectionStatusList.
+type OpCollectionStatusList struct {
+	Items []OpCollectionStatus `json:"items"`
+}
 
 // OpCreateSiteInput defines model for OpCreateSiteInput.
 type OpCreateSiteInput struct {
@@ -532,6 +914,65 @@ type OpError struct {
 	Code      string `json:"code"`
 	Message   string `json:"message"`
 	RequestId string `json:"request_id"`
+}
+
+// OpEvaluationRun defines model for OpEvaluationRun.
+type OpEvaluationRun struct {
+	AlgorithmVersion string                    `json:"algorithm_version"`
+	CompletedAt      *time.Time                `json:"completed_at,omitempty"`
+	CompletedSamples int                       `json:"completed_samples"`
+	ErrorCode        *string                   `json:"error_code,omitempty"`
+	ErrorMessage     *string                   `json:"error_message,omitempty"`
+	Id               openapi_types.UUID        `json:"id"`
+	Model            string                    `json:"model"`
+	NextRetryAt      *time.Time                `json:"next_retry_at,omitempty"`
+	PlannedSamples   int                       `json:"planned_samples"`
+	Purpose          OpEvaluationRunPurpose    `json:"purpose"`
+	ReferenceId      *openapi_types.UUID       `json:"reference_id,omitempty"`
+	RelationId       *openapi_types.UUID       `json:"relation_id,omitempty"`
+	RequestReason    string                    `json:"request_reason"`
+	RequestedAt      time.Time                 `json:"requested_at"`
+	RequestedBy      string                    `json:"requested_by"`
+	SiteId           *openapi_types.UUID       `json:"site_id,omitempty"`
+	StartedAt        *time.Time                `json:"started_at,omitempty"`
+	Status           OpEvaluationRunStatus     `json:"status"`
+	SuiteVersion     string                    `json:"suite_version"`
+	SupplierId       openapi_types.UUID        `json:"supplier_id"`
+	SupplierName     *string                   `json:"supplier_name,omitempty"`
+	TargetKind       OpEvaluationRunTargetKind `json:"target_kind"`
+	UpstreamModel    string                    `json:"upstream_model"`
+}
+
+// OpEvaluationRunPurpose defines model for OpEvaluationRun.Purpose.
+type OpEvaluationRunPurpose string
+
+// OpEvaluationRunStatus defines model for OpEvaluationRun.Status.
+type OpEvaluationRunStatus string
+
+// OpEvaluationRunTargetKind defines model for OpEvaluationRun.TargetKind.
+type OpEvaluationRunTargetKind string
+
+// OpEvaluationRunInput defines model for OpEvaluationRunInput.
+type OpEvaluationRunInput struct {
+	Model      string                          `json:"model"`
+	Purpose    OpEvaluationRunInputPurpose     `json:"purpose"`
+	Reason     string                          `json:"reason"`
+	SupplierId openapi_types.UUID              `json:"supplier_id"`
+	TargetKind *OpEvaluationRunInputTargetKind `json:"target_kind,omitempty"`
+}
+
+// OpEvaluationRunInputPurpose defines model for OpEvaluationRunInput.Purpose.
+type OpEvaluationRunInputPurpose string
+
+// OpEvaluationRunInputTargetKind defines model for OpEvaluationRunInput.TargetKind.
+type OpEvaluationRunInputTargetKind string
+
+// OpEvaluationRunPage defines model for OpEvaluationRunPage.
+type OpEvaluationRunPage struct {
+	Items  []OpEvaluationRun `json:"items"`
+	Limit  int               `json:"limit"`
+	Offset int               `json:"offset"`
+	Total  int64             `json:"total"`
 }
 
 // OpLoginInput defines model for OpLoginInput.
@@ -717,12 +1158,75 @@ type OpRestoreInput struct {
 	Reason string `json:"reason"`
 }
 
+// OpScoreInsight defines model for OpScoreInsight.
+type OpScoreInsight struct {
+	ActiveSamples       int64                             `json:"active_samples"`
+	AuthenticityVerdict OpScoreInsightAuthenticityVerdict `json:"authenticity_verdict"`
+	Confidence          OpScoreInsightConfidence          `json:"confidence"`
+	CreatedAt           time.Time                         `json:"created_at"`
+	Eligibility         OpScoreInsightEligibility         `json:"eligibility"`
+	Explanation         map[string]interface{}            `json:"explanation"`
+	FactsThrough        *time.Time                        `json:"facts_through,omitempty"`
+	HardReasons         []string                          `json:"hard_reasons"`
+	LatencyScore        *float32                          `json:"latency_score,omitempty"`
+	Model               string                            `json:"model"`
+	PassiveSamples      int64                             `json:"passive_samples"`
+	PolicyVersion       string                            `json:"policy_version"`
+	PriceScore          *float32                          `json:"price_score,omitempty"`
+	QualityScore        *float32                          `json:"quality_score,omitempty"`
+	Recommendations     []OpShadowRecommendation          `json:"recommendations"`
+	SiteId              openapi_types.UUID                `json:"site_id"`
+	SlaScore            *float32                          `json:"sla_score,omitempty"`
+	SnapshotId          openapi_types.UUID                `json:"snapshot_id"`
+	SupplierId          openapi_types.UUID                `json:"supplier_id"`
+	SupplierName        string                            `json:"supplier_name"`
+	TotalScore          *float32                          `json:"total_score,omitempty"`
+	WindowEnd           time.Time                         `json:"window_end"`
+	WindowStart         time.Time                         `json:"window_start"`
+}
+
+// OpScoreInsightAuthenticityVerdict defines model for OpScoreInsight.AuthenticityVerdict.
+type OpScoreInsightAuthenticityVerdict string
+
+// OpScoreInsightConfidence defines model for OpScoreInsight.Confidence.
+type OpScoreInsightConfidence string
+
+// OpScoreInsightEligibility defines model for OpScoreInsight.Eligibility.
+type OpScoreInsightEligibility string
+
+// OpScoreInsightPage defines model for OpScoreInsightPage.
+type OpScoreInsightPage struct {
+	Items  []OpScoreInsight `json:"items"`
+	Limit  int              `json:"limit"`
+	Offset int              `json:"offset"`
+	Total  int64            `json:"total"`
+}
+
 // OpSetupInput defines model for OpSetupInput.
 type OpSetupInput struct {
 	Password   *string `json:"password,omitempty"`
 	SetupToken *string `json:"setup_token,omitempty"`
 	Username   string  `json:"username"`
 }
+
+// OpShadowRecommendation defines model for OpShadowRecommendation.
+type OpShadowRecommendation struct {
+	Action        OpShadowRecommendationAction       `json:"action"`
+	Confidence    OpShadowRecommendationConfidence   `json:"confidence"`
+	CurrentMember bool                               `json:"current_member"`
+	Reasons       []string                           `json:"reasons"`
+	Score         *float32                           `json:"score,omitempty"`
+	StrategyKind  OpShadowRecommendationStrategyKind `json:"strategy_kind"`
+}
+
+// OpShadowRecommendationAction defines model for OpShadowRecommendation.Action.
+type OpShadowRecommendationAction string
+
+// OpShadowRecommendationConfidence defines model for OpShadowRecommendation.Confidence.
+type OpShadowRecommendationConfidence string
+
+// OpShadowRecommendationStrategyKind defines model for OpShadowRecommendation.StrategyKind.
+type OpShadowRecommendationStrategyKind string
 
 // OpSite defines model for OpSite.
 type OpSite struct {
@@ -870,6 +1374,28 @@ type OpSyncStep struct {
 // OpSyncStepStatus defines model for OpSyncStep.Status.
 type OpSyncStepStatus string
 
+// OpTrustedReference defines model for OpTrustedReference.
+type OpTrustedReference struct {
+	ExpiresAt  time.Time               `json:"expires_at"`
+	Id         openapi_types.UUID      `json:"id"`
+	Model      string                  `json:"model"`
+	SupplierId openapi_types.UUID      `json:"supplier_id"`
+	Trust      OpTrustedReferenceTrust `json:"trust"`
+}
+
+// OpTrustedReferenceTrust defines model for OpTrustedReference.Trust.
+type OpTrustedReferenceTrust string
+
+// OpTrustedReferenceInput defines model for OpTrustedReferenceInput.
+type OpTrustedReferenceInput struct {
+	Reason    string                       `json:"reason"`
+	Trust     OpTrustedReferenceInputTrust `json:"trust"`
+	ValidDays int                          `json:"valid_days"`
+}
+
+// OpTrustedReferenceInputTrust defines model for OpTrustedReferenceInput.Trust.
+type OpTrustedReferenceInputTrust string
+
 // OpUpdateSiteInput defines model for OpUpdateSiteInput.
 type OpUpdateSiteInput struct {
 	AdminUserId       *int64                  `json:"admin_user_id,omitempty"`
@@ -933,8 +1459,41 @@ type OpListAuditParams struct {
 	Offset     *OpOffset         `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
+// OpRunCollectionParams defines parameters for OpRunCollection.
+type OpRunCollectionParams struct {
+	IdempotencyKey OpIdempotencyKey `json:"Idempotency-Key"`
+}
+
+// OpListCollectionStatusParams defines parameters for OpListCollectionStatus.
+type OpListCollectionStatusParams struct {
+	SiteId *OpSiteFilter `form:"site_id,omitempty" json:"site_id,omitempty"`
+}
+
 // OpDeploySupplierParams defines parameters for OpDeploySupplier.
 type OpDeploySupplierParams struct {
+	IdempotencyKey OpIdempotencyKey `json:"Idempotency-Key"`
+}
+
+// OpListEvaluationRunsParams defines parameters for OpListEvaluationRuns.
+type OpListEvaluationRunsParams struct {
+	SiteId     *OpSiteFilter                      `form:"site_id,omitempty" json:"site_id,omitempty"`
+	SupplierId *OpSupplierFilter                  `form:"supplier_id,omitempty" json:"supplier_id,omitempty"`
+	Model      *string                            `form:"model,omitempty" json:"model,omitempty"`
+	Purpose    *OpListEvaluationRunsParamsPurpose `form:"purpose,omitempty" json:"purpose,omitempty"`
+	Limit      *OpLimit                           `form:"limit,omitempty" json:"limit,omitempty"`
+	Offset     *OpOffset                          `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// OpListEvaluationRunsParamsPurpose defines parameters for OpListEvaluationRuns.
+type OpListEvaluationRunsParamsPurpose string
+
+// OpRequestEvaluationRunParams defines parameters for OpRequestEvaluationRun.
+type OpRequestEvaluationRunParams struct {
+	IdempotencyKey OpIdempotencyKey `json:"Idempotency-Key"`
+}
+
+// OpPromoteEvaluationReferenceParams defines parameters for OpPromoteEvaluationReference.
+type OpPromoteEvaluationReferenceParams struct {
 	IdempotencyKey OpIdempotencyKey `json:"Idempotency-Key"`
 }
 
@@ -984,6 +1543,26 @@ type OpListRelationsParams struct {
 type OpUpdateRelationParams struct {
 	IdempotencyKey OpIdempotencyKey `json:"Idempotency-Key"`
 }
+
+// OpListScoreInsightsParams defines parameters for OpListScoreInsights.
+type OpListScoreInsightsParams struct {
+	SiteId     *OpSiteFilter     `form:"site_id,omitempty" json:"site_id,omitempty"`
+	SupplierId *OpSupplierFilter `form:"supplier_id,omitempty" json:"supplier_id,omitempty"`
+	Model      *string           `form:"model,omitempty" json:"model,omitempty"`
+	Limit      *OpLimit          `form:"limit,omitempty" json:"limit,omitempty"`
+	Offset     *OpOffset         `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// OpRefreshScoresJSONBody defines parameters for OpRefreshScores.
+type OpRefreshScoresJSONBody = map[string]interface{}
+
+// OpRefreshScoresParams defines parameters for OpRefreshScores.
+type OpRefreshScoresParams struct {
+	IdempotencyKey OpIdempotencyKey `json:"Idempotency-Key"`
+}
+
+// OpRefreshScores200JSONResponseBodyStatus defines parameters for OpRefreshScores.
+type OpRefreshScores200JSONResponseBodyStatus string
 
 // OpListSitesParams defines parameters for OpListSites.
 type OpListSitesParams struct {
@@ -1070,8 +1649,17 @@ type OpAuthLoginJSONRequestBody = OpLoginInput
 // OpAuthSetupJSONRequestBody defines body for OpAuthSetup for application/json ContentType.
 type OpAuthSetupJSONRequestBody = OpSetupInput
 
+// OpRunCollectionJSONRequestBody defines body for OpRunCollection for application/json ContentType.
+type OpRunCollectionJSONRequestBody = OpCollectionRunInput
+
 // OpDeploySupplierJSONRequestBody defines body for OpDeploySupplier for application/json ContentType.
 type OpDeploySupplierJSONRequestBody = OpDeploymentInput
+
+// OpRequestEvaluationRunJSONRequestBody defines body for OpRequestEvaluationRun for application/json ContentType.
+type OpRequestEvaluationRunJSONRequestBody = OpEvaluationRunInput
+
+// OpPromoteEvaluationReferenceJSONRequestBody defines body for OpPromoteEvaluationReference for application/json ContentType.
+type OpPromoteEvaluationReferenceJSONRequestBody = OpTrustedReferenceInput
 
 // OpRestorePlanJSONRequestBody defines body for OpRestorePlan for application/json ContentType.
 type OpRestorePlanJSONRequestBody = OpRestoreInput
@@ -1084,6 +1672,9 @@ type OpPublishPriceJSONRequestBody = OpPublishInput
 
 // OpUpdateRelationJSONRequestBody defines body for OpUpdateRelation for application/json ContentType.
 type OpUpdateRelationJSONRequestBody = OpRelationInput
+
+// OpRefreshScoresJSONRequestBody defines body for OpRefreshScores for application/json ContentType.
+type OpRefreshScoresJSONRequestBody = OpRefreshScoresJSONBody
 
 // OpCreateSiteJSONRequestBody defines body for OpCreateSite for application/json ContentType.
 type OpCreateSiteJSONRequestBody = OpCreateSiteInput

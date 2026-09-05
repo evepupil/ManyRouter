@@ -15,6 +15,26 @@ import (
 
 const reconciliationQueue = "reconciliation"
 
+type clientConfig struct {
+	collection CollectionRunner
+	evaluation EvaluationRunner
+	scoring    ScoringRunner
+}
+
+type ClientOption func(*clientConfig)
+
+func WithCollection(runner CollectionRunner) ClientOption {
+	return func(config *clientConfig) { config.collection = runner }
+}
+
+func WithEvaluation(runner EvaluationRunner) ClientOption {
+	return func(config *clientConfig) { config.evaluation = runner }
+}
+
+func WithScoring(runner ScoringRunner) ClientOption {
+	return func(config *clientConfig) { config.scoring = runner }
+}
+
 type ReconciliationArgs struct {
 	OperationID string `json:"operation_id"`
 }
@@ -94,16 +114,42 @@ func (d *Dispatcher) Dispatch(ctx context.Context, operationID uuid.UUID) error 
 	return err
 }
 
-func NewClient(pool *pgxpool.Pool, runner ReconciliationRunner, execute bool) (*river.Client[pgx.Tx], error) {
+func NewClient(pool *pgxpool.Pool, runner ReconciliationRunner, execute bool, options ...ClientOption) (*river.Client[pgx.Tx], error) {
 	if pool == nil || runner == nil {
 		return nil, errors.New("river pool and reconciliation runner are required")
 	}
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &ReconciliationWorker{runner: runner})
+	clientOptions := clientConfig{}
+	for _, option := range options {
+		option(&clientOptions)
+	}
 	config := &river.Config{Workers: workers}
+	if clientOptions.collection != nil {
+		river.AddWorker(workers, &CollectionWorker{runner: clientOptions.collection})
+		config.PeriodicJobs = collectionPeriodicJobs()
+	}
+	if clientOptions.evaluation != nil {
+		river.AddWorker(workers, &EvaluationWorker{runner: clientOptions.evaluation})
+		river.AddWorker(workers, &EvaluationSweepWorker{runner: clientOptions.evaluation})
+		config.PeriodicJobs = append(config.PeriodicJobs, evaluationPeriodicJobs()...)
+	}
+	if clientOptions.scoring != nil {
+		river.AddWorker(workers, &ScoringWorker{runner: clientOptions.scoring})
+		config.PeriodicJobs = append(config.PeriodicJobs, scoringPeriodicJobs()...)
+	}
 	if execute {
 		config.Queues = map[string]river.QueueConfig{
 			reconciliationQueue: {MaxWorkers: 4},
+		}
+		if clientOptions.collection != nil {
+			config.Queues[collectionQueue] = river.QueueConfig{MaxWorkers: 1}
+		}
+		if clientOptions.evaluation != nil {
+			config.Queues[evaluationQueue] = river.QueueConfig{MaxWorkers: 2}
+		}
+		if clientOptions.scoring != nil {
+			config.Queues[scoringQueue] = river.QueueConfig{MaxWorkers: 1}
 		}
 	}
 	return river.NewClient(riverpgxv5.New(pool), config)

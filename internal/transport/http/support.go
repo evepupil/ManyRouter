@@ -8,6 +8,7 @@ import (
 	stdhttp "net/http"
 	"strings"
 
+	evaluationapp "github.com/evepupil/ManyRouter/internal/application/evaluation"
 	"github.com/evepupil/ManyRouter/internal/application/idempotency"
 	"github.com/evepupil/ManyRouter/internal/application/onboarding"
 	"github.com/evepupil/ManyRouter/internal/application/reconciliation"
@@ -49,6 +50,18 @@ func (h *Handler) writeIdempotent(c *gin.Context, scope, key, requestHash string
 }
 
 func (h *Handler) writeApplicationError(c *gin.Context, err error) {
+	if errors.Is(err, evaluationapp.ErrInvalid) {
+		writeError(c, stdhttp.StatusBadRequest, "invalid_evaluation", strings.TrimPrefix(err.Error(), evaluationapp.ErrInvalid.Error()+": "))
+		return
+	}
+	if errors.Is(err, evaluationapp.ErrDailyBudgetExceeded) {
+		writeError(c, stdhttp.StatusConflict, "evaluation_budget_exhausted", "该供应商模型今天的主动测评预算已经用完")
+		return
+	}
+	if errors.Is(err, evaluationapp.ErrRequestKeyReused) {
+		writeError(c, stdhttp.StatusConflict, "idempotency_key_reused", "该幂等键已经用于另一份请求")
+		return
+	}
 	if errors.Is(err, operations.ErrInvalid) {
 		writeError(c, stdhttp.StatusBadRequest, "invalid_request", strings.TrimPrefix(err.Error(), operations.ErrInvalid.Error()+": "))
 		return

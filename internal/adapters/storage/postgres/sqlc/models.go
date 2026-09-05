@@ -10,6 +10,46 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+type AttemptLatencyHistograms1m struct {
+	BucketStart  pgtype.Timestamptz `json:"bucket_start"`
+	SiteID       uuid.UUID          `json:"site_id"`
+	SupplierID   uuid.UUID          `json:"supplier_id"`
+	Model        string             `json:"model"`
+	Source       string             `json:"source"`
+	Metric       string             `json:"metric"`
+	UpperBoundMs int64              `json:"upper_bound_ms"`
+	SampleCount  int64              `json:"sample_count"`
+}
+
+type AttemptMetrics1m struct {
+	BucketStart          pgtype.Timestamptz `json:"bucket_start"`
+	SiteID               uuid.UUID          `json:"site_id"`
+	SupplierID           uuid.UUID          `json:"supplier_id"`
+	Model                string             `json:"model"`
+	Source               string             `json:"source"`
+	AttemptCount         int64              `json:"attempt_count"`
+	SlaAttemptCount      int64              `json:"sla_attempt_count"`
+	SuccessCount         int64              `json:"success_count"`
+	FailureCount         int64              `json:"failure_count"`
+	SlaFailureCount      int64              `json:"sla_failure_count"`
+	RateLimitedCount     int64              `json:"rate_limited_count"`
+	AuthenticationCount  int64              `json:"authentication_count"`
+	BalanceCount         int64              `json:"balance_count"`
+	TimeoutCount         int64              `json:"timeout_count"`
+	TransportCount       int64              `json:"transport_count"`
+	UpstreamCount        int64              `json:"upstream_count"`
+	StreamCount          int64              `json:"stream_count"`
+	StreamCompletedCount int64              `json:"stream_completed_count"`
+	TtftSumMs            int64              `json:"ttft_sum_ms"`
+	TtftCount            int64              `json:"ttft_count"`
+	SuccessDurationSumMs int64              `json:"success_duration_sum_ms"`
+	SuccessDurationCount int64              `json:"success_duration_count"`
+	FailureDurationSumMs int64              `json:"failure_duration_sum_ms"`
+	FailureDurationCount int64              `json:"failure_duration_count"`
+	CoarseDurationCount  int64              `json:"coarse_duration_count"`
+	ComputedAt           pgtype.Timestamptz `json:"computed_at"`
+}
+
 type AuditEvent struct {
 	ID          uuid.UUID          `json:"id"`
 	ActorType   string             `json:"actor_type"`
@@ -32,6 +72,69 @@ type AuthLoginAttempt struct {
 	WindowStart pgtype.Timestamptz `json:"window_start"`
 }
 
+type AuthenticityAssessment struct {
+	ID               uuid.UUID          `json:"id"`
+	RunID            uuid.UUID          `json:"run_id"`
+	SupplierID       uuid.UUID          `json:"supplier_id"`
+	SiteID           pgtype.UUID        `json:"site_id"`
+	Model            string             `json:"model"`
+	Verdict          string             `json:"verdict"`
+	Confidence       decimal.Decimal    `json:"confidence"`
+	ReferenceID      pgtype.UUID        `json:"reference_id"`
+	MeanDistance     pgtype.Numeric     `json:"mean_distance"`
+	SelfDistance     pgtype.Numeric     `json:"self_distance"`
+	ComparableCells  int32              `json:"comparable_cells"`
+	EvidenceConflict bool               `json:"evidence_conflict"`
+	Evidence         []byte             `json:"evidence"`
+	AlgorithmVersion string             `json:"algorithm_version"`
+	CheckedAt        pgtype.Timestamptz `json:"checked_at"`
+	ExpiresAt        pgtype.Timestamptz `json:"expires_at"`
+}
+
+type CapabilityAssessment struct {
+	ID              uuid.UUID          `json:"id"`
+	RunID           uuid.UUID          `json:"run_id"`
+	SupplierID      uuid.UUID          `json:"supplier_id"`
+	SiteID          pgtype.UUID        `json:"site_id"`
+	Model           string             `json:"model"`
+	Score           decimal.Decimal    `json:"score"`
+	Confidence      decimal.Decimal    `json:"confidence"`
+	CompletedChecks int32              `json:"completed_checks"`
+	TotalChecks     int32              `json:"total_checks"`
+	SuiteVersion    string             `json:"suite_version"`
+	CheckedAt       pgtype.Timestamptz `json:"checked_at"`
+	ExpiresAt       pgtype.Timestamptz `json:"expires_at"`
+}
+
+type ChannelBindingHistory struct {
+	SiteID            uuid.UUID          `json:"site_id"`
+	ExternalChannelID int64              `json:"external_channel_id"`
+	RelationID        uuid.UUID          `json:"relation_id"`
+	SupplierID        uuid.UUID          `json:"supplier_id"`
+	ManagedTag        string             `json:"managed_tag"`
+	ValidFrom         pgtype.Timestamptz `json:"valid_from"`
+	ValidTo           pgtype.Timestamptz `json:"valid_to"`
+}
+
+type CollectionCursor struct {
+	SiteID                uuid.UUID          `json:"site_id"`
+	SourceKind            string             `json:"source_kind"`
+	ContractVersion       string             `json:"contract_version"`
+	CommittedCreatedAt    int64              `json:"committed_created_at"`
+	CommittedSourceID     string             `json:"committed_source_id"`
+	ScannedThroughAt      int64              `json:"scanned_through_at"`
+	OverlapSeconds        int32              `json:"overlap_seconds"`
+	SourceLatestCreatedAt pgtype.Int8        `json:"source_latest_created_at"`
+	LastReadAt            pgtype.Timestamptz `json:"last_read_at"`
+	LastSuccessAt         pgtype.Timestamptz `json:"last_success_at"`
+	LastErrorAt           pgtype.Timestamptz `json:"last_error_at"`
+	LastErrorCode         pgtype.Text        `json:"last_error_code"`
+	LastErrorMessage      pgtype.Text        `json:"last_error_message"`
+	ConsecutiveFailures   int32              `json:"consecutive_failures"`
+	DataGap               bool               `json:"data_gap"`
+	UpdatedAt             pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Credential struct {
 	ID         uuid.UUID          `json:"id"`
 	Purpose    string             `json:"purpose"`
@@ -42,6 +145,85 @@ type Credential struct {
 	RevokedAt  pgtype.Timestamptz `json:"revoked_at"`
 }
 
+type EvaluationBudgetReservation struct {
+	RunID          uuid.UUID          `json:"run_id"`
+	SupplierID     uuid.UUID          `json:"supplier_id"`
+	Model          string             `json:"model"`
+	BucketDate     pgtype.Date        `json:"bucket_date"`
+	PlannedSamples int32              `json:"planned_samples"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+}
+
+type EvaluationDailyBudget struct {
+	SupplierID      uuid.UUID          `json:"supplier_id"`
+	Model           string             `json:"model"`
+	BucketDate      pgtype.Date        `json:"bucket_date"`
+	ReservedSamples int32              `json:"reserved_samples"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+}
+
+type EvaluationFingerprint struct {
+	RunID           uuid.UUID          `json:"run_id"`
+	ProtocolVersion string             `json:"protocol_version"`
+	Cells           []byte             `json:"cells"`
+	ValidCells      int32              `json:"valid_cells"`
+	ValidSamples    int32              `json:"valid_samples"`
+	SelfDistance    pgtype.Numeric     `json:"self_distance"`
+	Stable          bool               `json:"stable"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+}
+
+type EvaluationRun struct {
+	ID               uuid.UUID          `json:"id"`
+	SupplierID       uuid.UUID          `json:"supplier_id"`
+	RelationID       pgtype.UUID        `json:"relation_id"`
+	SiteID           pgtype.UUID        `json:"site_id"`
+	Model            string             `json:"model"`
+	UpstreamModel    string             `json:"upstream_model"`
+	TargetKind       string             `json:"target_kind"`
+	Purpose          string             `json:"purpose"`
+	Status           string             `json:"status"`
+	SuiteVersion     string             `json:"suite_version"`
+	AlgorithmVersion string             `json:"algorithm_version"`
+	RandomSeed       int64              `json:"random_seed"`
+	ReferenceID      pgtype.UUID        `json:"reference_id"`
+	PlannedSamples   int32              `json:"planned_samples"`
+	CompletedSamples int32              `json:"completed_samples"`
+	RequestedBy      string             `json:"requested_by"`
+	RequestReason    string             `json:"request_reason"`
+	ErrorCode        pgtype.Text        `json:"error_code"`
+	ErrorMessage     pgtype.Text        `json:"error_message"`
+	RequestedAt      pgtype.Timestamptz `json:"requested_at"`
+	StartedAt        pgtype.Timestamptz `json:"started_at"`
+	CompletedAt      pgtype.Timestamptz `json:"completed_at"`
+	NextRetryAt      pgtype.Timestamptz `json:"next_retry_at"`
+	RequestKey       pgtype.Text        `json:"request_key"`
+	RequestHash      pgtype.Text        `json:"request_hash"`
+}
+
+type EvaluationSample struct {
+	RunID                 uuid.UUID          `json:"run_id"`
+	ProbeKey              string             `json:"probe_key"`
+	SampleIndex           int32              `json:"sample_index"`
+	PromptVariant         int32              `json:"prompt_variant"`
+	Outcome               string             `json:"outcome"`
+	NormalizedAnswer      pgtype.Text        `json:"normalized_answer"`
+	AnswerDigest          pgtype.Text        `json:"answer_digest"`
+	ResponseModel         pgtype.Text        `json:"response_model"`
+	ResponseShape         []byte             `json:"response_shape"`
+	TtftMs                pgtype.Int8        `json:"ttft_ms"`
+	DurationMs            pgtype.Int8        `json:"duration_ms"`
+	InputTokens           pgtype.Int8        `json:"input_tokens"`
+	OutputTokens          pgtype.Int8        `json:"output_tokens"`
+	StreamCompleted       pgtype.Bool        `json:"stream_completed"`
+	UpstreamStatusCode    pgtype.Int4        `json:"upstream_status_code"`
+	ErrorCategory         pgtype.Text        `json:"error_category"`
+	ErrorCode             pgtype.Text        `json:"error_code"`
+	ClassificationVersion string             `json:"classification_version"`
+	MeasurementRequestID  pgtype.UUID        `json:"measurement_request_id"`
+	CollectedAt           pgtype.Timestamptz `json:"collected_at"`
+}
+
 type IdempotencyRecord struct {
 	Scope          string             `json:"scope"`
 	IdempotencyKey string             `json:"idempotency_key"`
@@ -50,6 +232,84 @@ type IdempotencyRecord struct {
 	ResponseBody   []byte             `json:"response_body"`
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 	ExpiresAt      pgtype.Timestamptz `json:"expires_at"`
+}
+
+type MeasurementAttempt struct {
+	ID                    uuid.UUID          `json:"id"`
+	RequestMeasurementID  uuid.UUID          `json:"request_measurement_id"`
+	AttemptIndex          int32              `json:"attempt_index"`
+	RelationID            pgtype.UUID        `json:"relation_id"`
+	SupplierID            pgtype.UUID        `json:"supplier_id"`
+	ExternalChannelID     pgtype.Int8        `json:"external_channel_id"`
+	AttributionStatus     string             `json:"attribution_status"`
+	Model                 string             `json:"model"`
+	Outcome               string             `json:"outcome"`
+	IsFinal               bool               `json:"is_final"`
+	IsStream              bool               `json:"is_stream"`
+	StreamCompleted       pgtype.Bool        `json:"stream_completed"`
+	ProducedVisibleOutput pgtype.Bool        `json:"produced_visible_output"`
+	TtftMs                pgtype.Int8        `json:"ttft_ms"`
+	DurationMs            pgtype.Int8        `json:"duration_ms"`
+	DurationResolutionMs  pgtype.Int4        `json:"duration_resolution_ms"`
+	UpstreamStatusCode    pgtype.Int4        `json:"upstream_status_code"`
+	ErrorCategory         pgtype.Text        `json:"error_category"`
+	ErrorResponsibility   pgtype.Text        `json:"error_responsibility"`
+	ErrorCode             pgtype.Text        `json:"error_code"`
+	ClassificationVersion string             `json:"classification_version"`
+	ObservedAt            pgtype.Timestamptz `json:"observed_at"`
+	RecordedAt            pgtype.Timestamptz `json:"recorded_at"`
+}
+
+type MeasurementQuarantine struct {
+	ID              uuid.UUID          `json:"id"`
+	SiteID          uuid.UUID          `json:"site_id"`
+	Source          string             `json:"source"`
+	SourceEventKey  string             `json:"source_event_key"`
+	SourceCreatedAt int64              `json:"source_created_at"`
+	SourceID        string             `json:"source_id"`
+	ReasonCode      string             `json:"reason_code"`
+	RecordedAt      pgtype.Timestamptz `json:"recorded_at"`
+	ResolvedAt      pgtype.Timestamptz `json:"resolved_at"`
+}
+
+type MeasurementRequest struct {
+	ID                     uuid.UUID          `json:"id"`
+	SiteID                 pgtype.UUID        `json:"site_id"`
+	Source                 string             `json:"source"`
+	RequestHash            string             `json:"request_hash"`
+	Revision               int32              `json:"revision"`
+	IsCurrent              bool               `json:"is_current"`
+	SupersededAt           pgtype.Timestamptz `json:"superseded_at"`
+	SourceContract         string             `json:"source_contract"`
+	SourceEventKey         string             `json:"source_event_key"`
+	SourceEventID          pgtype.Int8        `json:"source_event_id"`
+	SourceCreatedAt        pgtype.Int8        `json:"source_created_at"`
+	TerminalCreatedAt      int64              `json:"terminal_created_at"`
+	TerminalSourceID       string             `json:"terminal_source_id"`
+	RequestID              pgtype.Text        `json:"request_id"`
+	ObservedAt             pgtype.Timestamptz `json:"observed_at"`
+	Model                  string             `json:"model"`
+	RequestGroup           string             `json:"request_group"`
+	Outcome                string             `json:"outcome"`
+	FinalRelationID        pgtype.UUID        `json:"final_relation_id"`
+	FinalSupplierID        pgtype.UUID        `json:"final_supplier_id"`
+	FinalExternalChannelID pgtype.Int8        `json:"final_external_channel_id"`
+	AttributionStatus      string             `json:"attribution_status"`
+	IsStream               bool               `json:"is_stream"`
+	StreamCompleted        pgtype.Bool        `json:"stream_completed"`
+	TtftMs                 pgtype.Int8        `json:"ttft_ms"`
+	DurationMs             pgtype.Int8        `json:"duration_ms"`
+	DurationResolutionMs   pgtype.Int4        `json:"duration_resolution_ms"`
+	InputTokens            pgtype.Int8        `json:"input_tokens"`
+	OutputTokens           pgtype.Int8        `json:"output_tokens"`
+	UpstreamStatusCode     pgtype.Int4        `json:"upstream_status_code"`
+	ErrorCategory          pgtype.Text        `json:"error_category"`
+	ErrorResponsibility    pgtype.Text        `json:"error_responsibility"`
+	ErrorCode              pgtype.Text        `json:"error_code"`
+	ClassificationVersion  string             `json:"classification_version"`
+	Completeness           string             `json:"completeness"`
+	MissingReason          pgtype.Text        `json:"missing_reason"`
+	RecordedAt             pgtype.Timestamptz `json:"recorded_at"`
 }
 
 type Operator struct {
@@ -85,6 +345,39 @@ type PriceVersion struct {
 	RoutePlanID  pgtype.UUID        `json:"route_plan_id"`
 }
 
+type RequestLatencyHistograms1m struct {
+	BucketStart  pgtype.Timestamptz `json:"bucket_start"`
+	SiteID       uuid.UUID          `json:"site_id"`
+	Model        string             `json:"model"`
+	Source       string             `json:"source"`
+	Metric       string             `json:"metric"`
+	UpperBoundMs int64              `json:"upper_bound_ms"`
+	SampleCount  int64              `json:"sample_count"`
+}
+
+type RequestMetrics1m struct {
+	BucketStart          pgtype.Timestamptz `json:"bucket_start"`
+	SiteID               uuid.UUID          `json:"site_id"`
+	Model                string             `json:"model"`
+	Source               string             `json:"source"`
+	RequestCount         int64              `json:"request_count"`
+	SuccessCount         int64              `json:"success_count"`
+	FailureCount         int64              `json:"failure_count"`
+	MappedCount          int64              `json:"mapped_count"`
+	StreamCount          int64              `json:"stream_count"`
+	StreamCompletedCount int64              `json:"stream_completed_count"`
+	InputTokens          int64              `json:"input_tokens"`
+	OutputTokens         int64              `json:"output_tokens"`
+	TtftSumMs            int64              `json:"ttft_sum_ms"`
+	TtftCount            int64              `json:"ttft_count"`
+	SuccessDurationSumMs int64              `json:"success_duration_sum_ms"`
+	SuccessDurationCount int64              `json:"success_duration_count"`
+	FailureDurationSumMs int64              `json:"failure_duration_sum_ms"`
+	FailureDurationCount int64              `json:"failure_duration_count"`
+	CoarseDurationCount  int64              `json:"coarse_duration_count"`
+	ComputedAt           pgtype.Timestamptz `json:"computed_at"`
+}
+
 type RoutePlanVersion struct {
 	ID             uuid.UUID          `json:"id"`
 	SiteID         uuid.UUID          `json:"site_id"`
@@ -97,6 +390,62 @@ type RoutePlanVersion struct {
 	Status         string             `json:"status"`
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 	ConfirmedAt    pgtype.Timestamptz `json:"confirmed_at"`
+}
+
+type ScoreSnapshot struct {
+	ID                       uuid.UUID          `json:"id"`
+	SiteID                   uuid.UUID          `json:"site_id"`
+	SupplierID               uuid.UUID          `json:"supplier_id"`
+	Model                    string             `json:"model"`
+	PolicyVersion            string             `json:"policy_version"`
+	WindowStart              pgtype.Timestamptz `json:"window_start"`
+	WindowEnd                pgtype.Timestamptz `json:"window_end"`
+	FactsThrough             pgtype.Timestamptz `json:"facts_through"`
+	PassiveSamples           int64              `json:"passive_samples"`
+	ActiveSamples            int64              `json:"active_samples"`
+	PriceScore               pgtype.Numeric     `json:"price_score"`
+	LatencyScore             pgtype.Numeric     `json:"latency_score"`
+	SlaScore                 pgtype.Numeric     `json:"sla_score"`
+	QualityScore             pgtype.Numeric     `json:"quality_score"`
+	TotalScore               pgtype.Numeric     `json:"total_score"`
+	Confidence               string             `json:"confidence"`
+	Eligibility              string             `json:"eligibility"`
+	HardReasons              []byte             `json:"hard_reasons"`
+	Explanation              []byte             `json:"explanation"`
+	AuthenticityAssessmentID pgtype.UUID        `json:"authenticity_assessment_id"`
+	CapabilityAssessmentID   pgtype.UUID        `json:"capability_assessment_id"`
+	CreatedAt                pgtype.Timestamptz `json:"created_at"`
+}
+
+type ScoringAggregationState struct {
+	Name          string             `json:"name"`
+	InitializedAt pgtype.Timestamptz `json:"initialized_at"`
+	FactsThrough  pgtype.Timestamptz `json:"facts_through"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+}
+
+type ScoringPolicyVersion struct {
+	Version               string             `json:"version"`
+	MinimumPassiveSamples int32              `json:"minimum_passive_samples"`
+	WindowWeights         []byte             `json:"window_weights"`
+	StrategyWeights       []byte             `json:"strategy_weights"`
+	Thresholds            []byte             `json:"thresholds"`
+	CreatedAt             pgtype.Timestamptz `json:"created_at"`
+}
+
+type ShadowRecommendation struct {
+	ID              uuid.UUID          `json:"id"`
+	ScoreSnapshotID uuid.UUID          `json:"score_snapshot_id"`
+	SiteID          uuid.UUID          `json:"site_id"`
+	SupplierID      uuid.UUID          `json:"supplier_id"`
+	Model           string             `json:"model"`
+	StrategyKind    string             `json:"strategy_kind"`
+	Action          string             `json:"action"`
+	CurrentMember   bool               `json:"current_member"`
+	Score           pgtype.Numeric     `json:"score"`
+	Confidence      string             `json:"confidence"`
+	Reasons         []byte             `json:"reasons"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 }
 
 type Site struct {
@@ -198,6 +547,17 @@ type SupplierModel struct {
 	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
 }
 
+type SupplierModelPriceHistory struct {
+	SupplierID  uuid.UUID          `json:"supplier_id"`
+	Model       string             `json:"model"`
+	Version     int64              `json:"version"`
+	InputPrice  decimal.Decimal    `json:"input_price"`
+	OutputPrice decimal.Decimal    `json:"output_price"`
+	Currency    string             `json:"currency"`
+	ValidFrom   pgtype.Timestamptz `json:"valid_from"`
+	ValidTo     pgtype.Timestamptz `json:"valid_to"`
+}
+
 type SyncOperation struct {
 	ID               uuid.UUID          `json:"id"`
 	SiteID           uuid.UUID          `json:"site_id"`
@@ -224,4 +584,20 @@ type SyncStep struct {
 	ErrorMessage  pgtype.Text        `json:"error_message"`
 	StartedAt     pgtype.Timestamptz `json:"started_at"`
 	FinishedAt    pgtype.Timestamptz `json:"finished_at"`
+}
+
+type TrustedModelReference struct {
+	ID               uuid.UUID          `json:"id"`
+	Model            string             `json:"model"`
+	SupplierID       uuid.UUID          `json:"supplier_id"`
+	FingerprintRunID uuid.UUID          `json:"fingerprint_run_id"`
+	TrustLevel       string             `json:"trust_level"`
+	ProtocolVersion  string             `json:"protocol_version"`
+	Reason           string             `json:"reason"`
+	CreatedBy        string             `json:"created_by"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	ExpiresAt        pgtype.Timestamptz `json:"expires_at"`
+	RevokedAt        pgtype.Timestamptz `json:"revoked_at"`
+	RequestKey       pgtype.Text        `json:"request_key"`
+	RequestHash      pgtype.Text        `json:"request_hash"`
 }

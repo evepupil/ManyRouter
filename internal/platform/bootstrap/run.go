@@ -13,10 +13,13 @@ import (
 	"github.com/evepupil/ManyRouter/internal/adapters/storage/postgres"
 	supplieropenai "github.com/evepupil/ManyRouter/internal/adapters/supplier/openai"
 	"github.com/evepupil/ManyRouter/internal/application/auth"
+	"github.com/evepupil/ManyRouter/internal/application/collection"
+	evaluationapp "github.com/evepupil/ManyRouter/internal/application/evaluation"
 	"github.com/evepupil/ManyRouter/internal/application/idempotency"
 	"github.com/evepupil/ManyRouter/internal/application/onboarding"
 	"github.com/evepupil/ManyRouter/internal/application/operations"
 	"github.com/evepupil/ManyRouter/internal/application/reconciliation"
+	scoringapp "github.com/evepupil/ManyRouter/internal/application/scoring"
 	"github.com/evepupil/ManyRouter/internal/jobs"
 	"github.com/evepupil/ManyRouter/internal/platform/config"
 	platformcrypto "github.com/evepupil/ManyRouter/internal/platform/crypto"
@@ -40,11 +43,17 @@ func Run(ctx context.Context, applicationConfig config.Config, logger *slog.Logg
 
 	now := time.Now
 	newID := uuid.New
+	gatewayClient := gatewayHTTPClient()
+	gatewayFactory := newapi.Factory{HTTPClient: gatewayClient}
+	collectionService, err := collection.NewService(store, vault, gatewayFactory, now)
+	if err != nil {
+		return err
+	}
 	dispatcher := jobs.NewDispatcher()
 	reconciliationService, err := reconciliation.NewService(
 		store,
 		vault,
-		newapi.Factory{HTTPClient: gatewayHTTPClient()},
+		gatewayFactory,
 		dispatcher,
 		now,
 		newID,
@@ -52,7 +61,24 @@ func Run(ctx context.Context, applicationConfig config.Config, logger *slog.Logg
 	if err != nil {
 		return err
 	}
-	riverClient, err := jobs.NewClient(store.Pool(), reconciliationService, applicationConfig.RunsWorkers())
+	evaluationProber, err := supplieropenai.NewEvaluationProber(gatewayClient)
+	if err != nil {
+		return err
+	}
+	evaluationService, err := evaluationapp.NewService(store, vault, evaluationProber, dispatcher, now, newID)
+	if err != nil {
+		return err
+	}
+	scoringService, err := scoringapp.NewService(store, now, newID)
+	if err != nil {
+		return err
+	}
+	riverClient, err := jobs.NewClient(
+		store.Pool(), reconciliationService, applicationConfig.RunsWorkers(),
+		jobs.WithCollection(collectionService),
+		jobs.WithEvaluation(evaluationService),
+		jobs.WithScoring(scoringService),
+	)
 	if err != nil {
 		return fmt.Errorf("configure River: %w", err)
 	}
@@ -80,16 +106,21 @@ func Run(ctx context.Context, applicationConfig config.Config, logger *slog.Logg
 		if err != nil {
 			return err
 		}
-		operationsClient := gatewayHTTPClient()
-		supplierCredentialChecker, err := supplieropenai.NewCredentialChecker(operationsClient)
+		supplierCredentialChecker, err := supplieropenai.NewCredentialChecker(gatewayClient)
 		if err != nil {
 			return err
 		}
-		operationsService, err := operations.NewService(store, vault, newapi.Factory{HTTPClient: operationsClient}, supplierCredentialChecker)
+		operationsService, err := operations.NewService(store, vault, gatewayFactory, supplierCredentialChecker)
 		if err != nil {
 			return err
 		}
-		handler, err := httptransport.NewHandler(onboardingService, reconciliationService, idempotencyService, logger, httptransport.WithOperations(operationsService))
+		handler, err := httptransport.NewHandler(
+			onboardingService, reconciliationService, idempotencyService, logger,
+			httptransport.WithOperations(operationsService),
+			httptransport.WithCollection(collectionService),
+			httptransport.WithEvaluation(evaluationService),
+			httptransport.WithScoring(scoringService),
+		)
 		if err != nil {
 			return err
 		}
@@ -98,6 +129,9 @@ func Run(ctx context.Context, applicationConfig config.Config, logger *slog.Logg
 			return err
 		}
 		httptransport.RegisterOperationsRoutes(router, handler)
+		httptransport.RegisterCollectionRoutes(router, handler)
+		httptransport.RegisterEvaluationRoutes(router, handler)
+		httptransport.RegisterScoringRoutes(router, handler)
 		server = &http.Server{
 			Addr:              applicationConfig.HTTPAddress,
 			Handler:           router,

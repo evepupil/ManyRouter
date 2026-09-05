@@ -7,9 +7,13 @@ import (
 	"log/slog"
 	stdhttp "net/http"
 
+	"github.com/evepupil/ManyRouter/internal/application/collection"
+	evaluationapp "github.com/evepupil/ManyRouter/internal/application/evaluation"
 	"github.com/evepupil/ManyRouter/internal/application/idempotency"
 	"github.com/evepupil/ManyRouter/internal/application/onboarding"
 	"github.com/evepupil/ManyRouter/internal/application/reconciliation"
+	scoringapp "github.com/evepupil/ManyRouter/internal/application/scoring"
+	domainevaluation "github.com/evepupil/ManyRouter/internal/domain/evaluation"
 	"github.com/evepupil/ManyRouter/internal/domain/operations"
 	"github.com/evepupil/ManyRouter/internal/domain/routing"
 	"github.com/evepupil/ManyRouter/internal/domain/site"
@@ -39,10 +43,39 @@ type operationsUseCases interface {
 	Execute(context.Context, operations.Mutation) (json.RawMessage, error)
 }
 
+type collectionUseCases interface {
+	CollectSite(context.Context, uuid.UUID) (collection.Result, error)
+	ListStatus(context.Context, *uuid.UUID) ([]collection.Status, error)
+}
+
+type evaluationUseCases interface {
+	RequestRun(context.Context, evaluationapp.RunCommand) (evaluationapp.Run, error)
+	GetRun(context.Context, uuid.UUID) (evaluationapp.Run, error)
+	ListRuns(context.Context, evaluationapp.RunFilter) (evaluationapp.RunPage, error)
+	PromoteReference(context.Context, evaluationapp.ReferenceCommand) (domainevaluation.ModelReference, error)
+}
+
+type scoringUseCases interface {
+	Refresh(context.Context) error
+	ListInsights(context.Context, scoringapp.InsightFilter) (scoringapp.InsightPage, error)
+}
+
 type HandlerOption func(*Handler)
 
 func WithOperations(service operationsUseCases) HandlerOption {
 	return func(handler *Handler) { handler.operations = service }
+}
+
+func WithCollection(service collectionUseCases) HandlerOption {
+	return func(handler *Handler) { handler.collection = service }
+}
+
+func WithEvaluation(service evaluationUseCases) HandlerOption {
+	return func(handler *Handler) { handler.evaluation = service }
+}
+
+func WithScoring(service scoringUseCases) HandlerOption {
+	return func(handler *Handler) { handler.scoring = service }
 }
 
 type Handler struct {
@@ -51,6 +84,9 @@ type Handler struct {
 	idempotency    *idempotency.Service
 	logger         *slog.Logger
 	operations     operationsUseCases
+	collection     collectionUseCases
+	evaluation     evaluationUseCases
+	scoring        scoringUseCases
 }
 
 func NewHandler(

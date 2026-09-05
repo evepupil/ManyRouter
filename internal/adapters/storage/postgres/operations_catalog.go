@@ -82,13 +82,24 @@ func (o *operationTx) saveSupplier(ctx context.Context, input domain.SupplierInp
 		if err = requireUpdated(tag.RowsAffected(), err); err != nil {
 			return nil, err
 		}
-		if _, err = o.tx.Exec(ctx, `DELETE FROM supplier_models WHERE supplier_id=$1`, id); err != nil {
+	}
+	modelNames := make([]string, 0, len(input.Models))
+	for _, m := range input.Models {
+		modelNames = append(modelNames, m.Model)
+		if _, err := o.tx.Exec(ctx, `INSERT INTO supplier_models(supplier_id,model,upstream_model,input_price,output_price,currency,enabled,created_at,updated_at)
+			VALUES($1,$2,$3,$4,$5,$6,$7,$8,$8)
+			ON CONFLICT (supplier_id,model) DO UPDATE SET
+				upstream_model=EXCLUDED.upstream_model,
+				input_price=EXCLUDED.input_price,
+				output_price=EXCLUDED.output_price,
+				currency=EXCLUDED.currency,
+				enabled=EXCLUDED.enabled,
+				updated_at=EXCLUDED.updated_at`, id, m.Model, m.UpstreamModel, m.InputPrice, m.OutputPrice, m.Currency, m.Enabled, o.now); err != nil {
 			return nil, err
 		}
 	}
-	for _, m := range input.Models {
-		if _, err := o.tx.Exec(ctx, `INSERT INTO supplier_models(supplier_id,model,upstream_model,input_price,output_price,currency,enabled,created_at,updated_at)
-            VALUES($1,$2,$3,$4,$5,$6,$7,$8,$8)`, id, m.Model, m.UpstreamModel, m.InputPrice, m.OutputPrice, m.Currency, m.Enabled, o.now); err != nil {
+	if o.mutation.Kind != "create_supplier" {
+		if _, err := o.tx.Exec(ctx, `DELETE FROM supplier_models WHERE supplier_id=$1 AND NOT (model=ANY($2::text[]))`, id, modelNames); err != nil {
 			return nil, err
 		}
 	}

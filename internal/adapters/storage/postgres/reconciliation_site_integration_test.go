@@ -64,7 +64,8 @@ func TestCredentialPromotionWaitsForAllSitesIncludingDisabledChannels(t *testing
 	bundles := make([]reconciliation.Bundle, 0, 2)
 	for index := range 2 {
 		siteData, err := onboard.CreateSite(ctx, onboarding.CreateSiteCommand{
-			Code: fmt.Sprintf("rotation-%s-%d", suffix, index), Name: "Rotation Site", NewAPIBaseURL: "https://gateway.example", NewAPIAccessToken: "management-test-secret",
+			Code: fmt.Sprintf("rotation-%s-%d", suffix, index), Name: "Rotation Site",
+			NewAPIBaseURL: fmt.Sprintf("https://rotation-%s-%d.example", suffix, index), NewAPIAccessToken: "management-test-secret",
 		})
 		if err != nil {
 			t.Fatal(err)

@@ -21,6 +21,20 @@ acceptance:
   existing_channels_before: 6
   existing_channels_preserved: 6
   managed_channels_created: 1
+m1_verification:
+  postgres_three_supplier_two_site_operations: passed
+  real_new_api_two_site_contract_with_mock_upstream: passed
+  shared_and_dedicated_group_calls: passed
+  site_price_and_group_isolation: passed
+  credential_replacement_and_cancellation: passed
+  historical_strategy_restore: passed
+  controlled_group_quota_consumption: passed
+  browser_auth_catalog_and_responsive_flow: passed
+  real_multi_supplier_acceptance: pending
+  browser_auto_price_and_restore_flow: pending
+  group_access_semantics: accepted_existing_keys_are_blocked_when_closed
+  observed_hidden_existing_key_status: 403
+  observed_empty_auto_status: 503
 capabilities:
   status_and_version: implemented
   channel_list: implemented

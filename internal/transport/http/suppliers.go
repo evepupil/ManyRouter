@@ -39,7 +39,7 @@ func (h *Handler) CreateSupplier(c *gin.Context, params apispec.CreateSupplierPa
 	}
 	result, err := h.onboarding.CreateSupplier(c.Request.Context(), onboarding.CreateSupplierCommand{
 		Code: request.Code, Name: request.Name, UpstreamBaseURL: request.UpstreamBaseUrl,
-		UpstreamAPIKey: request.UpstreamApiKey, Models: models, ActorID: "m0-owner",
+		UpstreamAPIKey: request.UpstreamApiKey, Models: models, ActorID: OperatorActor(c),
 	})
 	if err != nil {
 		h.writeApplicationError(c, err)

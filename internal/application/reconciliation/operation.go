@@ -19,6 +19,7 @@ const (
 	OperationSucceeded       OperationStatus = "succeeded"
 	OperationRetryableFailed OperationStatus = "retryable_failed"
 	OperationManualRequired  OperationStatus = "manual_required"
+	OperationSuperseded      OperationStatus = "superseded"
 )
 
 type Operation struct {
@@ -44,6 +45,28 @@ type Bundle struct {
 	ManagedChannel     routing.ManagedChannel
 	AdminCredential    credential.Record
 	SupplierCredential credential.Record
+	CurrentPlanID      uuid.UUID
+	Resources          []ResourceBundle
+}
+
+type ResourceBundle struct {
+	Snapshot            routing.Snapshot
+	ManagedChannel      routing.ManagedChannel
+	SupplierCredential  credential.Record
+	CredentialAvailable bool
+}
+
+type ResourceConfirmation struct {
+	Resource          ResourceBundle
+	ExternalChannelID *int64
+	CredentialApplied bool
+}
+
+type SiteStore interface {
+	SupersedeOperation(context.Context, Bundle, time.Time) error
+	ConfirmResource(context.Context, Bundle, ResourceConfirmation, time.Time) error
+	ConfirmSitePrices(context.Context, Bundle, time.Time) error
+	CompleteSiteOperation(context.Context, Bundle, time.Time) error
 }
 
 type StepStatus string

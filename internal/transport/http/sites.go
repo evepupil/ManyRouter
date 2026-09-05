@@ -20,7 +20,7 @@ func (h *Handler) CreateSite(c *gin.Context, params apispec.CreateSiteParams) {
 	}
 	result, err := h.onboarding.CreateSite(c.Request.Context(), onboarding.CreateSiteCommand{
 		Code: request.Code, Name: request.Name, NewAPIBaseURL: request.NewApiBaseUrl,
-		NewAPIAccessToken: request.NewApiAccessToken, ActorID: "m0-owner",
+		NewAPIAccessToken: request.NewApiAccessToken, ActorID: OperatorActor(c),
 	})
 	if err != nil {
 		h.writeApplicationError(c, err)

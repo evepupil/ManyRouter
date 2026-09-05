@@ -1,10 +1,13 @@
 package postgres
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 
 	"github.com/evepupil/ManyRouter/internal/adapters/storage/postgres/sqlc"
+	"github.com/evepupil/ManyRouter/internal/application/onboarding"
+	domainoperations "github.com/evepupil/ManyRouter/internal/domain/operations"
 	"github.com/evepupil/ManyRouter/internal/domain/routing"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -28,6 +31,67 @@ func (s *Store) CreateRelationAndPlan(
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	queries := s.queries.WithTx(tx)
+	locked, err := tryTransactionLock(ctx, tx, "manyrouter_operator_configuration", 2)
+	if err != nil {
+		return routing.Relation{}, routing.Plan{}, err
+	}
+	if !locked {
+		return routing.Relation{}, routing.Plan{}, domainoperations.ErrBusy
+	}
+	locked, err = tryTransactionLock(ctx, tx, relation.SiteID.String(), 1)
+	if err != nil {
+		return routing.Relation{}, routing.Plan{}, err
+	}
+	if !locked {
+		return routing.Relation{}, routing.Plan{}, domainoperations.ErrBusy
+	}
+	var hasSitePlan bool
+	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM route_plan_versions WHERE site_id=$1 AND snapshot->>'schema_version'='2')`, relation.SiteID).Scan(&hasSitePlan); err != nil {
+		return routing.Relation{}, routing.Plan{}, err
+	}
+	if hasSitePlan {
+		return routing.Relation{}, routing.Plan{}, fmt.Errorf("%w: this site uses whole-site plans; use the operations deployment endpoint", onboarding.ErrInvalidInput)
+	}
+	siteRow, err := queries.GetSite(ctx, relation.SiteID)
+	if err != nil {
+		return routing.Relation{}, routing.Plan{}, err
+	}
+	currentSite, err := mapSite(siteRow)
+	if err != nil {
+		return routing.Relation{}, routing.Plan{}, err
+	}
+	if err = currentSite.CanSync(); err != nil {
+		return routing.Relation{}, routing.Plan{}, fmt.Errorf("%w: site is no longer available for synchronization", onboarding.ErrInvalidInput)
+	}
+	supplierRow, err := queries.GetSupplier(ctx, relation.SupplierID)
+	if err != nil {
+		return routing.Relation{}, routing.Plan{}, err
+	}
+	if supplierRow.PendingCredentialID.Valid {
+		return routing.Relation{}, routing.Plan{}, fmt.Errorf("%w: supplier credential rotation must finish before legacy deployment", onboarding.ErrInvalidInput)
+	}
+	modelRows, err := queries.ListSupplierModels(ctx, relation.SupplierID)
+	if err != nil {
+		return routing.Relation{}, routing.Plan{}, err
+	}
+	currentSupplier, err := mapSupplier(supplierRow, modelRows)
+	if err != nil {
+		return routing.Relation{}, routing.Plan{}, err
+	}
+	if err = currentSupplier.CanDeploy(); err != nil {
+		return routing.Relation{}, routing.Plan{}, fmt.Errorf("%w: supplier is no longer available for deployment", onboarding.ErrInvalidInput)
+	}
+	currentSnapshot, err := routing.BuildSnapshot(currentSite, currentSupplier, relation, channel)
+	if err != nil {
+		return routing.Relation{}, routing.Plan{}, err
+	}
+	currentPayload, currentContentHash, err := routing.EncodeSnapshot(currentSnapshot)
+	if err != nil {
+		return routing.Relation{}, routing.Plan{}, err
+	}
+	if currentContentHash != contentHash || !bytes.Equal(currentPayload, payload) {
+		return routing.Relation{}, routing.Plan{}, domainoperations.ErrConflict
+	}
 	if err := queries.LockSitePlanVersion(ctx, relation.SiteID.String()); err != nil {
 		return routing.Relation{}, routing.Plan{}, fmt.Errorf("lock site route plan: %w", err)
 	}

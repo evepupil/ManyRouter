@@ -41,6 +41,7 @@ func (lock *siteLock) Release(ctx context.Context) error {
 		var released bool
 		if err := lock.connection.QueryRow(ctx, "SELECT pg_advisory_unlock(hashtextextended($1::text, 1))", lock.key).Scan(&released); err != nil {
 			lock.releaseErr = err
+			_ = lock.connection.Conn().Close(ctx)
 			return
 		}
 		if !released {

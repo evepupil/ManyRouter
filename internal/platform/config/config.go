@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -17,12 +18,13 @@ const (
 )
 
 type Config struct {
-	Mode          Mode
-	DatabaseURL   string
-	HTTPAddress   string
-	MasterKey     string
-	OperatorToken string
-	LogLevel      string
+	Mode             Mode
+	DatabaseURL      string
+	HTTPAddress      string
+	MasterKey        string
+	OperatorToken    string
+	LogLevel         string
+	AuthCookieSecure bool
 }
 
 func Load(mode Mode) (Config, error) {
@@ -30,12 +32,20 @@ func Load(mode Mode) (Config, error) {
 		return Config{}, fmt.Errorf("unsupported mode %q", mode)
 	}
 	config := Config{
-		Mode:          mode,
-		DatabaseURL:   strings.TrimSpace(os.Getenv("MANYROUTER_DATABASE_URL")),
-		HTTPAddress:   strings.TrimSpace(os.Getenv("MANYROUTER_HTTP_ADDRESS")),
-		MasterKey:     strings.TrimSpace(os.Getenv("MANYROUTER_MASTER_KEY")),
-		OperatorToken: strings.TrimSpace(os.Getenv("MANYROUTER_OPERATOR_TOKEN")),
-		LogLevel:      strings.ToLower(strings.TrimSpace(os.Getenv("MANYROUTER_LOG_LEVEL"))),
+		Mode:             mode,
+		DatabaseURL:      strings.TrimSpace(os.Getenv("MANYROUTER_DATABASE_URL")),
+		HTTPAddress:      strings.TrimSpace(os.Getenv("MANYROUTER_HTTP_ADDRESS")),
+		MasterKey:        strings.TrimSpace(os.Getenv("MANYROUTER_MASTER_KEY")),
+		OperatorToken:    strings.TrimSpace(os.Getenv("MANYROUTER_OPERATOR_TOKEN")),
+		LogLevel:         strings.ToLower(strings.TrimSpace(os.Getenv("MANYROUTER_LOG_LEVEL"))),
+		AuthCookieSecure: true,
+	}
+	if raw := strings.TrimSpace(os.Getenv("MANYROUTER_AUTH_COOKIE_SECURE")); raw != "" {
+		secure, err := strconv.ParseBool(raw)
+		if err != nil {
+			return Config{}, errors.New("MANYROUTER_AUTH_COOKIE_SECURE must be true or false")
+		}
+		config.AuthCookieSecure = secure
 	}
 	if config.DatabaseURL == "" {
 		return Config{}, errors.New("MANYROUTER_DATABASE_URL is required")

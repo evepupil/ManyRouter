@@ -103,7 +103,7 @@ func NewClient(pool *pgxpool.Pool, runner ReconciliationRunner, execute bool) (*
 	config := &river.Config{Workers: workers}
 	if execute {
 		config.Queues = map[string]river.QueueConfig{
-			reconciliationQueue: {MaxWorkers: 1},
+			reconciliationQueue: {MaxWorkers: 4},
 		}
 	}
 	return river.NewClient(riverpgxv5.New(pool), config)

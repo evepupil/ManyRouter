@@ -3,10 +3,12 @@ package httptransport
 import (
 	"crypto/subtle"
 	"errors"
+	"fmt"
 	"log/slog"
 	stdhttp "net/http"
 	"strings"
 
+	"github.com/evepupil/ManyRouter/internal/application/auth"
 	"github.com/evepupil/ManyRouter/internal/transport/http/apispec"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -18,7 +20,21 @@ const (
 	managementAPI = "/api/v1"
 )
 
-func NewRouter(handler *Handler, operatorToken string, logger *slog.Logger) (*gin.Engine, error) {
+type routerConfig struct {
+	authService  *auth.Service
+	cookieSecure bool
+}
+
+type RouterOption func(*routerConfig)
+
+func WithAuth(service *auth.Service, cookieSecure bool) RouterOption {
+	return func(config *routerConfig) {
+		config.authService = service
+		config.cookieSecure = cookieSecure
+	}
+}
+
+func NewRouter(handler *Handler, operatorToken string, logger *slog.Logger, options ...RouterOption) (*gin.Engine, error) {
 	if handler == nil || logger == nil {
 		return nil, errors.New("router dependencies are required")
 	}
@@ -26,7 +42,14 @@ func NewRouter(handler *Handler, operatorToken string, logger *slog.Logger) (*gi
 		return nil, errors.New("operator token must contain at least 32 characters")
 	}
 	gin.SetMode(gin.ReleaseMode)
+	config := routerConfig{cookieSecure: true}
+	for _, option := range options {
+		option(&config)
+	}
 	router := gin.New()
+	if err := router.SetTrustedProxies(nil); err != nil {
+		return nil, fmt.Errorf("disable unconfigured trusted proxies: %w", err)
+	}
 	router.Use(requestIDMiddleware())
 	router.Use(securityHeaders())
 	router.Use(bodyLimit())
@@ -34,7 +57,12 @@ func NewRouter(handler *Handler, operatorToken string, logger *slog.Logger) (*gi
 		logger.ErrorContext(c.Request.Context(), "panic recovered", "request_id", requestID(c), "panic_type", recoveredType(recovered))
 		writeError(c, stdhttp.StatusInternalServerError, "internal_error", "请求暂时无法完成")
 	}))
-	router.Use(operatorAuthentication(operatorToken))
+	if config.authService == nil {
+		router.Use(operatorAuthentication(operatorToken))
+	} else {
+		router.Use(sessionAuthentication(config.authService, operatorToken, config.cookieSecure))
+		RegisterAuthRoutes(router, config.authService, config.cookieSecure)
+	}
 	apispec.RegisterHandlersWithOptions(router, handler, apispec.GinServerOptions{
 		BaseURL: managementAPI,
 		ErrorHandler: func(c *gin.Context, _ error, statusCode int) {

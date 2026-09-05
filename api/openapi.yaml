@@ -373,6 +373,7 @@ components:
         visible:
           type: boolean
           default: true
+          description: Whether the dedicated entry is open. Closing it also rejects later requests from existing API keys bound to this group after synchronization.
     SiteSupplierResponse:
       type: object
       required: [id, site_id, supplier_id, group_key, group_display_name, sale_ratio, visible, desired_status, sync_status, route_plan_version, created_at, updated_at]
@@ -394,6 +395,7 @@ components:
           type: string
         visible:
           type: boolean
+          description: Whether the dedicated entry is open, including access by existing group-bound API keys.
         desired_status:
           type: string
           enum: [observing, enabled, disabled]

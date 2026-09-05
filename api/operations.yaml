@@ -1,0 +1,879 @@
+openapi: 3.0.3
+info:
+  title: ManyRouter Operations API
+  version: 0.1.0
+  description: >-
+    M1 operator authentication and multi-site operations. Browser writes use a
+    same-origin session and X-CSRF-Token. Automation may use the deployment
+    Bearer token. Every /ops mutation requires a unique Idempotency-Key.
+    Configuration acceptance and downstream synchronization are distinct states.
+    The visible field is retained for compatibility and means the group entry
+    is open. Closing either a dedicated or Auto group entry rejects subsequent
+    requests from API keys already bound to that group after synchronization.
+servers:
+  - url: /
+security:
+  - OpBearer: []
+  - OpSession: []
+paths:
+  /api/v1/auth/status:
+    get:
+      operationId: opAuthStatus
+      security: []
+      responses:
+        '200':
+          description: Owner initialization status
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpAuthStatus' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/auth/setup:
+    post:
+      operationId: opAuthSetup
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OpSetupInput' }
+      responses:
+        '201':
+          description: Owner created and session cookie issued
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpAuthSession' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/auth/login:
+    post:
+      operationId: opAuthLogin
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OpLoginInput' }
+      responses:
+        '200':
+          description: Authenticated and session cookie issued
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpAuthSession' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/auth/session:
+    get:
+      operationId: opAuthSession
+      security: [{ OpSession: [] }]
+      responses:
+        '200':
+          description: Current operator and CSRF token
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpAuthSession' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/auth/logout:
+    post:
+      operationId: opAuthLogout
+      security: [{ OpSession: [], OpCSRF: [] }]
+      responses:
+        '204': { description: Session revoked and cookie removed }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/sites:
+    get:
+      operationId: opListSites
+      parameters: &filters
+        - { $ref: '#/components/parameters/OpQuery' }
+        - { $ref: '#/components/parameters/OpSiteFilter' }
+        - { $ref: '#/components/parameters/OpSupplierFilter' }
+        - { $ref: '#/components/parameters/OpLimit' }
+        - { $ref: '#/components/parameters/OpOffset' }
+      responses:
+        '200':
+          description: Site page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpSitePage' }
+        default: { $ref: '#/components/responses/OpError' }
+    post:
+      operationId: opCreateSite
+      security: &writeSecurity [{ OpBearer: [] }, { OpSession: [], OpCSRF: [] }]
+      parameters: [{ $ref: '#/components/parameters/OpIdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OpCreateSiteInput' }
+      responses:
+        '201':
+          description: Site created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpSite' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/sites/{id}:
+    parameters: [{ $ref: '#/components/parameters/OpID' }]
+    put:
+      operationId: opUpdateSite
+      security: *writeSecurity
+      parameters: [{ $ref: '#/components/parameters/OpIdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OpUpdateSiteInput' }
+      responses:
+        '200':
+          description: Site updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpSite' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/sites/{id}/sync:
+    parameters: [{ $ref: '#/components/parameters/OpID' }]
+    post:
+      operationId: opSyncSite
+      security: *writeSecurity
+      parameters: [{ $ref: '#/components/parameters/OpIdempotencyKey' }]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: false }
+      responses:
+        '202': { $ref: '#/components/responses/OpPlans' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/suppliers:
+    get:
+      operationId: opListSuppliers
+      parameters: *filters
+      responses:
+        '200':
+          description: Supplier page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpSupplierPage' }
+        default: { $ref: '#/components/responses/OpError' }
+    post:
+      operationId: opCreateSupplier
+      security: *writeSecurity
+      parameters: [{ $ref: '#/components/parameters/OpIdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OpCreateSupplierInput' }
+      responses:
+        '201':
+          description: Supplier created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpSupplier' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/suppliers/{id}:
+    parameters: [{ $ref: '#/components/parameters/OpID' }]
+    put:
+      operationId: opUpdateSupplier
+      security: *writeSecurity
+      parameters: [{ $ref: '#/components/parameters/OpIdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OpUpdateSupplierInput' }
+      responses:
+        '200':
+          description: Supplier updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpSupplier' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/suppliers/{id}/credentials:
+    parameters: [{ $ref: '#/components/parameters/OpID' }]
+    post:
+      operationId: opRotateCredential
+      security: *writeSecurity
+      parameters: [{ $ref: '#/components/parameters/OpIdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OpCredentialInput' }
+      responses:
+        '200': { $ref: '#/components/responses/OpPlans' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/deployments:
+    post:
+      operationId: opDeploySupplier
+      security: *writeSecurity
+      parameters: [{ $ref: '#/components/parameters/OpIdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OpDeploymentInput' }
+      responses:
+        '202': { $ref: '#/components/responses/OpPlans' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/suppliers/{id}/credentials/cancel:
+    parameters: [{ $ref: '#/components/parameters/OpID' }]
+    post:
+      operationId: opCancelCredential
+      security: *writeSecurity
+      parameters: [{ $ref: '#/components/parameters/OpIdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OpCredentialCancelInput' }
+      responses:
+        '200': { $ref: '#/components/responses/OpPlans' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/relations:
+    get:
+      operationId: opListRelations
+      parameters: *filters
+      responses:
+        '200':
+          description: Site supplier relation page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpRelationPage' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/relations/{id}:
+    parameters: [{ $ref: '#/components/parameters/OpID' }]
+    put:
+      operationId: opUpdateRelation
+      security: *writeSecurity
+      parameters: [{ $ref: '#/components/parameters/OpIdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OpRelationInput' }
+      responses:
+        '200': { $ref: '#/components/responses/OpPlans' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/strategies:
+    get:
+      operationId: opListStrategies
+      parameters: *filters
+      responses:
+        '200':
+          description: Site strategy page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpStrategyPage' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/sites/{id}/strategies/{kind}:
+    parameters:
+      - { $ref: '#/components/parameters/OpID' }
+      - name: kind
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/OpStrategyKind' }
+    put:
+      operationId: opSaveStrategy
+      security: *writeSecurity
+      parameters: [{ $ref: '#/components/parameters/OpIdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OpStrategyInput' }
+      responses:
+        '200':
+          description: Strategy saved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpStrategy' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/prices:
+    get:
+      operationId: opListPrices
+      parameters: *filters
+      responses:
+        '200':
+          description: Price history page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpPricePage' }
+        default: { $ref: '#/components/responses/OpError' }
+    post:
+      operationId: opDraftPrice
+      security: *writeSecurity
+      parameters: [{ $ref: '#/components/parameters/OpIdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OpPriceInput' }
+      responses:
+        '201':
+          description: Price draft created with the current site billing basis
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpPrice' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/prices/{id}/publish:
+    parameters: [{ $ref: '#/components/parameters/OpID' }]
+    post:
+      operationId: opPublishPrice
+      security: *writeSecurity
+      parameters: [{ $ref: '#/components/parameters/OpIdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OpPublishInput' }
+      responses:
+        '200': { $ref: '#/components/responses/OpPlans' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/plans:
+    get:
+      operationId: opListPlans
+      parameters: *filters
+      responses:
+        '200':
+          description: Route plan history page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpPlanPage' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/plans/{id}:
+    parameters: [{ $ref: '#/components/parameters/OpID' }]
+    get:
+      operationId: opGetPlan
+      responses:
+        '200':
+          description: Complete route plan and previous snapshot
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpPlan' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/plans/{id}/restore:
+    parameters: [{ $ref: '#/components/parameters/OpID' }]
+    post:
+      operationId: opRestorePlan
+      security: *writeSecurity
+      parameters: [{ $ref: '#/components/parameters/OpIdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OpRestoreInput' }
+      responses:
+        '200': { $ref: '#/components/responses/OpPlans' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/sync-operations:
+    get:
+      operationId: opListSyncOperations
+      parameters: *filters
+      responses:
+        '200':
+          description: Synchronization operations with step results
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpSyncOperationPage' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/sync-operations/{id}:
+    parameters: [{ $ref: '#/components/parameters/OpID' }]
+    get:
+      operationId: opGetSyncOperation
+      responses:
+        '200':
+          description: Synchronization operation and its steps
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpSyncOperation' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/audit:
+    get:
+      operationId: opListAudit
+      parameters: *filters
+      responses:
+        '200':
+          description: Operator audit history
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpAuditPage' }
+        default: { $ref: '#/components/responses/OpError' }
+components:
+  securitySchemes:
+    OpBearer: { type: http, scheme: bearer }
+    OpSession: { type: apiKey, in: cookie, name: manyrouter_session }
+    OpCSRF: { type: apiKey, in: header, name: X-CSRF-Token }
+  parameters:
+    OpID:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    OpIdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, pattern: '^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$' }
+    OpQuery:
+      name: q
+      in: query
+      schema: { type: string, maxLength: 200 }
+    OpSiteFilter:
+      name: site_id
+      in: query
+      schema: { type: string, format: uuid }
+    OpSupplierFilter:
+      name: supplier_id
+      in: query
+      schema: { type: string, format: uuid }
+    OpLimit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 0, maximum: 100, default: 20 }
+    OpOffset:
+      name: offset
+      in: query
+      schema: { type: integer, minimum: 0, default: 0 }
+  responses:
+    OpError:
+      description: Validation, authentication, conflict, downstream, or server failure
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/OpError' }
+    OpPlans:
+      description: Configuration accepted with its affected site plans; inspect synchronization for actual completion
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/OpPlanResult' }
+  schemas:
+    OpError:
+      type: object
+      required: [code, message, request_id]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        request_id: { type: string }
+    OpAuthStatus:
+      type: object
+      required: [initialized]
+      properties:
+        initialized: { type: boolean }
+    OpAuthUser:
+      type: object
+      required: [id, username, role]
+      properties:
+        id: { type: string, format: uuid }
+        username: { type: string }
+        role: { type: string, enum: [owner] }
+    OpAuthSession:
+      type: object
+      required: [user, csrf_token]
+      properties:
+        user: { $ref: '#/components/schemas/OpAuthUser' }
+        csrf_token: { type: string }
+    OpLoginInput:
+      type: object
+      additionalProperties: false
+      required: [username, password]
+      properties:
+        username: { type: string, minLength: 3, maxLength: 80 }
+        password: { type: string, minLength: 12, maxLength: 128, writeOnly: true }
+    OpSetupInput:
+      type: object
+      additionalProperties: false
+      required: [username, password, setup_token]
+      properties:
+        username: { type: string, pattern: '^[A-Za-z0-9][A-Za-z0-9._-]{2,79}$' }
+        password: { type: string, minLength: 12, maxLength: 128, writeOnly: true }
+        setup_token: { type: string, minLength: 32, writeOnly: true }
+    OpStrategyKind:
+      type: string
+      enum: [lowest_price, low_latency, high_sla, high_quality, balanced]
+    OpModelInput:
+      type: object
+      additionalProperties: false
+      required: [model, upstream_model, input_price, output_price, currency, enabled]
+      properties:
+        model: { type: string, minLength: 1, maxLength: 191 }
+        upstream_model: { type: string, minLength: 1, maxLength: 191 }
+        input_price: { type: string, description: Nonnegative decimal with at most ten fractional digits }
+        output_price: { type: string, description: Nonnegative decimal with at most ten fractional digits }
+        currency: { type: string, enum: [USD, CNY] }
+        enabled: { type: boolean }
+    OpCreateSiteInput:
+      type: object
+      additionalProperties: false
+      required: [code, name, new_api_base_url, new_api_access_token]
+      properties: &siteInputProperties
+        code: { type: string, maxLength: 63 }
+        name: { type: string, minLength: 1, maxLength: 120 }
+        new_api_base_url: { type: string, format: uri }
+        new_api_access_token: { type: string, minLength: 8, maxLength: 16384, writeOnly: true }
+        admin_user_id: { type: integer, format: int64, minimum: 1, default: 1 }
+        status: { type: string, enum: [enabled, disabled] }
+        version: { type: integer, format: int64, minimum: 1 }
+        reason: { type: string }
+    OpUpdateSiteInput:
+      type: object
+      additionalProperties: false
+      required: [name, new_api_base_url, status, version, reason]
+      properties: *siteInputProperties
+    OpCreateSupplierInput:
+      type: object
+      additionalProperties: false
+      required: [code, name, upstream_base_url, upstream_api_key, models]
+      properties: &supplierInputProperties
+        code: { type: string, maxLength: 63 }
+        name: { type: string, minLength: 1, maxLength: 120 }
+        upstream_base_url: { type: string, format: uri }
+        upstream_api_key: { type: string, minLength: 8, maxLength: 16384, writeOnly: true }
+        models:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items: { $ref: '#/components/schemas/OpModelInput' }
+        status: { type: string, enum: [enabled, disabled] }
+        version: { type: integer, format: int64, minimum: 1 }
+        reason: { type: string }
+    OpUpdateSupplierInput:
+      type: object
+      additionalProperties: false
+      required: [name, upstream_base_url, models, status, version, reason]
+      properties: *supplierInputProperties
+    OpCredentialInput:
+      type: object
+      additionalProperties: false
+      required: [version, api_key, reason]
+      properties:
+        version: { type: integer, format: int64, minimum: 1 }
+        api_key: { type: string, minLength: 8, maxLength: 16384, writeOnly: true }
+        reason: { type: string, minLength: 1 }
+    OpDeploymentTarget:
+      type: object
+      additionalProperties: false
+      required: [site_id, group_display_name, sale_ratio, visible]
+      properties:
+        site_id: { type: string, format: uuid }
+        group_display_name: { type: string, minLength: 1, maxLength: 120 }
+        sale_ratio: { type: string, description: Positive decimal up to 999999.999999 }
+        visible:
+          type: boolean
+          description: Open the dedicated group entry when true. False closes the entry and rejects subsequent requests from existing API keys bound to this group after synchronization; the supplier can still serve other open Auto groups.
+    OpCredentialCancelInput:
+      type: object
+      additionalProperties: false
+      required: [version, reason]
+      properties:
+        version: { type: integer, format: int64, minimum: 1 }
+        reason: { type: string, minLength: 1 }
+    OpDeploymentInput:
+      type: object
+      additionalProperties: false
+      required: [supplier_id, sites, reason]
+      properties:
+        supplier_id: { type: string, format: uuid }
+        sites:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items: { $ref: '#/components/schemas/OpDeploymentTarget' }
+        reason: { type: string, minLength: 1 }
+    OpRelationInput:
+      type: object
+      additionalProperties: false
+      required: [version, group_display_name, visible, desired_status, resume, reason]
+      properties:
+        version: { type: integer, format: int64, minimum: 1 }
+        group_display_name: { type: string, minLength: 1, maxLength: 120 }
+        visible:
+          type: boolean
+          description: Desired dedicated entry access. False closes the entry and rejects subsequent requests from existing group-bound API keys after synchronization, while preserving the channel and participation in other open Auto groups.
+        desired_status: { type: string, enum: [enabled, disabled] }
+        resume: { type: boolean, description: Explicitly restore a stopped deployment }
+        reason: { type: string, minLength: 1 }
+    OpStrategyInput:
+      type: object
+      additionalProperties: false
+      required: [version, enabled, visible, display_name, member_relation_ids, reason]
+      properties:
+        version: { type: integer, format: int64, minimum: 0, description: Zero when creating a site strategy }
+        enabled: { type: boolean }
+        visible:
+          type: boolean
+          description: Desired Auto entry access. False closes the entry and rejects subsequent requests from existing API keys bound to this Auto group after synchronization. Opening also requires an enabled strategy with eligible members.
+        display_name: { type: string, minLength: 1, maxLength: 120 }
+        member_relation_ids:
+          type: array
+          uniqueItems: true
+          items: { type: string, format: uuid }
+        reason: { type: string, minLength: 1 }
+    OpPriceInput:
+      type: object
+      additionalProperties: false
+      required: [site_id, group_key, sale_ratio, reason]
+      properties:
+        site_id: { type: string, format: uuid }
+        group_key: { type: string, minLength: 1, maxLength: 64 }
+        sale_ratio: { type: string, description: Positive decimal up to 999999.999999 }
+        reason: { type: string, minLength: 1 }
+    OpPublishInput:
+      type: object
+      additionalProperties: false
+      required: [version]
+      properties:
+        version: { type: integer, format: int64, minimum: 1 }
+    OpRestoreInput:
+      type: object
+      additionalProperties: false
+      required: [reason]
+      properties:
+        reason: { type: string, minLength: 1 }
+    OpSite:
+      type: object
+      required: [id, code, name, new_api_base_url, admin_user_id, status, compatibility_status, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        code: { type: string }
+        name: { type: string }
+        new_api_base_url: { type: string }
+        admin_user_id: { type: integer, format: int64 }
+        status: { type: string, enum: [enabled, disabled] }
+        compatibility_status: { type: string, enum: [unknown, compatible, incompatible] }
+        version: { type: integer, format: int64 }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    OpSupplier:
+      type: object
+      required: [id, code, name, protocol, upstream_base_url, credential_version, status, version, models, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        code: { type: string }
+        name: { type: string }
+        protocol: { type: string, enum: [openai_compatible] }
+        upstream_base_url: { type: string }
+        credential_version: { type: integer }
+        pending_credential_version: { type: integer, nullable: true }
+        status: { type: string, enum: [draft, enabled, disabled] }
+        version: { type: integer, format: int64 }
+        models:
+          type: array
+          items: { $ref: '#/components/schemas/OpModelInput' }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    OpRelation:
+      type: object
+      required: [id, site_id, supplier_id, group_key, group_display_name, sale_ratio, visible, desired_status, sync_status, version, site_name, supplier_name, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        site_id: { type: string, format: uuid }
+        supplier_id: { type: string, format: uuid }
+        group_key: { type: string }
+        group_display_name: { type: string }
+        sale_ratio: { type: string }
+        visible:
+          type: boolean
+          description: Desired dedicated group entry access, including existing group-bound API keys. Inspect synchronization state for whether the access change has completed.
+        desired_status: { type: string, enum: [observing, enabled, disabled] }
+        sync_status: { type: string, enum: [pending, syncing, active, failed, manual_locked] }
+        version: { type: integer, format: int64 }
+        current_plan_id: { type: string, format: uuid, nullable: true }
+        last_confirmed_at: { type: string, format: date-time, nullable: true }
+        site_name: { type: string }
+        supplier_name: { type: string }
+        credential_version: { type: integer, nullable: true }
+        last_confirmed_enabled: { type: boolean, nullable: true }
+        external_channel_id: { type: integer, format: int64, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    OpStrategy:
+      type: object
+      required: [id, site_id, kind, group_key, display_name, enabled, visible, version, member_relation_ids, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        site_id: { type: string, format: uuid }
+        kind: { $ref: '#/components/schemas/OpStrategyKind' }
+        group_key: { type: string }
+        display_name: { type: string }
+        enabled: { type: boolean }
+        visible:
+          type: boolean
+          description: Desired Auto group entry access, including existing group-bound API keys. Effective opening also requires an enabled strategy and eligible members.
+        version: { type: integer, format: int64 }
+        member_relation_ids:
+          type: array
+          items: { type: string, format: uuid }
+        sale_ratio: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    OpPrice:
+      type: object
+      required: [id, site_id, group_key, version, sale_ratio, reason, status, billing_basis, basis_hash, created_at, is_last_confirmed]
+      properties:
+        id: { type: string, format: uuid }
+        site_id: { type: string, format: uuid }
+        group_key: { type: string }
+        version: { type: integer, format: int64 }
+        sale_ratio: { type: string }
+        reason: { type: string }
+        status: { type: string, enum: [draft, published, applied, superseded] }
+        billing_basis:
+          type: object
+          additionalProperties: true
+          description: Pricing settings and New API version observed for this price; this historical evidence does not assert that an external administrator has left the live settings unchanged.
+        basis_hash:
+          type: string
+          description: Digest of the observed pricing settings and New API version, used for configuration reconciliation.
+        created_at: { type: string, format: date-time }
+        published_at: { type: string, format: date-time, nullable: true }
+        applied_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Historical time when this price version first passed group-ratio and pricing-basis reconciliation; subsequent external changes or partial writes may require fresh confirmation.
+        is_last_confirmed:
+          type: boolean
+          description: True for the most recently confirmed version recorded for this site and group. A pending or partially applied newer plan can leave the current external price unknown.
+        route_plan_id: { type: string, format: uuid, nullable: true }
+    OpPlan:
+      type: object
+      required: [id, site_id, site_supplier_id, version, reason, snapshot, content_hash, status, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        site_id: { type: string, format: uuid }
+        site_supplier_id: { type: string, format: uuid }
+        version: { type: integer, format: int64 }
+        previous_plan_id: { type: string, format: uuid, nullable: true }
+        reason: { type: string }
+        snapshot: { type: object, additionalProperties: true }
+        previous_snapshot: { type: object, additionalProperties: true, nullable: true }
+        content_hash: { type: string }
+        status: { type: string, enum: [pending, applying, confirmed, failed, uncertain, superseded] }
+        created_at: { type: string, format: date-time }
+        confirmed_at: { type: string, format: date-time, nullable: true }
+    OpPlanReference:
+      type: object
+      required: [id, site_id, version, status]
+      properties:
+        id: { type: string, format: uuid }
+        site_id: { type: string, format: uuid }
+        version: { type: integer, format: int64 }
+        status: { type: string }
+      additionalProperties: true
+    OpPlanResult:
+      type: object
+      required: [plans]
+      properties:
+        plans:
+          type: array
+          items: { $ref: '#/components/schemas/OpPlanReference' }
+    OpSyncStep:
+      type: object
+      required: [operation_id, step_key, status]
+      properties:
+        operation_id: { type: string, format: uuid }
+        step_key: { type: string }
+        status: { type: string, enum: [pending, running, succeeded, failed, uncertain] }
+        before_summary: { type: object, additionalProperties: true, nullable: true }
+        after_summary: { type: object, additionalProperties: true, nullable: true }
+        error_code: { type: string, nullable: true }
+        error_message: { type: string, nullable: true }
+        started_at: { type: string, format: date-time, nullable: true }
+        finished_at: { type: string, format: date-time, nullable: true }
+    OpSyncOperation:
+      type: object
+      required: [id, site_id, site_supplier_id, route_plan_id, status, attempt, steps, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        site_id: { type: string, format: uuid }
+        site_supplier_id: { type: string, format: uuid }
+        route_plan_id: { type: string, format: uuid }
+        status: { type: string, enum: [pending, running, uncertain, succeeded, retryable_failed, manual_required, superseded] }
+        current_step: { type: string, nullable: true }
+        attempt: { type: integer }
+        last_error_code: { type: string, nullable: true }
+        last_error_message: { type: string, nullable: true }
+        next_attempt_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        completed_at: { type: string, format: date-time, nullable: true }
+        steps:
+          type: array
+          items: { $ref: '#/components/schemas/OpSyncStep' }
+    OpAudit:
+      type: object
+      required: [id, actor_type, actor_id, object_type, object_id, action, reason, result, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        actor_type: { type: string, enum: [operator, system] }
+        actor_id: { type: string }
+        site_id: { type: string, format: uuid, nullable: true }
+        object_type: { type: string }
+        object_id: { type: string }
+        action: { type: string }
+        reason: { type: string }
+        operation_id: { type: string, format: uuid, nullable: true }
+        old_summary: { type: object, additionalProperties: true, nullable: true }
+        new_summary: { type: object, additionalProperties: true, nullable: true }
+        result: { type: string }
+        created_at: { type: string, format: date-time }
+    OpPagination:
+      type: object
+      required: [total, limit, offset]
+      properties:
+        total: { type: integer, format: int64, minimum: 0 }
+        limit: { type: integer, minimum: 0 }
+        offset: { type: integer, minimum: 0 }
+    OpSitePage:
+      allOf:
+        - { $ref: '#/components/schemas/OpPagination' }
+        - type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/OpSite' } }
+    OpSupplierPage:
+      allOf:
+        - { $ref: '#/components/schemas/OpPagination' }
+        - type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/OpSupplier' } }
+    OpRelationPage:
+      allOf:
+        - { $ref: '#/components/schemas/OpPagination' }
+        - type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/OpRelation' } }
+    OpStrategyPage:
+      allOf:
+        - { $ref: '#/components/schemas/OpPagination' }
+        - type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/OpStrategy' } }
+    OpPricePage:
+      allOf:
+        - { $ref: '#/components/schemas/OpPagination' }
+        - type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/OpPrice' } }
+    OpPlanPage:
+      allOf:
+        - { $ref: '#/components/schemas/OpPagination' }
+        - type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/OpPlan' } }
+    OpSyncOperationPage:
+      allOf:
+        - { $ref: '#/components/schemas/OpPagination' }
+        - type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/OpSyncOperation' } }
+    OpAuditPage:
+      allOf:
+        - { $ref: '#/components/schemas/OpPagination' }
+        - type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/OpAudit' } }

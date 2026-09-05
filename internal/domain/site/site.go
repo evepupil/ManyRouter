@@ -29,6 +29,7 @@ type Site struct {
 	Name                string
 	NewAPIBaseURL       string
 	AdminCredentialID   uuid.UUID
+	AdminUserID         int64
 	Status              Status
 	CompatibilityStatus CompatibilityStatus
 	Version             int64
@@ -64,6 +65,7 @@ func New(id uuid.UUID, code, name, baseURL string, credentialID uuid.UUID, now t
 		Name:                normalizedName,
 		NewAPIBaseURL:       normalizedURL,
 		AdminCredentialID:   credentialID,
+		AdminUserID:         1,
 		Status:              StatusEnabled,
 		CompatibilityStatus: CompatibilityUnknown,
 		Version:             1,

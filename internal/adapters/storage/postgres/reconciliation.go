@@ -7,6 +7,8 @@ import (
 
 	"github.com/evepupil/ManyRouter/internal/adapters/storage/postgres/sqlc"
 	"github.com/evepupil/ManyRouter/internal/application/reconciliation"
+	"github.com/evepupil/ManyRouter/internal/domain/credential"
+	"github.com/evepupil/ManyRouter/internal/domain/routing"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -75,11 +77,7 @@ func (s *Store) LoadBundle(ctx context.Context, operationID uuid.UUID) (reconcil
 	if err != nil {
 		return reconciliation.Bundle{}, err
 	}
-	channelRow, err := s.queries.GetSiteSupplierChannel(ctx, operation.RelationID)
-	if err != nil {
-		return reconciliation.Bundle{}, err
-	}
-	managedChannel, err := mapManagedChannel(channelRow)
+	relation, err := s.queries.GetSiteSupplier(ctx, operation.RelationID)
 	if err != nil {
 		return reconciliation.Bundle{}, err
 	}
@@ -87,18 +85,62 @@ func (s *Store) LoadBundle(ctx context.Context, operationID uuid.UUID) (reconcil
 	if err != nil {
 		return reconciliation.Bundle{}, err
 	}
-	supplierCredentialRow, err := s.queries.GetCredential(ctx, plan.Snapshot.Channel.CredentialID)
-	if err != nil {
-		return reconciliation.Bundle{}, err
+	if adminCredentialRow.RevokedAt.Valid || adminCredentialRow.Purpose != string(credential.PurposeNewAPIAdmin) {
+		return reconciliation.Bundle{}, errors.New("site management credential is unavailable")
 	}
-	return reconciliation.Bundle{
-		Operation:          operation,
-		Site:               siteData,
-		Plan:               plan,
-		ManagedChannel:     managedChannel,
-		AdminCredential:    mapCredential(adminCredentialRow),
-		SupplierCredential: mapCredential(supplierCredentialRow),
-	}, nil
+	bundle := reconciliation.Bundle{
+		Operation:       operation,
+		Site:            siteData,
+		Plan:            plan,
+		AdminCredential: mapCredential(adminCredentialRow),
+	}
+	if relation.CurrentPlanID.Valid {
+		bundle.CurrentPlanID = uuid.UUID(relation.CurrentPlanID.Bytes)
+	}
+	if plan.Snapshot.SchemaVersion == routing.SnapshotSchemaVersion {
+		latestID, err := s.queries.LatestFullSitePlanID(ctx, plan.SiteID)
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			return reconciliation.Bundle{}, err
+		}
+		if err == nil {
+			bundle.CurrentPlanID = latestID
+		}
+	}
+	for _, snapshot := range plan.Snapshot.ResourceSnapshots() {
+		resourceRelation, err := s.queries.GetSiteSupplier(ctx, snapshot.RelationID)
+		if err != nil {
+			return reconciliation.Bundle{}, err
+		}
+		if resourceRelation.SiteID != plan.SiteID || resourceRelation.SupplierID != snapshot.SupplierID {
+			return reconciliation.Bundle{}, errors.New("route plan resource does not belong to its declared site and supplier")
+		}
+		channelRow, err := s.queries.GetSiteSupplierChannel(ctx, snapshot.RelationID)
+		if err != nil {
+			return reconciliation.Bundle{}, err
+		}
+		managedChannel, err := mapManagedChannel(channelRow)
+		if err != nil {
+			return reconciliation.Bundle{}, err
+		}
+		if managedChannel.ID != snapshot.Channel.ID || managedChannel.ManagedTag != snapshot.Channel.ManagedTag {
+			return reconciliation.Bundle{}, errors.New("route plan channel identity does not match its stored binding")
+		}
+		resource := reconciliation.ResourceBundle{Snapshot: snapshot, ManagedChannel: managedChannel}
+		credentialRow, err := s.queries.GetCredential(ctx, snapshot.Channel.CredentialID)
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			return reconciliation.Bundle{}, err
+		}
+		if err == nil && !credentialRow.RevokedAt.Valid && credentialRow.Purpose == string(credential.PurposeSupplierAPIKey) {
+			resource.SupplierCredential = mapCredential(credentialRow)
+			resource.CredentialAvailable = true
+		}
+		bundle.Resources = append(bundle.Resources, resource)
+	}
+	if len(bundle.Resources) > 0 {
+		bundle.ManagedChannel = bundle.Resources[0].ManagedChannel
+		bundle.SupplierCredential = bundle.Resources[0].SupplierCredential
+	}
+	return bundle, nil
 }
 
 func (s *Store) StartOperation(ctx context.Context, operation reconciliation.Operation, step string, now time.Time) error {
@@ -115,7 +157,7 @@ func (s *Store) StartOperation(ctx context.Context, operation reconciliation.Ope
 	}); err != nil {
 		return err
 	}
-	if err := queries.SetSiteSupplierSyncing(ctx, sqlc.SetSiteSupplierSyncingParams{ID: operation.RelationID, UpdatedAt: databaseTime(now)}); err != nil {
+	if err := queries.SetPlanRelationsSyncing(ctx, sqlc.SetPlanRelationsSyncingParams{CurrentPlanID: databaseUUID(operation.RoutePlanID), UpdatedAt: databaseTime(now)}); err != nil {
 		return err
 	}
 	if err := queries.SetRoutePlanApplying(ctx, operation.RoutePlanID); err != nil {
@@ -169,6 +211,12 @@ func (s *Store) CompleteOperation(ctx context.Context, bundle reconciliation.Bun
 	}); err != nil {
 		return err
 	}
+	if err := confirmResource(ctx, queries, bundle, reconciliation.ResourceConfirmation{
+		Resource:          reconciliation.ResourceBundle{Snapshot: bundle.Plan.Snapshot, ManagedChannel: bundle.ManagedChannel},
+		ExternalChannelID: &externalChannelID, CredentialApplied: true,
+	}, now); err != nil {
+		return err
+	}
 	if err := queries.MarkSyncSucceeded(ctx, sqlc.MarkSyncSucceededParams{ID: bundle.Operation.ID, UpdatedAt: databaseTime(now)}); err != nil {
 		return err
 	}
@@ -204,7 +252,6 @@ func (s *Store) CompleteOperation(ctx context.Context, bundle reconciliation.Bun
 func (s *Store) FailOperation(ctx context.Context, record reconciliation.FailureRecord) error {
 	operationStatus := reconciliation.OperationManualRequired
 	planStatus := "failed"
-	relationStatus := "failed"
 	switch record.Kind {
 	case reconciliation.FailureRetryable:
 		operationStatus = reconciliation.OperationRetryableFailed
@@ -212,7 +259,6 @@ func (s *Store) FailOperation(ctx context.Context, record reconciliation.Failure
 		operationStatus = reconciliation.OperationUncertain
 		planStatus = "uncertain"
 	case reconciliation.FailureManualLock:
-		relationStatus = "manual_locked"
 	}
 	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
@@ -234,10 +280,17 @@ func (s *Store) FailOperation(ctx context.Context, record reconciliation.Failure
 	if err := queries.SetRoutePlanFailed(ctx, sqlc.SetRoutePlanFailedParams{ID: record.RoutePlanID, Status: planStatus}); err != nil {
 		return err
 	}
-	if err := queries.SetSiteSupplierSyncFailure(ctx, sqlc.SetSiteSupplierSyncFailureParams{
-		ID: record.RelationID, SyncStatus: relationStatus, UpdatedAt: databaseTime(record.OccurredAt),
+	if err := queries.SetPlanRelationsSyncFailure(ctx, sqlc.SetPlanRelationsSyncFailureParams{
+		CurrentPlanID: databaseUUID(record.RoutePlanID), SyncStatus: "failed", UpdatedAt: databaseTime(record.OccurredAt),
 	}); err != nil {
 		return err
+	}
+	if record.Kind == reconciliation.FailureManualLock {
+		if err := queries.SetRelationSyncFailure(ctx, sqlc.SetRelationSyncFailureParams{
+			ID: record.RelationID, SyncStatus: "manual_locked", UpdatedAt: databaseTime(record.OccurredAt), CurrentPlanID: databaseUUID(record.RoutePlanID),
+		}); err != nil {
+			return err
+		}
 	}
 	if err := insertAudit(ctx, queries, auditInput{
 		ActorType:   "system",

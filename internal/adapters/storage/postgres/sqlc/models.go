@@ -26,6 +26,12 @@ type AuditEvent struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
+type AuthLoginAttempt struct {
+	Key         string             `json:"key"`
+	Attempts    int32              `json:"attempts"`
+	WindowStart pgtype.Timestamptz `json:"window_start"`
+}
+
 type Credential struct {
 	ID         uuid.UUID          `json:"id"`
 	Purpose    string             `json:"purpose"`
@@ -44,6 +50,39 @@ type IdempotencyRecord struct {
 	ResponseBody   []byte             `json:"response_body"`
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 	ExpiresAt      pgtype.Timestamptz `json:"expires_at"`
+}
+
+type Operator struct {
+	ID           uuid.UUID          `json:"id"`
+	Username     string             `json:"username"`
+	PasswordHash string             `json:"password_hash"`
+	Role         string             `json:"role"`
+	Enabled      bool               `json:"enabled"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+}
+
+type OperatorSession struct {
+	TokenHash  string             `json:"token_hash"`
+	OperatorID uuid.UUID          `json:"operator_id"`
+	CsrfHash   string             `json:"csrf_hash"`
+	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+}
+
+type PriceVersion struct {
+	ID           uuid.UUID          `json:"id"`
+	SiteID       uuid.UUID          `json:"site_id"`
+	GroupKey     string             `json:"group_key"`
+	Version      int64              `json:"version"`
+	SaleRatio    decimal.Decimal    `json:"sale_ratio"`
+	Reason       string             `json:"reason"`
+	Status       string             `json:"status"`
+	BillingBasis []byte             `json:"billing_basis"`
+	BasisHash    string             `json:"basis_hash"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	PublishedAt  pgtype.Timestamptz `json:"published_at"`
+	AppliedAt    pgtype.Timestamptz `json:"applied_at"`
+	RoutePlanID  pgtype.UUID        `json:"route_plan_id"`
 }
 
 type RoutePlanVersion struct {
@@ -71,6 +110,20 @@ type Site struct {
 	Version             int64              `json:"version"`
 	CreatedAt           pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt           pgtype.Timestamptz `json:"updated_at"`
+	AdminUserID         int64              `json:"admin_user_id"`
+}
+
+type SiteStrategy struct {
+	ID          uuid.UUID          `json:"id"`
+	SiteID      uuid.UUID          `json:"site_id"`
+	Kind        string             `json:"kind"`
+	GroupKey    string             `json:"group_key"`
+	DisplayName string             `json:"display_name"`
+	Enabled     bool               `json:"enabled"`
+	Visible     bool               `json:"visible"`
+	Version     int64              `json:"version"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
 type SiteSupplier struct {
@@ -91,27 +144,46 @@ type SiteSupplier struct {
 }
 
 type SiteSupplierChannel struct {
-	ID                       uuid.UUID          `json:"id"`
-	SiteSupplierID           uuid.UUID          `json:"site_supplier_id"`
-	ManagedTag               string             `json:"managed_tag"`
-	ExternalChannelID        pgtype.Int8        `json:"external_channel_id"`
-	LastConfirmedPlanVersion pgtype.Int8        `json:"last_confirmed_plan_version"`
-	CreatedAt                pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt                pgtype.Timestamptz `json:"updated_at"`
+	ID                             uuid.UUID          `json:"id"`
+	SiteSupplierID                 uuid.UUID          `json:"site_supplier_id"`
+	ManagedTag                     string             `json:"managed_tag"`
+	ExternalChannelID              pgtype.Int8        `json:"external_channel_id"`
+	LastConfirmedPlanVersion       pgtype.Int8        `json:"last_confirmed_plan_version"`
+	CreatedAt                      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt                      pgtype.Timestamptz `json:"updated_at"`
+	LastConfirmedCredentialID      pgtype.UUID        `json:"last_confirmed_credential_id"`
+	LastConfirmedCredentialVersion pgtype.Int4        `json:"last_confirmed_credential_version"`
+	LastConfirmedEnabled           pgtype.Bool        `json:"last_confirmed_enabled"`
+}
+
+type StrategyMember struct {
+	StrategyID uuid.UUID `json:"strategy_id"`
+	RelationID uuid.UUID `json:"relation_id"`
+}
+
+type StrategyVersion struct {
+	StrategyID uuid.UUID          `json:"strategy_id"`
+	Version    int64              `json:"version"`
+	Snapshot   []byte             `json:"snapshot"`
+	Reason     string             `json:"reason"`
+	ActorID    string             `json:"actor_id"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
 }
 
 type Supplier struct {
-	ID                uuid.UUID          `json:"id"`
-	Code              string             `json:"code"`
-	Name              string             `json:"name"`
-	Protocol          string             `json:"protocol"`
-	UpstreamBaseUrl   string             `json:"upstream_base_url"`
-	CredentialID      uuid.UUID          `json:"credential_id"`
-	CredentialVersion int32              `json:"credential_version"`
-	Status            string             `json:"status"`
-	Version           int64              `json:"version"`
-	CreatedAt         pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+	ID                       uuid.UUID          `json:"id"`
+	Code                     string             `json:"code"`
+	Name                     string             `json:"name"`
+	Protocol                 string             `json:"protocol"`
+	UpstreamBaseUrl          string             `json:"upstream_base_url"`
+	CredentialID             uuid.UUID          `json:"credential_id"`
+	CredentialVersion        int32              `json:"credential_version"`
+	Status                   string             `json:"status"`
+	Version                  int64              `json:"version"`
+	CreatedAt                pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt                pgtype.Timestamptz `json:"updated_at"`
+	PendingCredentialID      pgtype.UUID        `json:"pending_credential_id"`
+	PendingCredentialVersion pgtype.Int4        `json:"pending_credential_version"`
 }
 
 type SupplierModel struct {

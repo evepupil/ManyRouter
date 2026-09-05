@@ -91,7 +91,7 @@ func ChannelConfigurationMatches(expected routing.DesiredChannel, actual ActualC
 	if !slices.Equal(expectedModels, actualModels) || !mapsEqual(expectedMapping, actual.ModelMapping) {
 		return false
 	}
-	expectedGroups := []string{expected.GroupKey}
+	expectedGroups := expected.GroupKeys()
 	actualGroups := append([]string(nil), actual.Groups...)
 	sort.Strings(actualGroups)
 	return slices.Equal(expectedGroups, actualGroups)

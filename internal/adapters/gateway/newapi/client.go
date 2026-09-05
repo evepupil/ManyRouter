@@ -35,6 +35,7 @@ type Client struct {
 	baseURL     string
 	accessToken string
 	httpClient  *http.Client
+	adminUserID int64
 }
 
 func NewClient(baseURL string, accessToken []byte, httpClient *http.Client) (*Client, error) {
@@ -52,7 +53,20 @@ func NewClient(baseURL string, accessToken []byte, httpClient *http.Client) (*Cl
 	clientCopy.CheckRedirect = func(*http.Request, []*http.Request) error {
 		return http.ErrUseLastResponse
 	}
-	return &Client{baseURL: normalizedURL, accessToken: string(accessToken), httpClient: &clientCopy}, nil
+	return &Client{baseURL: normalizedURL, accessToken: string(accessToken), httpClient: &clientCopy, adminUserID: 1}, nil
+}
+
+func (f Factory) NewForSite(baseURL string, accessToken []byte, adminUserID int64) (reconciliation.Gateway, error) {
+	gateway, err := f.New(baseURL, accessToken)
+	if err != nil {
+		return nil, err
+	}
+	client, ok := gateway.(*Client)
+	if !ok || adminUserID < 1 {
+		return nil, errors.New("valid New API management user ID is required")
+	}
+	client.adminUserID = adminUserID
+	return client, nil
 }
 
 type apiResponse[T any] struct {

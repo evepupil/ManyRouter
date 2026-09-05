@@ -1,0 +1,8 @@
+package: apispec
+generate:
+  models: true
+compatibility:
+  always-prefix-enum-values: true
+output-options:
+  skip-prune: true
+output: ../internal/transport/http/apispec/operations.gen.go

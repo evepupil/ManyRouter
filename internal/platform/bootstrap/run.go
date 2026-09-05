@@ -11,8 +11,11 @@ import (
 
 	"github.com/evepupil/ManyRouter/internal/adapters/gateway/newapi"
 	"github.com/evepupil/ManyRouter/internal/adapters/storage/postgres"
+	supplieropenai "github.com/evepupil/ManyRouter/internal/adapters/supplier/openai"
+	"github.com/evepupil/ManyRouter/internal/application/auth"
 	"github.com/evepupil/ManyRouter/internal/application/idempotency"
 	"github.com/evepupil/ManyRouter/internal/application/onboarding"
+	"github.com/evepupil/ManyRouter/internal/application/operations"
 	"github.com/evepupil/ManyRouter/internal/application/reconciliation"
 	"github.com/evepupil/ManyRouter/internal/jobs"
 	"github.com/evepupil/ManyRouter/internal/platform/config"
@@ -73,14 +76,28 @@ func Run(ctx context.Context, applicationConfig config.Config, logger *slog.Logg
 		if err != nil {
 			return err
 		}
-		handler, err := httptransport.NewHandler(onboardingService, reconciliationService, idempotencyService, logger)
+		authService, err := auth.NewService(store, applicationConfig.OperatorToken, now)
 		if err != nil {
 			return err
 		}
-		router, err := httptransport.NewRouter(handler, applicationConfig.OperatorToken, logger)
+		operationsClient := gatewayHTTPClient()
+		supplierCredentialChecker, err := supplieropenai.NewCredentialChecker(operationsClient)
 		if err != nil {
 			return err
 		}
+		operationsService, err := operations.NewService(store, vault, newapi.Factory{HTTPClient: operationsClient}, supplierCredentialChecker)
+		if err != nil {
+			return err
+		}
+		handler, err := httptransport.NewHandler(onboardingService, reconciliationService, idempotencyService, logger, httptransport.WithOperations(operationsService))
+		if err != nil {
+			return err
+		}
+		router, err := httptransport.NewRouter(handler, applicationConfig.OperatorToken, logger, httptransport.WithAuth(authService, applicationConfig.AuthCookieSecure))
+		if err != nil {
+			return err
+		}
+		httptransport.RegisterOperationsRoutes(router, handler)
 		server = &http.Server{
 			Addr:              applicationConfig.HTTPAddress,
 			Handler:           router,

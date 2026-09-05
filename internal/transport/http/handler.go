@@ -2,6 +2,7 @@ package httptransport
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"log/slog"
 	stdhttp "net/http"
@@ -9,6 +10,7 @@ import (
 	"github.com/evepupil/ManyRouter/internal/application/idempotency"
 	"github.com/evepupil/ManyRouter/internal/application/onboarding"
 	"github.com/evepupil/ManyRouter/internal/application/reconciliation"
+	"github.com/evepupil/ManyRouter/internal/domain/operations"
 	"github.com/evepupil/ManyRouter/internal/domain/routing"
 	"github.com/evepupil/ManyRouter/internal/domain/site"
 	"github.com/evepupil/ManyRouter/internal/domain/supplier"
@@ -31,11 +33,24 @@ type reconciliationUseCases interface {
 	GetOperation(context.Context, uuid.UUID) (reconciliation.Operation, error)
 }
 
+type operationsUseCases interface {
+	List(context.Context, string, operations.Filter) (operations.Page, error)
+	Get(context.Context, string, uuid.UUID) (json.RawMessage, error)
+	Execute(context.Context, operations.Mutation) (json.RawMessage, error)
+}
+
+type HandlerOption func(*Handler)
+
+func WithOperations(service operationsUseCases) HandlerOption {
+	return func(handler *Handler) { handler.operations = service }
+}
+
 type Handler struct {
 	onboarding     onboardingUseCases
 	reconciliation reconciliationUseCases
 	idempotency    *idempotency.Service
 	logger         *slog.Logger
+	operations     operationsUseCases
 }
 
 func NewHandler(
@@ -43,14 +58,19 @@ func NewHandler(
 	reconciliationService reconciliationUseCases,
 	idempotencyService *idempotency.Service,
 	logger *slog.Logger,
+	options ...HandlerOption,
 ) (*Handler, error) {
 	if onboardingService == nil || reconciliationService == nil || idempotencyService == nil || logger == nil {
 		return nil, errors.New("HTTP handler dependencies are required")
 	}
-	return &Handler{
+	handler := &Handler{
 		onboarding: onboardingService, reconciliation: reconciliationService,
 		idempotency: idempotencyService, logger: logger,
-	}, nil
+	}
+	for _, option := range options {
+		option(handler)
+	}
+	return handler, nil
 }
 
 var _ apispec.ServerInterface = (*Handler)(nil)

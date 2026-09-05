@@ -20,7 +20,7 @@ INSERT INTO sites (
     $1, $2, $3, $4, $5,
     $6, $7, $8, $9, $10
 )
-RETURNING id, code, name, new_api_base_url, admin_credential_id, status, compatibility_status, version, created_at, updated_at
+RETURNING id, code, name, new_api_base_url, admin_credential_id, status, compatibility_status, version, created_at, updated_at, admin_user_id
 `
 
 type CreateSiteParams struct {
@@ -61,12 +61,13 @@ func (q *Queries) CreateSite(ctx context.Context, arg CreateSiteParams) (Site, e
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.AdminUserID,
 	)
 	return i, err
 }
 
 const getSite = `-- name: GetSite :one
-SELECT id, code, name, new_api_base_url, admin_credential_id, status, compatibility_status, version, created_at, updated_at
+SELECT id, code, name, new_api_base_url, admin_credential_id, status, compatibility_status, version, created_at, updated_at, admin_user_id
 FROM sites
 WHERE id = $1
 `
@@ -85,6 +86,7 @@ func (q *Queries) GetSite(ctx context.Context, id uuid.UUID) (Site, error) {
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.AdminUserID,
 	)
 	return i, err
 }

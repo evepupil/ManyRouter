@@ -2,6 +2,7 @@ package reconciliation
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/evepupil/ManyRouter/internal/domain/routing"
@@ -78,12 +79,20 @@ type Gateway interface {
 	SetUserUsableGroups(context.Context, map[string]string) error
 	CreateChannel(context.Context, routing.DesiredChannel, []byte) error
 	UpdateChannel(context.Context, int64, routing.DesiredChannel, []byte) error
-	TestChannel(context.Context, int64, string) error
+	TestChannel(context.Context, int64, string, []byte) error
 	SetChannelEnabled(context.Context, int64, bool) error
 }
 
 type GatewayFactory interface {
 	New(baseURL string, accessToken []byte) (Gateway, error)
+}
+
+type SiteGatewayFactory interface {
+	NewForSite(baseURL string, accessToken []byte, adminUserID int64) (Gateway, error)
+}
+
+type BillingBasisReader interface {
+	ReadBillingBasis(context.Context) (map[string]json.RawMessage, string, error)
 }
 
 func failuref(kind FailureKind, code, format string, args ...any) *Failure {

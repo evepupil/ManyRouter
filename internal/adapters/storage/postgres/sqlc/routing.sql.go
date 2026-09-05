@@ -215,7 +215,7 @@ INSERT INTO site_supplier_channels (
 ) VALUES (
     $1, $2, $3, $4, $5
 )
-RETURNING id, site_supplier_id, managed_tag, external_channel_id, last_confirmed_plan_version, created_at, updated_at
+RETURNING id, site_supplier_id, managed_tag, external_channel_id, last_confirmed_plan_version, created_at, updated_at, last_confirmed_credential_id, last_confirmed_credential_version, last_confirmed_enabled
 `
 
 type CreateSiteSupplierChannelParams struct {
@@ -243,6 +243,9 @@ func (q *Queries) CreateSiteSupplierChannel(ctx context.Context, arg CreateSiteS
 		&i.LastConfirmedPlanVersion,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.LastConfirmedCredentialID,
+		&i.LastConfirmedCredentialVersion,
+		&i.LastConfirmedEnabled,
 	)
 	return i, err
 }
@@ -372,7 +375,7 @@ func (q *Queries) GetSiteSupplier(ctx context.Context, id uuid.UUID) (SiteSuppli
 }
 
 const getSiteSupplierChannel = `-- name: GetSiteSupplierChannel :one
-SELECT id, site_supplier_id, managed_tag, external_channel_id, last_confirmed_plan_version, created_at, updated_at
+SELECT id, site_supplier_id, managed_tag, external_channel_id, last_confirmed_plan_version, created_at, updated_at, last_confirmed_credential_id, last_confirmed_credential_version, last_confirmed_enabled
 FROM site_supplier_channels
 WHERE site_supplier_id = $1
 ORDER BY created_at
@@ -390,6 +393,9 @@ func (q *Queries) GetSiteSupplierChannel(ctx context.Context, siteSupplierID uui
 		&i.LastConfirmedPlanVersion,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.LastConfirmedCredentialID,
+		&i.LastConfirmedCredentialVersion,
+		&i.LastConfirmedEnabled,
 	)
 	return i, err
 }

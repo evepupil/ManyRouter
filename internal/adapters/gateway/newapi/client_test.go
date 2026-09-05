@@ -139,6 +139,28 @@ func TestBusinessErrorRedactsSecrets(t *testing.T) {
 	}
 }
 
+func TestChannelFailureRedactsSupplierCredential(t *testing.T) {
+	t.Parallel()
+	const supplierKey = "supplier-key-that-must-not-leak"
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{"success":false,"message":"Incorrect API key provided: ` + supplierKey + `"}`))
+	}))
+	defer server.Close()
+	client, err := newapi.NewClient(server.URL, []byte("admin-token"), server.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = client.TestChannel(context.Background(), 42, "model-a", []byte(supplierKey))
+	var failure *reconciliation.Failure
+	if !errors.As(err, &failure) {
+		t.Fatalf("expected classified failure, got %v", err)
+	}
+	if strings.Contains(failure.Error(), supplierKey) || !strings.Contains(failure.Error(), "[redacted]") {
+		t.Fatalf("supplier credential was not redacted: %v", failure)
+	}
+}
+
 func TestClientDoesNotFollowRedirectsWithAdminToken(t *testing.T) {
 	t.Parallel()
 	var targetCalled atomic.Bool

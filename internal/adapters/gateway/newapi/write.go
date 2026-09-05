@@ -56,10 +56,10 @@ func (c *Client) UpdateChannel(ctx context.Context, id int64, desired routing.De
 	return c.request(ctx, http.MethodPut, "/api/channel/", payload, &response, true, string(upstreamKey))
 }
 
-func (c *Client) TestChannel(ctx context.Context, id int64, model string) error {
+func (c *Client) TestChannel(ctx context.Context, id int64, model string, upstreamKey []byte) error {
 	path := fmt.Sprintf("/api/channel/test/%d?model=%s", id, url.QueryEscape(model))
 	var response apiResponse[json.RawMessage]
-	return c.request(ctx, http.MethodGet, path, nil, &response, false)
+	return c.request(ctx, http.MethodGet, path, nil, &response, false, string(upstreamKey))
 }
 
 func (c *Client) SetChannelEnabled(ctx context.Context, id int64, enabled bool) error {
@@ -102,7 +102,7 @@ func channelPayload(id int64, desired routing.DesiredChannel, upstreamKey []byte
 		"weight":        desired.Weight,
 		"base_url":      desired.BaseURL,
 		"models":        strings.Join(models, ","),
-		"group":         desired.GroupKey,
+		"group":         strings.Join(desired.GroupKeys(), ","),
 		"model_mapping": &mappingJSON,
 		"priority":      desired.Priority,
 		"auto_ban":      1,

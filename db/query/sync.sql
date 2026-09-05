@@ -93,3 +93,61 @@ INSERT INTO idempotency_records (
 )
 ON CONFLICT (scope, idempotency_key) DO NOTHING
 RETURNING *;
+
+-- name: SetPlanRelationsSyncing :exec
+UPDATE site_suppliers SET sync_status = 'syncing', updated_at = $2
+WHERE current_plan_id = $1;
+
+-- name: SetPlanRelationsSyncFailure :exec
+UPDATE site_suppliers SET sync_status = $2, updated_at = $3
+WHERE current_plan_id = $1 AND sync_status = 'syncing';
+
+-- name: SetRelationSyncFailure :exec
+UPDATE site_suppliers SET sync_status = $2, updated_at = $3
+WHERE id = $1 AND current_plan_id = $4;
+
+-- name: MarkSyncSuperseded :exec
+UPDATE sync_operations
+SET status = 'superseded', current_step = 'superseded', next_attempt_at = NULL,
+    updated_at = $2, completed_at = $2
+WHERE id = $1;
+
+-- name: ConfirmM1Channel :exec
+UPDATE site_supplier_channels
+SET external_channel_id = sqlc.narg('external_channel_id')::bigint,
+    last_confirmed_plan_version = sqlc.narg('plan_version')::bigint,
+    last_confirmed_enabled = sqlc.arg('enabled')::boolean,
+    last_confirmed_credential_id = CASE WHEN sqlc.arg('credential_applied')::boolean
+        THEN sqlc.narg('credential_id')::uuid ELSE last_confirmed_credential_id END,
+    last_confirmed_credential_version = CASE WHEN sqlc.arg('credential_applied')::boolean
+        THEN sqlc.narg('credential_version')::integer ELSE last_confirmed_credential_version END,
+    updated_at = sqlc.arg('updated_at')
+WHERE id = sqlc.arg('id');
+
+-- name: MarkSitePriceApplied :exec
+UPDATE price_versions SET status = 'applied', applied_at = $3, route_plan_id = $4
+WHERE id = $1 AND site_id = $2 AND status = 'published';
+
+-- name: LockSupplierRotation :one
+SELECT id FROM suppliers WHERE id = $1 FOR UPDATE;
+
+-- name: LatestFullSitePlanID :one
+SELECT id FROM route_plan_versions
+WHERE site_id = $1 AND snapshot->>'schema_version' = '2'
+ORDER BY version DESC LIMIT 1;
+
+-- name: PromoteConfirmedSupplierCredential :exec
+UPDATE suppliers s
+SET credential_id = pending_credential_id,
+    credential_version = pending_credential_version,
+    pending_credential_id = NULL,
+    pending_credential_version = NULL,
+    updated_at = $2
+WHERE s.id = $1 AND s.pending_credential_id IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1 FROM site_suppliers r
+    JOIN site_supplier_channels c ON c.site_supplier_id = r.id
+    WHERE r.supplier_id = s.id AND c.external_channel_id IS NOT NULL
+      AND (c.last_confirmed_credential_id IS DISTINCT FROM s.pending_credential_id
+        OR c.last_confirmed_credential_version IS DISTINCT FROM s.pending_credential_version)
+);

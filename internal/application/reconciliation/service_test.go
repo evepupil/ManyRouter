@@ -162,7 +162,7 @@ func (g *fakeGateway) CreateChannel(_ context.Context, desired routing.DesiredCh
 	defer g.mutex.Unlock()
 	g.createCount++
 	g.desiredChannel = desired
-	g.state.Channels = append(g.state.Channels, actualFromDesired(42, desired, reconciliation.ChannelManuallyDisabled))
+	g.state.Channels = append(g.state.Channels, actualFromDesired(int64(41+g.createCount), desired, reconciliation.ChannelManuallyDisabled))
 	return nil
 }
 
@@ -179,7 +179,7 @@ func (g *fakeGateway) UpdateChannel(_ context.Context, id int64, desired routing
 	return nil
 }
 
-func (g *fakeGateway) TestChannel(context.Context, int64, string) error {
+func (g *fakeGateway) TestChannel(context.Context, int64, string, []byte) error {
 	g.testCount++
 	return nil
 }
@@ -189,8 +189,11 @@ func (g *fakeGateway) SetChannelEnabled(_ context.Context, id int64, enabled boo
 	defer g.mutex.Unlock()
 	g.enableCount++
 	for index := range g.state.Channels {
-		if g.state.Channels[index].ID == id && enabled {
-			g.state.Channels[index].Status = reconciliation.ChannelEnabled
+		if g.state.Channels[index].ID == id {
+			g.state.Channels[index].Status = reconciliation.ChannelManuallyDisabled
+			if enabled {
+				g.state.Channels[index].Status = reconciliation.ChannelEnabled
+			}
 		}
 	}
 	return nil
@@ -358,7 +361,7 @@ func actualFromDesired(id int64, desired routing.DesiredChannel, status reconcil
 	}
 	return reconciliation.ActualChannel{
 		ID: id, ManagedTag: desired.ManagedTag, Name: desired.Name, Protocol: desired.Protocol,
-		BaseURL: desired.BaseURL, Models: models, ModelMapping: mapping, Groups: []string{desired.GroupKey},
+		BaseURL: desired.BaseURL, Models: models, ModelMapping: mapping, Groups: desired.GroupKeys(),
 		Priority: desired.Priority, Weight: desired.Weight, Status: status,
 	}
 }

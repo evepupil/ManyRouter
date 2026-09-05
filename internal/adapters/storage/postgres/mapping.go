@@ -47,6 +47,7 @@ func mapSite(row sqlc.Site) (site.Site, error) {
 		Name:                row.Name,
 		NewAPIBaseURL:       row.NewApiBaseUrl,
 		AdminCredentialID:   row.AdminCredentialID,
+		AdminUserID:         row.AdminUserID,
 		Status:              site.Status(row.Status),
 		CompatibilityStatus: site.CompatibilityStatus(row.CompatibilityStatus),
 		Version:             row.Version,
@@ -139,14 +140,26 @@ func mapManagedChannel(row sqlc.SiteSupplierChannel) (routing.ManagedChannel, er
 		value := row.LastConfirmedPlanVersion.Int64
 		confirmedVersion = &value
 	}
+	var confirmedEnabled *bool
+	if row.LastConfirmedEnabled.Valid {
+		value := row.LastConfirmedEnabled.Bool
+		confirmedEnabled = &value
+	}
+	confirmedCredentialID := uuid.Nil
+	if row.LastConfirmedCredentialID.Valid {
+		confirmedCredentialID = uuid.UUID(row.LastConfirmedCredentialID.Bytes)
+	}
 	return routing.ManagedChannel{
-		ID:                       row.ID,
-		RelationID:               row.SiteSupplierID,
-		ManagedTag:               row.ManagedTag,
-		ExternalChannelID:        externalID,
-		LastConfirmedPlanVersion: confirmedVersion,
-		CreatedAt:                row.CreatedAt.Time.UTC(),
-		UpdatedAt:                row.UpdatedAt.Time.UTC(),
+		ID:                             row.ID,
+		RelationID:                     row.SiteSupplierID,
+		ManagedTag:                     row.ManagedTag,
+		ExternalChannelID:              externalID,
+		LastConfirmedPlanVersion:       confirmedVersion,
+		LastConfirmedCredentialID:      confirmedCredentialID,
+		LastConfirmedCredentialVersion: row.LastConfirmedCredentialVersion.Int32,
+		LastConfirmedEnabled:           confirmedEnabled,
+		CreatedAt:                      row.CreatedAt.Time.UTC(),
+		UpdatedAt:                      row.UpdatedAt.Time.UTC(),
 	}, nil
 }
 

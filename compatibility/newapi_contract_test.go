@@ -80,7 +80,7 @@ func TestNewAPIExistingAdminContract(t *testing.T) {
 	if channel == nil {
 		t.Fatal("New API did not expose the created managed channel")
 	}
-	if err := client.TestChannel(ctx, channel.ID, contractModel); err != nil {
+	if err := client.TestChannel(ctx, channel.ID, contractModel, []byte(contractUpstreamKey)); err != nil {
 		t.Fatal(err)
 	}
 	if err := client.SetChannelEnabled(ctx, channel.ID, true); err != nil {

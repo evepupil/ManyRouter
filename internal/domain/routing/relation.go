@@ -48,13 +48,16 @@ type Relation struct {
 }
 
 type ManagedChannel struct {
-	ID                       uuid.UUID
-	RelationID               uuid.UUID
-	ManagedTag               string
-	ExternalChannelID        *int64
-	LastConfirmedPlanVersion *int64
-	CreatedAt                time.Time
-	UpdatedAt                time.Time
+	ID                             uuid.UUID
+	RelationID                     uuid.UUID
+	ManagedTag                     string
+	ExternalChannelID              *int64
+	LastConfirmedPlanVersion       *int64
+	LastConfirmedCredentialID      uuid.UUID
+	LastConfirmedCredentialVersion int32
+	LastConfirmedEnabled           *bool
+	CreatedAt                      time.Time
+	UpdatedAt                      time.Time
 }
 
 func NewRelation(

@@ -30,7 +30,7 @@ func (h *Handler) CreateSiteSupplier(c *gin.Context, params apispec.CreateSiteSu
 	}
 	relation, _, err := h.onboarding.CreateRelation(c.Request.Context(), onboarding.CreateRelationCommand{
 		SiteID: uuid.UUID(request.SiteId), SupplierID: uuid.UUID(request.SupplierId),
-		GroupDisplayName: request.GroupDisplayName, SaleRatio: ratio, Visible: visible, ActorID: "m0-owner",
+		GroupDisplayName: request.GroupDisplayName, SaleRatio: ratio, Visible: visible, ActorID: OperatorActor(c),
 	})
 	if err != nil {
 		h.writeApplicationError(c, err)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/evepupil/ManyRouter/internal/domain/routing"
 	"github.com/evepupil/ManyRouter/internal/domain/site"
 	"github.com/google/uuid"
 )
@@ -58,15 +59,8 @@ func (s *Service) Run(ctx context.Context, operationID uuid.UUID) (runErr error)
 	if err != nil {
 		return fmt.Errorf("load synchronization operation: %w", err)
 	}
-	if bundle.Operation.Status == OperationSucceeded || bundle.Operation.Status == OperationManualRequired {
+	if bundle.Operation.Status == OperationSucceeded || bundle.Operation.Status == OperationManualRequired || bundle.Operation.Status == OperationSuperseded {
 		return nil
-	}
-	if err := bundle.Site.CanSync(); err != nil {
-		kind := FailureConfiguration
-		if bundle.Site.CompatibilityStatus == site.CompatibilityIncompatible {
-			kind = FailureCompatibility
-		}
-		return s.finishFailure(ctx, bundle, "validate_site", NewFailure(kind, "site_not_writable", "site is not available for synchronization", err))
 	}
 	lock, acquired, err := s.store.AcquireSiteLock(ctx, bundle.Site.ID)
 	if err != nil {
@@ -82,6 +76,29 @@ func (s *Service) Run(ctx context.Context, operationID uuid.UUID) (runErr error)
 			runErr = errors.Join(runErr, fmt.Errorf("release site synchronization lock: %w", err))
 		}
 	}()
+	bundle, err = s.store.LoadBundle(ctx, operationID)
+	if err != nil {
+		return fmt.Errorf("reload synchronization operation under site lock: %w", err)
+	}
+	if bundle.CurrentPlanID != uuid.Nil && bundle.CurrentPlanID != bundle.Plan.ID {
+		if store, ok := s.store.(SiteStore); ok {
+			return store.SupersedeOperation(ctx, bundle, s.now().UTC())
+		}
+		return errors.New("cannot record superseded synchronization operation")
+	}
+	if bundle.Operation.Status == OperationSucceeded || bundle.Operation.Status == OperationManualRequired || bundle.Operation.Status == OperationSuperseded {
+		return nil
+	}
+	if err := bundle.Site.CanSync(); err != nil {
+		kind := FailureConfiguration
+		if bundle.Site.CompatibilityStatus == site.CompatibilityIncompatible {
+			kind = FailureCompatibility
+		}
+		return s.finishFailure(ctx, bundle, "validate_site", NewFailure(kind, "site_not_writable", "site is not available for synchronization", err))
+	}
+	if bundle.Plan.Snapshot.SchemaVersion == routing.SiteSnapshotSchemaVersion {
+		return s.runSite(ctx, bundle)
+	}
 
 	startedAt := s.now().UTC()
 	if err := s.store.StartOperation(ctx, bundle.Operation, "probe", startedAt); err != nil {
@@ -100,7 +117,7 @@ func (s *Service) Run(ctx context.Context, operationID uuid.UUID) (runErr error)
 	}
 	defer clear(supplierSecret)
 
-	gateway, err := s.gateways.New(bundle.Site.NewAPIBaseURL, adminSecret)
+	gateway, err := s.newGateway(bundle, adminSecret)
 	if err != nil {
 		return s.finishFailure(ctx, bundle, "create_gateway", NewFailure(FailureConfiguration, "gateway_configuration", "New API client could not be created", err))
 	}
@@ -203,7 +220,7 @@ func (s *Service) Run(ctx context.Context, operationID uuid.UUID) (runErr error)
 
 	testModel := bundle.Plan.Snapshot.Channel.Models[0].Model
 	testStarted := s.now().UTC()
-	if err := gateway.TestChannel(ctx, actualChannel.ID, testModel); err != nil {
+	if err := gateway.TestChannel(ctx, actualChannel.ID, testModel, supplierSecret); err != nil {
 		return s.finishFailure(ctx, bundle, "test_channel", err)
 	}
 	if err := s.recordSuccess(ctx, operationID, "test_channel", nil, map[string]any{"channel_id": actualChannel.ID, "model": testModel}, testStarted); err != nil {

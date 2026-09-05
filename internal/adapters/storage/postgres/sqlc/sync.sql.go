@@ -12,6 +12,44 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const confirmM1Channel = `-- name: ConfirmM1Channel :exec
+UPDATE site_supplier_channels
+SET external_channel_id = $1::bigint,
+    last_confirmed_plan_version = $2::bigint,
+    last_confirmed_enabled = $3::boolean,
+    last_confirmed_credential_id = CASE WHEN $4::boolean
+        THEN $5::uuid ELSE last_confirmed_credential_id END,
+    last_confirmed_credential_version = CASE WHEN $4::boolean
+        THEN $6::integer ELSE last_confirmed_credential_version END,
+    updated_at = $7
+WHERE id = $8
+`
+
+type ConfirmM1ChannelParams struct {
+	ExternalChannelID pgtype.Int8        `json:"external_channel_id"`
+	PlanVersion       pgtype.Int8        `json:"plan_version"`
+	Enabled           bool               `json:"enabled"`
+	CredentialApplied bool               `json:"credential_applied"`
+	CredentialID      pgtype.UUID        `json:"credential_id"`
+	CredentialVersion pgtype.Int4        `json:"credential_version"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+	ID                uuid.UUID          `json:"id"`
+}
+
+func (q *Queries) ConfirmM1Channel(ctx context.Context, arg ConfirmM1ChannelParams) error {
+	_, err := q.db.Exec(ctx, confirmM1Channel,
+		arg.ExternalChannelID,
+		arg.PlanVersion,
+		arg.Enabled,
+		arg.CredentialApplied,
+		arg.CredentialID,
+		arg.CredentialVersion,
+		arg.UpdatedAt,
+		arg.ID,
+	)
+	return err
+}
+
 const createIdempotencyRecord = `-- name: CreateIdempotencyRecord :one
 INSERT INTO idempotency_records (
     scope, idempotency_key, request_hash, status_code,
@@ -231,6 +269,52 @@ func (q *Queries) InsertAuditEvent(ctx context.Context, arg InsertAuditEventPara
 	return err
 }
 
+const latestFullSitePlanID = `-- name: LatestFullSitePlanID :one
+SELECT id FROM route_plan_versions
+WHERE site_id = $1 AND snapshot->>'schema_version' = '2'
+ORDER BY version DESC LIMIT 1
+`
+
+func (q *Queries) LatestFullSitePlanID(ctx context.Context, siteID uuid.UUID) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, latestFullSitePlanID, siteID)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
+const lockSupplierRotation = `-- name: LockSupplierRotation :one
+SELECT id FROM suppliers WHERE id = $1 FOR UPDATE
+`
+
+func (q *Queries) LockSupplierRotation(ctx context.Context, id uuid.UUID) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, lockSupplierRotation, id)
+	var id_2 uuid.UUID
+	err := row.Scan(&id_2)
+	return id_2, err
+}
+
+const markSitePriceApplied = `-- name: MarkSitePriceApplied :exec
+UPDATE price_versions SET status = 'applied', applied_at = $3, route_plan_id = $4
+WHERE id = $1 AND site_id = $2 AND status = 'published'
+`
+
+type MarkSitePriceAppliedParams struct {
+	ID          uuid.UUID          `json:"id"`
+	SiteID      uuid.UUID          `json:"site_id"`
+	AppliedAt   pgtype.Timestamptz `json:"applied_at"`
+	RoutePlanID pgtype.UUID        `json:"route_plan_id"`
+}
+
+func (q *Queries) MarkSitePriceApplied(ctx context.Context, arg MarkSitePriceAppliedParams) error {
+	_, err := q.db.Exec(ctx, markSitePriceApplied,
+		arg.ID,
+		arg.SiteID,
+		arg.AppliedAt,
+		arg.RoutePlanID,
+	)
+	return err
+}
+
 const markSyncFailed = `-- name: MarkSyncFailed :exec
 UPDATE sync_operations
 SET status = $2,
@@ -307,6 +391,103 @@ type MarkSyncSucceededParams struct {
 
 func (q *Queries) MarkSyncSucceeded(ctx context.Context, arg MarkSyncSucceededParams) error {
 	_, err := q.db.Exec(ctx, markSyncSucceeded, arg.ID, arg.UpdatedAt)
+	return err
+}
+
+const markSyncSuperseded = `-- name: MarkSyncSuperseded :exec
+UPDATE sync_operations
+SET status = 'superseded', current_step = 'superseded', next_attempt_at = NULL,
+    updated_at = $2, completed_at = $2
+WHERE id = $1
+`
+
+type MarkSyncSupersededParams struct {
+	ID        uuid.UUID          `json:"id"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) MarkSyncSuperseded(ctx context.Context, arg MarkSyncSupersededParams) error {
+	_, err := q.db.Exec(ctx, markSyncSuperseded, arg.ID, arg.UpdatedAt)
+	return err
+}
+
+const promoteConfirmedSupplierCredential = `-- name: PromoteConfirmedSupplierCredential :exec
+UPDATE suppliers s
+SET credential_id = pending_credential_id,
+    credential_version = pending_credential_version,
+    pending_credential_id = NULL,
+    pending_credential_version = NULL,
+    updated_at = $2
+WHERE s.id = $1 AND s.pending_credential_id IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1 FROM site_suppliers r
+    JOIN site_supplier_channels c ON c.site_supplier_id = r.id
+    WHERE r.supplier_id = s.id AND c.external_channel_id IS NOT NULL
+      AND (c.last_confirmed_credential_id IS DISTINCT FROM s.pending_credential_id
+        OR c.last_confirmed_credential_version IS DISTINCT FROM s.pending_credential_version)
+)
+`
+
+type PromoteConfirmedSupplierCredentialParams struct {
+	ID        uuid.UUID          `json:"id"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) PromoteConfirmedSupplierCredential(ctx context.Context, arg PromoteConfirmedSupplierCredentialParams) error {
+	_, err := q.db.Exec(ctx, promoteConfirmedSupplierCredential, arg.ID, arg.UpdatedAt)
+	return err
+}
+
+const setPlanRelationsSyncFailure = `-- name: SetPlanRelationsSyncFailure :exec
+UPDATE site_suppliers SET sync_status = $2, updated_at = $3
+WHERE current_plan_id = $1 AND sync_status = 'syncing'
+`
+
+type SetPlanRelationsSyncFailureParams struct {
+	CurrentPlanID pgtype.UUID        `json:"current_plan_id"`
+	SyncStatus    string             `json:"sync_status"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) SetPlanRelationsSyncFailure(ctx context.Context, arg SetPlanRelationsSyncFailureParams) error {
+	_, err := q.db.Exec(ctx, setPlanRelationsSyncFailure, arg.CurrentPlanID, arg.SyncStatus, arg.UpdatedAt)
+	return err
+}
+
+const setPlanRelationsSyncing = `-- name: SetPlanRelationsSyncing :exec
+UPDATE site_suppliers SET sync_status = 'syncing', updated_at = $2
+WHERE current_plan_id = $1
+`
+
+type SetPlanRelationsSyncingParams struct {
+	CurrentPlanID pgtype.UUID        `json:"current_plan_id"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) SetPlanRelationsSyncing(ctx context.Context, arg SetPlanRelationsSyncingParams) error {
+	_, err := q.db.Exec(ctx, setPlanRelationsSyncing, arg.CurrentPlanID, arg.UpdatedAt)
+	return err
+}
+
+const setRelationSyncFailure = `-- name: SetRelationSyncFailure :exec
+UPDATE site_suppliers SET sync_status = $2, updated_at = $3
+WHERE id = $1 AND current_plan_id = $4
+`
+
+type SetRelationSyncFailureParams struct {
+	ID            uuid.UUID          `json:"id"`
+	SyncStatus    string             `json:"sync_status"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+	CurrentPlanID pgtype.UUID        `json:"current_plan_id"`
+}
+
+func (q *Queries) SetRelationSyncFailure(ctx context.Context, arg SetRelationSyncFailureParams) error {
+	_, err := q.db.Exec(ctx, setRelationSyncFailure,
+		arg.ID,
+		arg.SyncStatus,
+		arg.UpdatedAt,
+		arg.CurrentPlanID,
+	)
 	return err
 }
 

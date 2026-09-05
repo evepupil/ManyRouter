@@ -9,11 +9,12 @@ import (
 type PlanStatus string
 
 const (
-	PlanPending   PlanStatus = "pending"
-	PlanApplying  PlanStatus = "applying"
-	PlanConfirmed PlanStatus = "confirmed"
-	PlanFailed    PlanStatus = "failed"
-	PlanUncertain PlanStatus = "uncertain"
+	PlanPending    PlanStatus = "pending"
+	PlanApplying   PlanStatus = "applying"
+	PlanConfirmed  PlanStatus = "confirmed"
+	PlanFailed     PlanStatus = "failed"
+	PlanUncertain  PlanStatus = "uncertain"
+	PlanSuperseded PlanStatus = "superseded"
 )
 
 type Plan struct {

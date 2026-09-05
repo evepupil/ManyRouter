@@ -16,6 +16,7 @@ import (
 )
 
 const SnapshotSchemaVersion = 1
+const SiteSnapshotSchemaVersion = 2
 
 type ModelRoute struct {
 	Model         string `json:"model"`
@@ -39,18 +40,25 @@ type DesiredChannel struct {
 	CredentialVersion int32         `json:"credential_version"`
 	Models            []ModelRoute  `json:"models"`
 	GroupKey          string        `json:"group_key"`
+	ExtraGroupKeys    []string      `json:"extra_group_keys,omitempty"`
 	Priority          int64         `json:"priority"`
 	Weight            int           `json:"weight"`
 	DesiredStatus     DesiredStatus `json:"desired_status"`
 }
 
 type Snapshot struct {
-	SchemaVersion int            `json:"schema_version"`
-	SiteID        uuid.UUID      `json:"site_id"`
-	RelationID    uuid.UUID      `json:"relation_id"`
-	SupplierID    uuid.UUID      `json:"supplier_id"`
-	Group         DesiredGroup   `json:"group"`
-	Channel       DesiredChannel `json:"channel"`
+	SchemaVersion     int                 `json:"schema_version"`
+	SiteID            uuid.UUID           `json:"site_id"`
+	RelationID        uuid.UUID           `json:"relation_id"`
+	SupplierID        uuid.UUID           `json:"supplier_id"`
+	Group             DesiredGroup        `json:"group"`
+	Channel           DesiredChannel      `json:"channel"`
+	Resources         []Snapshot          `json:"resources,omitempty"`
+	AutoGroups        []DesiredGroup      `json:"auto_groups,omitempty"`
+	ResumeRelationIDs []uuid.UUID         `json:"resume_relation_ids,omitempty"`
+	BillingBasisHash  string              `json:"billing_basis_hash,omitempty"`
+	PriceVersionIDs   []uuid.UUID         `json:"price_version_ids,omitempty"`
+	StrategyVersions  []StrategyReference `json:"strategy_versions,omitempty"`
 }
 
 func BuildSnapshot(siteData site.Site, supplierData supplier.Supplier, relation Relation, channel ManagedChannel) (Snapshot, error) {
@@ -133,11 +141,17 @@ func DecodeSnapshot(payload []byte) (Snapshot, error) {
 }
 
 func ValidateSnapshot(snapshot Snapshot) error {
+	if snapshot.SchemaVersion == SiteSnapshotSchemaVersion {
+		return validateSiteSnapshot(snapshot)
+	}
 	if snapshot.SchemaVersion != SnapshotSchemaVersion {
 		return errors.New("unsupported snapshot schema version")
 	}
 	if snapshot.SiteID == uuid.Nil || snapshot.RelationID == uuid.Nil || snapshot.SupplierID == uuid.Nil {
 		return errors.New("snapshot site, relation, and supplier IDs are required")
+	}
+	if len(snapshot.Resources) != 0 || len(snapshot.AutoGroups) != 0 || len(snapshot.ResumeRelationIDs) != 0 || snapshot.BillingBasisHash != "" || len(snapshot.PriceVersionIDs) != 0 || len(snapshot.StrategyVersions) != 0 {
+		return errors.New("single-resource snapshots cannot contain site-level fields")
 	}
 	if snapshot.Group.Key != GroupKey(snapshot.RelationID) || snapshot.Channel.GroupKey != snapshot.Group.Key {
 		return errors.New("snapshot managed group identity is invalid")
@@ -174,6 +188,13 @@ func ValidateSnapshot(snapshot Snapshot) error {
 	}
 	if snapshot.Channel.Weight < 0 {
 		return errors.New("snapshot channel weight is invalid")
+	}
+	previousGroup := ""
+	for _, group := range snapshot.Channel.ExtraGroupKeys {
+		if group == "" || group <= previousGroup || group == snapshot.Channel.GroupKey || strings.ContainsAny(group, ",\r\n") {
+			return errors.New("extra groups must be valid, unique and sorted")
+		}
+		previousGroup = group
 	}
 	if snapshot.Channel.DesiredStatus != DesiredEnabled && snapshot.Channel.DesiredStatus != DesiredDisabled {
 		return errors.New("snapshot desired channel status is invalid")

@@ -10,6 +10,8 @@ import (
 
 	"github.com/evepupil/ManyRouter/internal/application/idempotency"
 	"github.com/evepupil/ManyRouter/internal/application/onboarding"
+	"github.com/evepupil/ManyRouter/internal/application/reconciliation"
+	"github.com/evepupil/ManyRouter/internal/domain/operations"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -47,6 +49,27 @@ func (h *Handler) writeIdempotent(c *gin.Context, scope, key, requestHash string
 }
 
 func (h *Handler) writeApplicationError(c *gin.Context, err error) {
+	if errors.Is(err, operations.ErrInvalid) {
+		writeError(c, stdhttp.StatusBadRequest, "invalid_request", strings.TrimPrefix(err.Error(), operations.ErrInvalid.Error()+": "))
+		return
+	}
+	if errors.Is(err, operations.ErrConflict) || errors.Is(err, idempotency.ErrKeyReused) {
+		writeError(c, stdhttp.StatusConflict, "configuration_conflict", "配置已经更新或请求编号已用于其他修改，请刷新后重试")
+		return
+	}
+	if errors.Is(err, operations.ErrBusy) {
+		writeError(c, stdhttp.StatusConflict, "configuration_busy", "其他配置正在提交，请稍后重试")
+		return
+	}
+	if errors.Is(err, operations.ErrNotFound) {
+		writeError(c, stdhttp.StatusNotFound, "not_found", "请求的业务对象不存在")
+		return
+	}
+	var gatewayFailure *reconciliation.Failure
+	if errors.As(err, &gatewayFailure) && (gatewayFailure.Kind == reconciliation.FailureAuthentication || gatewayFailure.Kind == reconciliation.FailureCompatibility) {
+		writeError(c, stdhttp.StatusUnprocessableEntity, "gateway_check_failed", "站点凭证或兼容检查未通过")
+		return
+	}
 	if errors.Is(err, onboarding.ErrInvalidInput) {
 		writeError(c, stdhttp.StatusBadRequest, "invalid_request", strings.TrimPrefix(err.Error(), onboarding.ErrInvalidInput.Error()+": "))
 		return

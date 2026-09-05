@@ -21,7 +21,7 @@ INSERT INTO suppliers (
     $1, $2, $3, $4, $5, $6,
     $7, $8, $9, $10, $11
 )
-RETURNING id, code, name, protocol, upstream_base_url, credential_id, credential_version, status, version, created_at, updated_at
+RETURNING id, code, name, protocol, upstream_base_url, credential_id, credential_version, status, version, created_at, updated_at, pending_credential_id, pending_credential_version
 `
 
 type CreateSupplierParams struct {
@@ -65,6 +65,8 @@ func (q *Queries) CreateSupplier(ctx context.Context, arg CreateSupplierParams) 
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.PendingCredentialID,
+		&i.PendingCredentialVersion,
 	)
 	return i, err
 }
@@ -120,7 +122,7 @@ func (q *Queries) CreateSupplierModel(ctx context.Context, arg CreateSupplierMod
 }
 
 const getSupplier = `-- name: GetSupplier :one
-SELECT id, code, name, protocol, upstream_base_url, credential_id, credential_version, status, version, created_at, updated_at
+SELECT id, code, name, protocol, upstream_base_url, credential_id, credential_version, status, version, created_at, updated_at, pending_credential_id, pending_credential_version
 FROM suppliers
 WHERE id = $1
 `
@@ -140,6 +142,8 @@ func (q *Queries) GetSupplier(ctx context.Context, id uuid.UUID) (Supplier, erro
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.PendingCredentialID,
+		&i.PendingCredentialVersion,
 	)
 	return i, err
 }

@@ -112,3 +112,14 @@ for (const moduleDocument of [
     throw new Error(`M1 document link is incomplete: ${moduleDocument}`)
   }
 }
+
+for (const moduleDocument of [
+  '真实流量采集与测量事实.md',
+  '主动测评与模型真实性.md',
+  '窗口统计与影子评分.md',
+]) {
+  const contents = readFileSync(join(root, 'docs/模块设计', moduleDocument), 'utf8')
+  if (!roadmap.includes(moduleDocument) || !contents.includes('../roadmap.md#m2')) {
+    throw new Error(`M2 document link is incomplete: ${moduleDocument}`)
+  }
+}

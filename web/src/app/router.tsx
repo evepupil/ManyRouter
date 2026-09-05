@@ -13,6 +13,7 @@ import { PricingPage } from "../features/pricing/pricing-page";
 import { PlansPage } from "../features/operations/plans-page";
 import { OperationsPage } from "../features/operations/operations-page";
 import { AuditPage } from "../features/operations/audit-page";
+import { ObservabilityPage } from "../features/observability/observability-page";
 import { Button, Empty } from "../components/ui";
 import { ScopeProvider } from "./scope";
 import { Shell } from "./shell";
@@ -88,6 +89,11 @@ const operationRoute = createRoute({
   path: "/operations",
   component: OperationsPage,
 });
+const observabilityRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/observability",
+  component: ObservabilityPage,
+});
 const auditRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/audit",
@@ -103,6 +109,7 @@ export const router = createRouter({
     autoRoute,
     pricingRoute,
     planRoute,
+    observabilityRoute,
     operationRoute,
     auditRoute,
   ]),

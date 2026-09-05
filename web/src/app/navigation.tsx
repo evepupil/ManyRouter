@@ -2,6 +2,7 @@ import { Dialog } from "@base-ui/react/dialog";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
+  Activity,
   Building2,
   CircleDollarSign,
   ClipboardList,
@@ -21,6 +22,7 @@ const links = [
   { path: "/auto", key: "auto", icon: GitBranch },
   { path: "/pricing", key: "pricing", icon: CircleDollarSign },
   { path: "/plans", key: "plans", icon: History },
+  { path: "/observability", key: "observability", icon: Activity },
   { path: "/operations", key: "operations", icon: LayoutList },
   { path: "/audit", key: "audit", icon: ClipboardList },
 ] as const;

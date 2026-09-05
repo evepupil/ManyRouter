@@ -119,6 +119,20 @@ export function Checkbox({
   );
 }
 
+export type BadgeTone = "success" | "danger" | "warning" | "info";
+
+export function Badge({
+  tone,
+  children,
+}: {
+  tone?: BadgeTone;
+  children: ReactNode;
+}) {
+  return (
+    <span className={`badge ${tone ? `badge-${tone}` : ""}`}>{children}</span>
+  );
+}
+
 export function Notice({
   error,
   success,
@@ -229,9 +243,7 @@ export function Status({ value }: { value: string }) {
           ? "warning"
           : "";
   return (
-    <span className={`badge ${tone ? `badge-${tone}` : ""}`}>
-      {statusNames[value] ?? "待核对"}
-    </span>
+    <Badge tone={tone || undefined}>{statusNames[value] ?? "待核对"}</Badge>
   );
 }
 

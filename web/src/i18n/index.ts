@@ -14,6 +14,7 @@ void i18n.use(initReactI18next).init({
         auto: "人工 Auto",
         pricing: "售价",
         plans: "线路版本",
+        observability: "观测评分",
         operations: "同步操作",
         audit: "审计",
         allSites: "选择站点",

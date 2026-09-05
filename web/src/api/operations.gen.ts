@@ -427,10 +427,297 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/ops/collection-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["opListCollectionStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ops/collection-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["opRunCollection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ops/evaluation-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["opListEvaluationRuns"];
+        put?: never;
+        post: operations["opRequestEvaluationRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ops/evaluation-runs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["OpID"];
+            };
+            cookie?: never;
+        };
+        get: operations["opGetEvaluationRun"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ops/evaluation-runs/{id}/reference": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["OpID"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["opPromoteEvaluationReference"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ops/score-insights": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["opListScoreInsights"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ops/score-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["opRefreshScores"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        OpCollectionRunInput: {
+            /** Format: uuid */
+            site_id: string;
+        };
+        OpCollectionRunResult: {
+            /** Format: uuid */
+            site_id: string;
+            site_name: string;
+            read_records: number;
+            saved_requests: number;
+            saved_attempts: number;
+            /** Format: date-time */
+            cursor_time?: string | null;
+            /** Format: date-time */
+            scanned_through?: string | null;
+            /** Format: date-time */
+            source_latest?: string | null;
+            data_gap: boolean;
+            error_code?: string;
+        };
+        OpCollectionStatus: {
+            /** Format: uuid */
+            site_id: string;
+            site_name: string;
+            source_kind: string;
+            contract_version: string;
+            /** Format: date-time */
+            cursor_time?: string | null;
+            /** Format: date-time */
+            scanned_through?: string | null;
+            /** Format: date-time */
+            source_latest?: string | null;
+            /** Format: date-time */
+            last_read_at?: string | null;
+            /** Format: date-time */
+            last_success_at?: string | null;
+            /** Format: date-time */
+            last_error_at?: string | null;
+            last_error_code?: string;
+            last_error_message?: string;
+            consecutive_failures: number;
+            data_gap: boolean;
+            /** Format: date-time */
+            updated_at?: string | null;
+        };
+        OpCollectionStatusList: {
+            items: components["schemas"]["OpCollectionStatus"][];
+        };
+        OpEvaluationRunInput: {
+            /** Format: uuid */
+            supplier_id: string;
+            model: string;
+            /** @enum {string} */
+            purpose: "health" | "authenticity" | "quality" | "recovery";
+            /**
+             * @default supplier_direct
+             * @enum {string}
+             */
+            target_kind: "supplier_direct";
+            reason: string;
+        };
+        OpEvaluationRun: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            supplier_id: string;
+            supplier_name?: string;
+            /** Format: uuid */
+            relation_id?: string | null;
+            /** Format: uuid */
+            site_id?: string | null;
+            model: string;
+            upstream_model: string;
+            /** @enum {string} */
+            target_kind: "supplier_direct" | "site_route";
+            /** @enum {string} */
+            purpose: "health" | "authenticity" | "quality" | "recovery";
+            /** @enum {string} */
+            status: "pending" | "running" | "succeeded" | "failed" | "uncertain" | "cancelled";
+            suite_version: string;
+            algorithm_version: string;
+            /** Format: uuid */
+            reference_id?: string | null;
+            planned_samples: number;
+            completed_samples: number;
+            requested_by: string;
+            request_reason: string;
+            error_code?: string;
+            error_message?: string;
+            /** Format: date-time */
+            requested_at: string;
+            /** Format: date-time */
+            started_at?: string | null;
+            /** Format: date-time */
+            completed_at?: string | null;
+            /** Format: date-time */
+            next_retry_at?: string | null;
+        };
+        OpEvaluationRunPage: components["schemas"]["OpPagination"] & {
+            items: components["schemas"]["OpEvaluationRun"][];
+        };
+        OpTrustedReferenceInput: {
+            /** @enum {string} */
+            trust: "official" | "operator_trusted" | "community";
+            reason: string;
+            valid_days: number;
+        };
+        OpTrustedReference: {
+            /** Format: uuid */
+            id: string;
+            model: string;
+            /** Format: uuid */
+            supplier_id: string;
+            /** @enum {string} */
+            trust: "official" | "operator_trusted" | "community";
+            /** Format: date-time */
+            expires_at: string;
+        };
+        OpShadowRecommendation: {
+            /** @enum {string} */
+            strategy_kind: "lowest_price" | "low_latency" | "high_sla" | "high_quality" | "balanced";
+            /** @enum {string} */
+            action: "join" | "keep" | "exit" | "watch" | "exclude";
+            current_member: boolean;
+            score?: number | null;
+            /** @enum {string} */
+            confidence: "high" | "medium" | "low" | "insufficient";
+            reasons: string[];
+        };
+        OpScoreInsight: {
+            /** Format: uuid */
+            snapshot_id: string;
+            policy_version: string;
+            /** Format: uuid */
+            site_id: string;
+            /** Format: uuid */
+            supplier_id: string;
+            supplier_name: string;
+            model: string;
+            /** Format: int64 */
+            passive_samples: number;
+            /** Format: int64 */
+            active_samples: number;
+            price_score?: number | null;
+            latency_score?: number | null;
+            sla_score?: number | null;
+            quality_score?: number | null;
+            total_score?: number | null;
+            /** @enum {string} */
+            confidence: "high" | "medium" | "low" | "insufficient";
+            /** @enum {string} */
+            eligibility: "eligible" | "excluded" | "insufficient";
+            hard_reasons: string[];
+            /** @enum {string} */
+            authenticity_verdict: "consistent" | "suspicious" | "inconsistent" | "insufficient";
+            /** Format: date-time */
+            facts_through?: string | null;
+            /** Format: date-time */
+            window_start: string;
+            /** Format: date-time */
+            window_end: string;
+            /** Format: date-time */
+            created_at: string;
+            explanation: {
+                [key: string]: unknown;
+            };
+            recommendations: components["schemas"]["OpShadowRecommendation"][];
+        };
+        OpScoreInsightPage: components["schemas"]["OpPagination"] & {
+            items: components["schemas"]["OpScoreInsight"][];
+        };
         OpError: {
             code: string;
             message: string;
@@ -1578,6 +1865,220 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OpAuditPage"];
+                };
+            };
+            default: components["responses"]["OpError"];
+        };
+    };
+    opListCollectionStatus: {
+        parameters: {
+            query?: {
+                site_id?: components["parameters"]["OpSiteFilter"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Per-site measurement collection freshness and cursor state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpCollectionStatusList"];
+                };
+            };
+            default: components["responses"]["OpError"];
+        };
+    };
+    opRunCollection: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": components["parameters"]["OpIdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpCollectionRunInput"];
+            };
+        };
+        responses: {
+            /** @description Completed idempotent collection pass for one site */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpCollectionRunResult"];
+                };
+            };
+            default: components["responses"]["OpError"];
+        };
+    };
+    opListEvaluationRuns: {
+        parameters: {
+            query?: {
+                site_id?: components["parameters"]["OpSiteFilter"];
+                supplier_id?: components["parameters"]["OpSupplierFilter"];
+                model?: string;
+                purpose?: "health" | "authenticity" | "quality" | "recovery";
+                limit?: components["parameters"]["OpLimit"];
+                offset?: components["parameters"]["OpOffset"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Evaluation runs without private prompts or raw answers */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpEvaluationRunPage"];
+                };
+            };
+            default: components["responses"]["OpError"];
+        };
+    };
+    opRequestEvaluationRun: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": components["parameters"]["OpIdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpEvaluationRunInput"];
+            };
+        };
+        responses: {
+            /** @description Durable evaluation run accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpEvaluationRun"];
+                };
+            };
+            default: components["responses"]["OpError"];
+        };
+    };
+    opGetEvaluationRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["OpID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Evaluation run progress and safe summary */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpEvaluationRun"];
+                };
+            };
+            default: components["responses"]["OpError"];
+        };
+    };
+    opPromoteEvaluationReference: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": components["parameters"]["OpIdempotencyKey"];
+            };
+            path: {
+                id: components["parameters"]["OpID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpTrustedReferenceInput"];
+            };
+        };
+        responses: {
+            /** @description Fingerprint promoted to a versioned trusted reference */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpTrustedReference"];
+                };
+            };
+            default: components["responses"]["OpError"];
+        };
+    };
+    opListScoreInsights: {
+        parameters: {
+            query?: {
+                site_id?: components["parameters"]["OpSiteFilter"];
+                supplier_id?: components["parameters"]["OpSupplierFilter"];
+                model?: string;
+                limit?: components["parameters"]["OpLimit"];
+                offset?: components["parameters"]["OpOffset"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Latest explainable shadow score for each site supplier model */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpScoreInsightPage"];
+                };
+            };
+            default: components["responses"]["OpError"];
+        };
+    };
+    opRefreshScores: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": components["parameters"]["OpIdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": Record<string, never>;
+            };
+        };
+        responses: {
+            /** @description Measurement aggregates and shadow scores refreshed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        status: "completed";
+                    };
                 };
             };
             default: components["responses"]["OpError"];

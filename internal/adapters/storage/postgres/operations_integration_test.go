@@ -22,6 +22,7 @@ import (
 	platformcrypto "github.com/evepupil/ManyRouter/internal/platform/crypto"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 func TestM1OperationsAcrossSites(t *testing.T) {
@@ -172,6 +173,34 @@ func TestM1OperationsAcrossSites(t *testing.T) {
 	}
 	if jobCount < 6 {
 		t.Fatalf("persisted jobs missing: %d", jobCount)
+	}
+}
+
+func TestM1RejectsDuplicateNewAPIBaseURL(t *testing.T) {
+	store, ctx := newOperationsTestStore(t)
+	vault, err := platformcrypto.NewVault(bytes.Repeat([]byte{0x24}, 32), 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	create := func(code string) error {
+		sealed, err := vault.Encrypt(uuid.New(), credential.PurposeNewAPIAdmin, []byte("integration-test-credential"))
+		if err != nil {
+			return err
+		}
+		key := uuid.NewString()
+		_, err = store.MutateOperations(ctx, domain.Mutation{
+			Kind: "create_site", Actor: "integration-owner", Key: key, RequestHash: key, Sealed: &sealed,
+			Input: domain.SiteInput{Code: code, Name: code, NewAPIBaseURL: "https://same-new-api.example", AdminUserID: 1},
+		})
+		return err
+	}
+	if err := create("first-site"); err != nil {
+		t.Fatal(err)
+	}
+	err = create("second-site")
+	var databaseError *pgconn.PgError
+	if !errors.As(err, &databaseError) || databaseError.Code != "23505" || databaseError.ConstraintName != "sites_new_api_base_url_unique" {
+		t.Fatalf("duplicate New API site was not rejected by its ownership constraint: %v", err)
 	}
 }
 

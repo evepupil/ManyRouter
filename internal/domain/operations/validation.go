@@ -20,9 +20,21 @@ func ValidStrategyKind(kind string) bool {
 	return false
 }
 
-func AutoGroupKey(siteID uuid.UUID, kind string) string {
-	id := uuid.NewSHA1(siteID, []byte(kind))
-	return "mr_a_" + strings.ReplaceAll(id.String(), "-", "")
+func AutoGroupKey(_ uuid.UUID, kind string) string {
+	switch kind {
+	case "lowest_price":
+		return "mrap"
+	case "low_latency":
+		return "mral"
+	case "high_sla":
+		return "mras"
+	case "high_quality":
+		return "mraq"
+	case "balanced":
+		return "mrab"
+	default:
+		return ""
+	}
 }
 
 func ValidateReason(reason string) error {

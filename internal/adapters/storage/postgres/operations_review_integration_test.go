@@ -157,6 +157,61 @@ func TestM1RestorePreservesDisabledStrategyMemberSelection(t *testing.T) {
 	}
 }
 
+func TestM1ExistingStrategyKeepsItsLegacyAutoGroupKey(t *testing.T) {
+	fixture := newOperationsReviewFixture(t)
+	var relationID uuid.UUID
+	if err := fixture.store.pool.QueryRow(fixture.ctx, `SELECT id FROM site_suppliers WHERE site_id=$1`, fixture.siteID).Scan(&relationID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := fixture.execute(domain.Mutation{Kind: "strategy", ID: fixture.siteID, StrategyKind: "balanced", Input: domain.StrategyInput{
+		DisplayName: "Legacy Balanced", Enabled: false, Visible: true, MemberRelationIDs: []uuid.UUID{relationID}, Reason: "create a pre-upgrade strategy",
+	}}); err != nil {
+		t.Fatal(err)
+	}
+	basis := domain.BillingBasis{Hash: strings.Repeat("a", 64), Values: map[string]json.RawMessage{"ModelRatio": json.RawMessage(`{"model-a":1}`)}}
+	raw, err := fixture.execute(domain.Mutation{Kind: "draft_price", Input: domain.PriceInput{
+		SiteID: fixture.siteID, GroupKey: domain.AutoGroupKey(fixture.siteID, "balanced"), SaleRatio: "1.2", Reason: "publish the pre-upgrade price",
+	}, Bases: map[uuid.UUID]domain.BillingBasis{fixture.siteID: basis}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var price struct {
+		ID uuid.UUID `json:"id"`
+	}
+	if err := json.Unmarshal(raw, &price); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := fixture.execute(domain.Mutation{Kind: "publish_price", ID: price.ID, Input: domain.PublishInput{Version: 1}, Bases: map[uuid.UUID]domain.BillingBasis{fixture.siteID: basis}}); err != nil {
+		t.Fatal(err)
+	}
+	legacyGroup := "mr_a_legacy_balanced"
+	if _, err := fixture.store.pool.Exec(fixture.ctx, `UPDATE price_versions SET group_key=$2 WHERE site_id=$1 AND group_key=$3`, fixture.siteID, legacyGroup, domain.AutoGroupKey(fixture.siteID, "balanced")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := fixture.store.pool.Exec(fixture.ctx, `UPDATE site_strategies SET group_key=$2 WHERE site_id=$1 AND kind='balanced'`, fixture.siteID, legacyGroup); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := fixture.store.pool.Exec(fixture.ctx, `UPDATE site_suppliers SET sync_status='active' WHERE site_id=$1`, fixture.siteID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := fixture.execute(domain.Mutation{Kind: "strategy", ID: fixture.siteID, StrategyKind: "balanced", Input: domain.StrategyInput{
+		Version: 1, DisplayName: "Legacy Balanced", Enabled: true, Visible: true, MemberRelationIDs: []uuid.UUID{relationID}, Reason: "keep the pre-upgrade group identity",
+	}}); err != nil {
+		t.Fatalf("pre-upgrade strategy could not reuse its price and group: %v", err)
+	}
+	var payload []byte
+	if err := fixture.store.pool.QueryRow(fixture.ctx, `SELECT snapshot FROM route_plan_versions WHERE site_id=$1 ORDER BY version DESC LIMIT 1`, fixture.siteID).Scan(&payload); err != nil {
+		t.Fatal(err)
+	}
+	snapshot, err := routing.DecodeSnapshot(payload)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(snapshot.AutoGroups) != 1 || snapshot.AutoGroups[0].Key != legacyGroup {
+		t.Fatal("pre-upgrade Auto group identity was replaced")
+	}
+}
+
 func TestM1CandidateReplacementAndCancellationPublishFreshPlans(t *testing.T) {
 	fixture := newOperationsReviewFixture(t)
 	var originalCredentialID uuid.UUID

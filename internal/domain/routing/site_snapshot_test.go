@@ -41,8 +41,8 @@ func siteSnapshotFixture(t *testing.T) routing.Snapshot {
 func TestSiteSnapshotRoundTripAndGroupReferences(t *testing.T) {
 	t.Parallel()
 	snapshot := siteSnapshotFixture(t)
-	snapshot.AutoGroups = []routing.DesiredGroup{{Key: "mr_a_test", DisplayName: "Balanced", SaleRatio: "1.25", Visible: true}}
-	snapshot.Resources[0].Channel.ExtraGroupKeys = []string{"mr_a_test"}
+	snapshot.AutoGroups = []routing.DesiredGroup{{Key: "mrab", DisplayName: "Balanced", SaleRatio: "1.25", Visible: true}}
+	snapshot.Resources[0].Channel.ExtraGroupKeys = []string{"mrab"}
 	snapshot.ResumeRelationIDs = []uuid.UUID{snapshot.RelationID}
 	snapshot.PriceVersionIDs = []uuid.UUID{uuid.New()}
 	snapshot.StrategyVersions = []routing.StrategyReference{{ID: uuid.New(), Version: 3}}
@@ -60,6 +60,16 @@ func TestSiteSnapshotRoundTripAndGroupReferences(t *testing.T) {
 	}
 	if actualHash != expectedHash || len(decoded.Resources[0].Channel.GroupKeys()) != 2 {
 		t.Fatal("site snapshot or channel groups changed during round trip")
+	}
+}
+
+func TestSiteSnapshotAcceptsLegacyAutoGroupKey(t *testing.T) {
+	t.Parallel()
+	snapshot := siteSnapshotFixture(t)
+	snapshot.AutoGroups = []routing.DesiredGroup{{Key: "mr_a_test", DisplayName: "Balanced", SaleRatio: "1.25", Visible: true}}
+	snapshot.Resources[0].Channel.ExtraGroupKeys = []string{"mr_a_test"}
+	if err := routing.ValidateSnapshot(snapshot); err != nil {
+		t.Fatalf("legacy Auto group key was rejected: %v", err)
 	}
 }
 

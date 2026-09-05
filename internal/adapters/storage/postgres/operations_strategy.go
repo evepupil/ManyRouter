@@ -16,7 +16,8 @@ func (o *operationTx) saveStrategy(ctx context.Context, input domain.StrategyInp
 	kind := o.mutation.StrategyKind
 	var id uuid.UUID
 	var version int64
-	err := o.tx.QueryRow(ctx, `SELECT id,version FROM site_strategies WHERE site_id=$1 AND kind=$2`, siteID, kind).Scan(&id, &version)
+	var existingGroupKey string
+	err := o.tx.QueryRow(ctx, `SELECT id,version,group_key FROM site_strategies WHERE site_id=$1 AND kind=$2`, siteID, kind).Scan(&id, &version, &existingGroupKey)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return nil, err
 	}
@@ -24,6 +25,9 @@ func (o *operationTx) saveStrategy(ctx context.Context, input domain.StrategyInp
 		return nil, domain.ErrConflict
 	}
 	groupKey := domain.AutoGroupKey(siteID, kind)
+	if version > 0 {
+		groupKey = existingGroupKey
+	}
 	for _, relationID := range input.MemberRelationIDs {
 		var eligible bool
 		if err = o.tx.QueryRow(ctx, `SELECT r.desired_status='enabled' AND r.sync_status='active' AND s.status='enabled'

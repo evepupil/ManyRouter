@@ -184,7 +184,13 @@ func (s *Service) prepare(ctx context.Context, m *domain.Mutation) error {
 	case domain.StrategyInput:
 		input.DisplayName = strings.TrimSpace(input.DisplayName)
 		m.Input = input
-		return domain.ValidateStrategy(m.StrategyKind, input)
+		if err := domain.ValidateStrategy(m.StrategyKind, input); err != nil {
+			return err
+		}
+		if input.Version == 0 {
+			return s.checkNewAutoGroupOwnership(ctx, m.ID, m.StrategyKind)
+		}
+		return nil
 	case domain.PriceInput:
 		if input.SiteID == uuid.Nil || input.GroupKey == "" {
 			return invalid("价格所属站点和分组不能为空")
@@ -236,6 +242,44 @@ func (s *Service) prepare(ctx context.Context, m *domain.Mutation) error {
 }
 
 func invalid(message string) error { return fmt.Errorf("%w: %s", domain.ErrInvalid, message) }
+
+func (s *Service) checkNewAutoGroupOwnership(ctx context.Context, siteID uuid.UUID, kind string) error {
+	groupKey := domain.AutoGroupKey(siteID, kind)
+	if groupKey == "" {
+		return invalid("固定 Auto 分组类型无效")
+	}
+	access, err := s.store.GetSiteAccess(ctx, siteID)
+	if err != nil {
+		return err
+	}
+	secret, err := s.vault.Decrypt(access.Credential)
+	if err != nil {
+		return err
+	}
+	defer clear(secret)
+	gateway, err := s.gateways.NewForSite(access.BaseURL, secret, access.AdminUserID)
+	if err != nil {
+		return err
+	}
+	actual, err := gateway.ReadActualState(ctx)
+	if err != nil {
+		return err
+	}
+	if _, exists := actual.GroupRatios[groupKey]; exists {
+		return invalid("固定 Auto 分组短码已被站点现有配置占用，请先处理冲突")
+	}
+	if _, exists := actual.UserUsableGroups[groupKey]; exists {
+		return invalid("固定 Auto 分组短码已被站点现有配置占用，请先处理冲突")
+	}
+	for _, channel := range actual.Channels {
+		for _, group := range channel.Groups {
+			if group == groupKey {
+				return invalid("固定 Auto 分组短码已被站点现有配置占用，请先处理冲突")
+			}
+		}
+	}
+	return nil
+}
 
 func validateModels(models []domain.ModelInput) error {
 	if len(models) == 0 || len(models) > 500 {

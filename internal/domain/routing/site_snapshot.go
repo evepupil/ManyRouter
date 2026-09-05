@@ -46,7 +46,7 @@ func validateSiteSnapshot(snapshot Snapshot) error {
 	groups := make(map[string]bool)
 	for _, group := range snapshot.AutoGroups {
 		ratio, err := decimal.NewFromString(group.SaleRatio)
-		if !strings.HasPrefix(group.Key, "mr_a_") || strings.ContainsAny(group.Key, ",\r\n") || group.DisplayName == "" || groups[group.Key] || err != nil || !ratio.IsPositive() || ratio.Exponent() < -6 {
+		if !validAutoGroupKey(group.Key) || strings.ContainsAny(group.Key, ",\r\n") || group.DisplayName == "" || groups[group.Key] || err != nil || !ratio.IsPositive() || ratio.Exponent() < -6 {
 			return errors.New("site snapshot contains an invalid Auto group")
 		}
 		groups[group.Key] = true
@@ -97,4 +97,13 @@ func validateSiteSnapshot(snapshot Snapshot) error {
 		previousStrategy = reference.ID.String()
 	}
 	return nil
+}
+
+func validAutoGroupKey(key string) bool {
+	switch key {
+	case "mrap", "mral", "mras", "mraq", "mrab":
+		return true
+	default:
+		return strings.HasPrefix(key, "mr_a_")
+	}
 }

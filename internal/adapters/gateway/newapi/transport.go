@@ -56,6 +56,8 @@ func (c *Client) request(ctx context.Context, method, path string, body any, tar
 		kind := reconciliation.FailureRetryable
 		if response.StatusCode == http.StatusUnauthorized || response.StatusCode == http.StatusForbidden {
 			kind = reconciliation.FailureAuthentication
+		} else if response.StatusCode == http.StatusTooManyRequests {
+			kind = reconciliation.FailureRetryable
 		} else if response.StatusCode >= 300 && response.StatusCode < 500 {
 			kind = reconciliation.FailureCompatibility
 		}

@@ -185,3 +185,38 @@ func TestClientDoesNotFollowRedirectsWithAdminToken(t *testing.T) {
 		t.Fatal("redirect target received the privileged request")
 	}
 }
+
+func TestHTTPStatusFailureClassification(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name       string
+		statusCode int
+		kind       reconciliation.FailureKind
+		code       string
+	}{
+		{name: "rate limit is retryable", statusCode: http.StatusTooManyRequests, kind: reconciliation.FailureRetryable, code: "gateway_http_429"},
+		{name: "bad request is compatibility", statusCode: http.StatusBadRequest, kind: reconciliation.FailureCompatibility, code: "gateway_http_400"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+				writer.WriteHeader(test.statusCode)
+			}))
+			defer server.Close()
+			client, err := newapi.NewClient(server.URL, []byte("admin-token"), server.Client())
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			_, err = client.Probe(context.Background())
+			var failure *reconciliation.Failure
+			if !errors.As(err, &failure) {
+				t.Fatalf("expected classified failure, got %v", err)
+			}
+			if failure.Kind != test.kind || failure.Code != test.code {
+				t.Fatalf("unexpected failure: kind=%q code=%q", failure.Kind, failure.Code)
+			}
+		})
+	}
+}

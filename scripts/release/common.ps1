@@ -3,7 +3,12 @@ $ErrorActionPreference = "Stop"
 
 $script:ReleaseRepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $script:ReleaseDeployDir = Join-Path $script:ReleaseRepoRoot "deploy"
-$script:ReleaseEnvPath = Join-Path $script:ReleaseDeployDir ".env"
+$configuredEnvironment = [Environment]::GetEnvironmentVariable("MANYROUTER_RELEASE_ENV_FILE")
+$script:ReleaseEnvPath = if ([string]::IsNullOrWhiteSpace($configuredEnvironment)) {
+    Join-Path $script:ReleaseDeployDir ".env"
+} else {
+    [System.IO.Path]::GetFullPath($configuredEnvironment, $script:ReleaseRepoRoot)
+}
 $script:ReleaseWSLDistro = "Ubuntu-24.04"
 $script:ReleaseWSLRoot = "/mnt/c/code/ManyRouter"
 
@@ -68,7 +73,8 @@ function Invoke-ReleaseDocker {
 }
 
 function Invoke-ReleaseCompose {
-    Invoke-ReleaseWSL -Arguments (@("docker", "compose", "--env-file", "deploy/.env", "-f", "deploy/compose.yaml") + $args)
+    $environmentPath = ConvertTo-ReleaseWSLPath $script:ReleaseEnvPath
+    Invoke-ReleaseWSL -Arguments (@("docker", "compose", "--env-file", $environmentPath, "-f", "deploy/compose.yaml") + $args)
 }
 
 function ConvertTo-ReleaseWSLPath {

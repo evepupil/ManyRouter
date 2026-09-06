@@ -1,8 +1,10 @@
 param(
     [string]$Model = "",
-    [string]$NewAPIKey = ""
+    [string]$NewAPIKey = "",
+    [string]$EnvironmentFile = ""
 )
 
+if ($EnvironmentFile) { $env:MANYROUTER_RELEASE_ENV_FILE = $EnvironmentFile }
 . (Join-Path $PSScriptRoot "common.ps1")
 
 $environment = Get-ReleaseEnvironment

@@ -1,5 +1,9 @@
-param([Parameter(Mandatory)][string]$ReleaseDirectory)
+param(
+    [Parameter(Mandatory)][string]$ReleaseDirectory,
+    [string]$EnvironmentFile = ""
+)
 
+if ($EnvironmentFile) { $env:MANYROUTER_RELEASE_ENV_FILE = $EnvironmentFile }
 . (Join-Path $PSScriptRoot "common.ps1")
 
 $backupRoot = [System.IO.Path]::GetFullPath((Join-Path $script:ReleaseDeployDir "backups"))

@@ -1,8 +1,10 @@
 param(
     [Parameter(Mandatory)][string]$ManyRouterImage,
-    [Parameter(Mandatory)][string]$NewAPIImage
+    [Parameter(Mandatory)][string]$NewAPIImage,
+    [string]$EnvironmentFile = ""
 )
 
+if ($EnvironmentFile) { $env:MANYROUTER_RELEASE_ENV_FILE = $EnvironmentFile }
 . (Join-Path $PSScriptRoot "common.ps1")
 & (Join-Path $PSScriptRoot "preflight.ps1") | Out-Null
 $environment = Get-ReleaseEnvironment

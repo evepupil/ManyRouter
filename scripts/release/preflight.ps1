@@ -1,4 +1,9 @@
-param([switch]$AllowMissingLocalImages)
+param(
+    [switch]$AllowMissingLocalImages,
+    [string]$EnvironmentFile = ""
+)
+
+if ($EnvironmentFile) { $env:MANYROUTER_RELEASE_ENV_FILE = $EnvironmentFile }
 
 . (Join-Path $PSScriptRoot "common.ps1")
 

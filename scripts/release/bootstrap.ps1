@@ -1,8 +1,10 @@
 param(
     [switch]$BuildLocal,
-    [switch]$SkipSmoke
+    [switch]$SkipSmoke,
+    [string]$EnvironmentFile = ""
 )
 
+if ($EnvironmentFile) { $env:MANYROUTER_RELEASE_ENV_FILE = $EnvironmentFile }
 . (Join-Path $PSScriptRoot "common.ps1")
 
 if (-not (Test-Path -LiteralPath $script:ReleaseEnvPath)) {

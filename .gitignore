@@ -14,6 +14,8 @@
 node_modules/
 /web/dist/
 /deploy/.env
+/deploy/.env.*
+!/deploy/.env.example
 /deploy/backups/
 /deploy/evidence/
 /.impeccable/review/

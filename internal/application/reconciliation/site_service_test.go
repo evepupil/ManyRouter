@@ -101,6 +101,68 @@ func (factory siteTestFactory) New(string, []byte) (reconciliation.Gateway, erro
 	return factory.gateway, nil
 }
 
+type managedSiteGateway struct {
+	*siteTestGateway
+	batchCalls     int
+	receivedSecret bool
+}
+
+func (g *managedSiteGateway) ReadManagedSyncCapabilities(context.Context) (reconciliation.ManagedSyncCapabilities, error) {
+	return reconciliation.ManagedSyncCapabilities{
+		ContractVersion: reconciliation.ManagedSyncContractVersion,
+		NewAPIVersion:   "managed-test",
+		DatabaseType:    "postgres",
+		Features: reconciliation.ManagedSyncFeatures{
+			AtomicApply: true, ManagedChannels: true, MultipleGroups: true, GroupRatios: true,
+			EntryVisibility: true, PersistentIdempotency: true, FinalStateDigest: true,
+		},
+		Limits: reconciliation.ManagedSyncLimits{
+			MaxChannels: 100, MaxGroups: 20, MaxModels: 500, MaxGroupKeyBytes: 64, MaxRequestBytes: 2 << 20,
+		},
+		BillingBasis:     map[string]json.RawMessage{"ModelRatio": json.RawMessage(`{}`)},
+		BillingBasisHash: g.billingHash,
+	}, nil
+}
+
+func (g *managedSiteGateway) ReadManagedState(context.Context) (reconciliation.ManagedSyncState, error) {
+	return reconciliation.ManagedSyncState{
+		StateHash: strings.Repeat("a", 64), BillingBasisHash: g.billingHash,
+		Actual: reconciliation.ActualState{
+			Version: "managed-test", GroupRatios: map[string]string{}, UserUsableGroups: map[string]string{},
+		},
+	}, nil
+}
+
+func (g *managedSiteGateway) ApplyManagedState(_ context.Context, request reconciliation.ManagedSyncRequest) (reconciliation.ManagedSyncResult, error) {
+	g.batchCalls++
+	actual := reconciliation.ActualState{
+		Version: "managed-test", GroupRatios: make(map[string]string), UserUsableGroups: make(map[string]string),
+		Channels: make([]reconciliation.ActualChannel, 0, len(request.Channels)),
+	}
+	for _, group := range request.Groups {
+		actual.GroupRatios[group.Key] = group.SaleRatio
+		if group.Visible {
+			actual.UserUsableGroups[group.Key] = group.DisplayName
+		}
+	}
+	for index, input := range request.Channels {
+		g.receivedSecret = g.receivedSecret || string(input.APIKey) == "supplier-secret"
+		status := reconciliation.ChannelEnabled
+		if input.Desired.DesiredStatus == routing.DesiredDisabled {
+			status = reconciliation.ChannelManuallyDisabled
+		}
+		channel := actualFromDesired(int64(81+index), input.Desired, status)
+		channel.CredentialVersion = input.Desired.CredentialVersion
+		actual.Channels = append(actual.Channels, channel)
+	}
+	return reconciliation.ManagedSyncResult{
+		Actions: []reconciliation.ManagedSyncAction{{Resource: "channel", Key: request.Channels[0].Desired.ManagedTag, Action: "created", ChannelID: 81}},
+		State: reconciliation.ManagedSyncState{
+			StateHash: strings.Repeat("b", 64), BillingBasisHash: g.billingHash, Actual: actual,
+		},
+	}, nil
+}
+
 func siteFixture(t *testing.T) (*fakeSiteStore, *siteTestGateway, *reconciliation.Service) {
 	t.Helper()
 	bundle := testBundle()
@@ -126,6 +188,28 @@ func siteFixture(t *testing.T) (*fakeSiteStore, *siteTestGateway, *reconciliatio
 		t.Fatal(err)
 	}
 	return store, gateway, service
+}
+
+func TestSiteRunUsesManagedBatchContractWhenAvailable(t *testing.T) {
+	t.Parallel()
+	store, legacy, _ := siteFixture(t)
+	managed := &managedSiteGateway{siteTestGateway: legacy}
+	service, err := reconciliation.NewService(store, fakeVault{}, siteTestFactory{managed}, nil, time.Now, uuid.New)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := service.Run(context.Background(), store.bundle.Operation.ID); err != nil {
+		t.Fatal(err)
+	}
+	if !store.completed || !store.pricesConfirmed || len(store.confirmations) != 1 {
+		t.Fatalf("managed batch was not confirmed: completed=%v prices=%v confirmations=%d failure=%v", store.completed, store.pricesConfirmed, len(store.confirmations), store.failure)
+	}
+	if managed.batchCalls != 1 || !managed.receivedSecret {
+		t.Fatalf("managed batch did not receive the expected request: calls=%d secret=%v", managed.batchCalls, managed.receivedSecret)
+	}
+	if legacy.createCount != 0 || legacy.updateCount != 0 || legacy.ratioCount != 0 || legacy.userGroupCount != 0 {
+		t.Fatalf("legacy writes ran during managed batch: create=%d update=%d ratio=%d groups=%d", legacy.createCount, legacy.updateCount, legacy.ratioCount, legacy.userGroupCount)
+	}
 }
 
 func existingSiteResource(store *fakeSiteStore, gateway *siteTestGateway, status reconciliation.ChannelStatus) {

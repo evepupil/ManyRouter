@@ -22,6 +22,9 @@ var billingOptionKeys = map[string]bool{
 }
 
 func (c *Client) ReadBillingBasis(ctx context.Context) (map[string]json.RawMessage, string, error) {
+	if capabilities, err := c.ReadManagedSyncCapabilities(ctx); err == nil {
+		return capabilities.BillingBasis, capabilities.BillingBasisHash, nil
+	}
 	var response apiResponse[[]option]
 	if err := c.request(ctx, http.MethodGet, "/api/option/", nil, &response, false); err != nil {
 		return nil, "", err

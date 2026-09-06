@@ -117,6 +117,9 @@ func (c *Client) Probe(ctx context.Context) (string, error) {
 }
 
 func (c *Client) ReadActualState(ctx context.Context) (reconciliation.ActualState, error) {
+	if managed, err := c.ReadManagedState(ctx); err == nil {
+		return managed.Actual, nil
+	}
 	version, err := c.Probe(ctx)
 	if err != nil {
 		return reconciliation.ActualState{}, err

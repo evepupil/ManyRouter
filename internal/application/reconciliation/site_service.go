@@ -40,6 +40,9 @@ func (s *Service) runSite(ctx context.Context, bundle Bundle) error {
 	if err != nil {
 		return s.finishFailure(ctx, bundle, "create_gateway", err)
 	}
+	if handled, err := s.tryRunManagedSite(ctx, store, gateway, bundle); handled {
+		return err
+	}
 	actual, err := gateway.ReadActualState(ctx)
 	if err != nil {
 		return s.finishFailure(ctx, bundle, "read_actual", err)

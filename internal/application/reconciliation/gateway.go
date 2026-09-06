@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/evepupil/ManyRouter/internal/domain/routing"
+	"github.com/google/uuid"
 )
 
 type FailureKind string
@@ -52,17 +53,18 @@ const (
 )
 
 type ActualChannel struct {
-	ID           int64
-	ManagedTag   string
-	Name         string
-	Protocol     string
-	BaseURL      string
-	Models       []string
-	ModelMapping map[string]string
-	Groups       []string
-	Priority     int64
-	Weight       int
-	Status       ChannelStatus
+	ID                int64
+	ManagedTag        string
+	Name              string
+	Protocol          string
+	BaseURL           string
+	Models            []string
+	ModelMapping      map[string]string
+	Groups            []string
+	Priority          int64
+	Weight            int
+	Status            ChannelStatus
+	CredentialVersion int32
 }
 
 type ActualState struct {
@@ -116,6 +118,77 @@ func (policy RetryPolicy) AllowsStatus(code int) bool {
 
 type RetryPolicyReader interface {
 	ReadRetryPolicy(context.Context) (RetryPolicy, error)
+}
+
+const ManagedSyncContractVersion = "m4-managed-sync-v1"
+
+type ManagedSyncFeatures struct {
+	AtomicApply           bool
+	ManagedChannels       bool
+	MultipleGroups        bool
+	GroupRatios           bool
+	EntryVisibility       bool
+	PersistentIdempotency bool
+	FinalStateDigest      bool
+}
+
+type ManagedSyncLimits struct {
+	MaxChannels      int
+	MaxGroups        int
+	MaxModels        int
+	MaxGroupKeyBytes int
+	MaxRequestBytes  int64
+}
+
+type ManagedSyncCapabilities struct {
+	ContractVersion  string
+	NewAPIVersion    string
+	DatabaseType     string
+	Features         ManagedSyncFeatures
+	Limits           ManagedSyncLimits
+	RetryPolicy      RetryPolicy
+	BillingBasis     map[string]json.RawMessage
+	BillingBasisHash string
+}
+
+type ManagedSyncState struct {
+	StateHash        string
+	BillingBasisHash string
+	Actual           ActualState
+	Conflicts        []string
+}
+
+type ManagedSyncChannel struct {
+	Desired routing.DesiredChannel
+	APIKey  []byte
+	Resume  bool
+}
+
+type ManagedSyncRequest struct {
+	OperationID       uuid.UUID
+	RoutePlanVersion  int64
+	ExpectedStateHash string
+	Channels          []ManagedSyncChannel
+	Groups            []routing.DesiredGroup
+}
+
+type ManagedSyncAction struct {
+	Resource  string
+	Key       string
+	Action    string
+	ChannelID int64
+}
+
+type ManagedSyncResult struct {
+	Replayed bool
+	Actions  []ManagedSyncAction
+	State    ManagedSyncState
+}
+
+type ManagedSyncGateway interface {
+	ReadManagedSyncCapabilities(context.Context) (ManagedSyncCapabilities, error)
+	ReadManagedState(context.Context) (ManagedSyncState, error)
+	ApplyManagedState(context.Context, ManagedSyncRequest) (ManagedSyncResult, error)
 }
 
 func failuref(kind FailureKind, code, format string, args ...any) *Failure {

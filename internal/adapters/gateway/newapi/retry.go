@@ -12,6 +12,9 @@ import (
 )
 
 func (c *Client) ReadRetryPolicy(ctx context.Context) (reconciliation.RetryPolicy, error) {
+	if capabilities, err := c.ReadManagedSyncCapabilities(ctx); err == nil {
+		return capabilities.RetryPolicy, nil
+	}
 	var response apiResponse[[]option]
 	if err := c.request(ctx, http.MethodGet, "/api/option/", nil, &response, false); err != nil {
 		return reconciliation.RetryPolicy{}, err

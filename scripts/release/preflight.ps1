@@ -46,6 +46,26 @@ Invoke-ReleaseWSL -Arguments @("docker", "version", "--format", "{{.Server.Versi
 Invoke-ReleaseWSL -Arguments @("docker", "compose", "version", "--short") | Out-Null
 Invoke-ReleaseCompose config --quiet | Out-Null
 
+$ownedPorts = [System.Collections.Generic.HashSet[int]]::new()
+try {
+    foreach ($line in @(Invoke-ReleaseCompose ps --format json)) {
+        if ([string]::IsNullOrWhiteSpace($line)) { continue }
+        $container = $line | ConvertFrom-Json
+        foreach ($publisher in @($container.Publishers)) {
+            if ($publisher.PublishedPort) { [void]$ownedPorts.Add([int]$publisher.PublishedPort) }
+        }
+    }
+} catch {
+    throw "无法读取当前发布组合的端口状态"
+}
+foreach ($portKey in @("MANYROUTER_PORT", "NEW_API_PORT")) {
+    $port = [int]$environment[$portKey]
+    if ($ownedPorts.Contains($port)) { continue }
+    $windowsListener = Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue
+    $linuxListener = @(Invoke-ReleaseWSL -Arguments @("sh", "-lc", "ss -H -ltn 'sport = :$port'"))
+    if ($windowsListener -or $linuxListener.Count -gt 0) { throw "$portKey=$port 已被其他进程占用" }
+}
+
 if (-not $AllowMissingLocalImages) {
     foreach ($key in @("POSTGRES_IMAGE", "MANYROUTER_IMAGE", "NEW_API_IMAGE")) {
         Invoke-ReleaseDocker image inspect $environment[$key] | Out-Null

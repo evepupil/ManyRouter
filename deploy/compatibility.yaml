@@ -1,15 +1,24 @@
 version: "2026-09-07.1"
 combinations:
   - mode: managed
-    new_api_version: "78028d1c"
+    new_api_version: "f12c3433"
     contract_version: "m4-managed-sync-v1"
     database_types: ["postgres"]
     support: recommended
-    minimum_rollback_version: "c88bf065"
+    minimum_rollback_version: "78028d1c"
     notes:
       - "窄权限整批同步已通过 SQLite、MySQL 8.4 和 PostgreSQL 17.6 合同测试。"
       - "窄权限日志读取不会返回用户名、令牌名称或用户编号。"
       - "正式组合只启用 PostgreSQL 17.6。"
+      - "手机产品表支持横向读取价格、SLA、延迟和质量。"
+  - mode: managed
+    new_api_version: "78028d1c"
+    contract_version: "m4-managed-sync-v1"
+    database_types: ["postgres"]
+    support: supported
+    minimum_rollback_version: "c88bf065"
+    notes:
+      - "保留为正式组合的上一应用版本。"
   - mode: managed
     new_api_version: "c88bf065"
     contract_version: "m4-managed-sync-v1"

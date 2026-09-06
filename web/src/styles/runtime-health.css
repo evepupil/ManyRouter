@@ -37,6 +37,25 @@
   min-width: 1320px;
 }
 
+.runtime-health-table .table-actions {
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  width: 1%;
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+  white-space: nowrap;
+}
+
+.runtime-health-table th.table-actions {
+  z-index: 2;
+  background: var(--surface-muted);
+}
+
+.runtime-health-table .table tbody tr:hover td.table-actions {
+  background: #f8faf9;
+}
+
 .runtime-issue-cell {
   display: flex;
   max-width: 21rem;

@@ -64,13 +64,11 @@ function Invoke-ReleaseWSL {
 }
 
 function Invoke-ReleaseDocker {
-    param([Parameter(ValueFromRemainingArguments)][string[]]$Arguments)
-    Invoke-ReleaseWSL -Arguments (@("docker") + $Arguments)
+    Invoke-ReleaseWSL -Arguments (@("docker") + $args)
 }
 
 function Invoke-ReleaseCompose {
-    param([Parameter(ValueFromRemainingArguments)][string[]]$Arguments)
-    Invoke-ReleaseWSL -Arguments (@("docker", "compose", "--env-file", "deploy/.env", "-f", "deploy/compose.yaml") + $Arguments)
+    Invoke-ReleaseWSL -Arguments (@("docker", "compose", "--env-file", "deploy/.env", "-f", "deploy/compose.yaml") + $args)
 }
 
 function ConvertTo-ReleaseWSLPath {

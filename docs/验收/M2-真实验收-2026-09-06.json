@@ -1,0 +1,100 @@
+{
+  "version": 2,
+  "accepted_at": "2026-09-06",
+  "scope": {
+    "supplier_records": 3,
+    "real_upstreams": 1,
+    "independent_gateways": 2,
+    "summary": "3 个独立供应商记录共用 1 个真实上游，并投放到 2 个独立临时 New API 进程。"
+  },
+  "evidence_adjustments": [
+    {
+      "field": "counts.temporary_keys_created",
+      "raw_value": 4,
+      "archived_value": 8,
+      "reason": "原始计数在首批 4 条密钥后写入，随后又为其余供应商创建 4 条密钥；清理阶段逐条确认 8 条均已删除。验收代码已同步修正。"
+    }
+  ],
+  "limitations": [
+    "真实性对比只覆盖同一真实上游的正向一致路径，不能证明不同厂商或不同模型的识别能力。",
+    "没有覆盖已知不同模型的反例、多时段盲测、长期漂移和生产可信参考。",
+    "主动测评只覆盖供应商直连，站点链路专用探测密钥和真实路径仍待实现。",
+    "日志来源为 New API 管理接口，ClickHouse 稳定日志键与真实进程中断续传仍待验证。"
+  ],
+  "post_run_cleanup": {
+    "temporary_database_schema_removed": true,
+    "temporary_gateway_processes_removed": true
+  },
+  "versions": {
+    "gateway_1": "v0.0.0",
+    "gateway_2": "v0.0.0"
+  },
+  "counts": {
+    "comparison_fingerprint_samples": 96,
+    "health_evaluations": 3,
+    "local_superseded_operations": 2,
+    "local_user_keys_before": 0,
+    "quality_evaluations": 3,
+    "real_model_calls": 8,
+    "real_superseded_operations": 2,
+    "real_upstreams": 1,
+    "real_user_keys_after": 0,
+    "real_user_keys_before": 0,
+    "reference_fingerprint_samples": 96,
+    "site_1_measurement_attempts": 9,
+    "site_1_score_snapshots": 12,
+    "site_1_source_requests": 9,
+    "site_2_measurement_attempts": 9,
+    "site_2_score_snapshots": 12,
+    "site_2_source_requests": 9,
+    "sites": 2,
+    "supplier_records": 3,
+    "temporary_keys_created": 8,
+    "temporary_keys_removed": 8
+  },
+  "checks": {
+    "all_supplier_records_received_real_traffic": true,
+    "authenticity_consistent": true,
+    "authenticity_suspicious": false,
+    "collection_watermarks_advanced": true,
+    "dedicated_and_auto_keys_called": true,
+    "different_auto_prices_configured": true,
+    "different_manual_members_configured": true,
+    "health_and_quality_results_queryable": true,
+    "independent_site_processes": true,
+    "independent_supplier_records": true,
+    "local_usage_increased": true,
+    "main_chain_completed": true,
+    "passed": true,
+    "real_usage_increased": true,
+    "score_explanations_queryable": true,
+    "shadow_scoring_did_not_change_routes": true,
+    "shared_upstream_authenticity_compared": true,
+    "site_0_initial_supersession": true,
+    "site_1_initial_supersession": true,
+    "source_logs_reconciled": true,
+    "temporary_keys_removed": true,
+    "temporary_site_paused": true,
+    "trusted_reference_promoted": true,
+    "two_score_rounds_persisted": true
+  },
+  "stages": [
+    { "phase": "configuration", "passed": true },
+    { "phase": "acceptance_lock", "passed": true },
+    { "phase": "ephemeral_database", "passed": true },
+    { "phase": "independent_gateways", "passed": true },
+    { "phase": "m2_backend", "passed": true },
+    { "phase": "suppliers_and_deployments", "passed": true },
+    { "phase": "start_worker", "passed": true },
+    { "phase": "first_gateway_sync", "passed": true },
+    { "phase": "second_gateway_sync", "passed": true },
+    { "phase": "manual_strategies", "passed": true },
+    { "phase": "real_traffic", "passed": true },
+    { "phase": "log_collection", "passed": true },
+    { "phase": "health_and_quality", "passed": true },
+    { "phase": "authenticity", "passed": true },
+    { "phase": "shadow_scoring", "passed": true },
+    { "phase": "cleanup_entry_access", "passed": true },
+    { "phase": "cleanup_temp_site", "passed": true }
+  ]
+}

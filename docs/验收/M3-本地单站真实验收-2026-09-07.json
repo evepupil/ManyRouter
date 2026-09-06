@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "accepted_at": "2026-09-07",
+  "scope": {
+    "supplier_records": 3,
+    "real_upstreams": 1,
+    "independent_gateways": 1,
+    "fixed_auto_products": 1,
+    "summary": "在 WSL 的独立 PostgreSQL New API 实例上完成 3 条专属线路、1 个三成员均衡 Auto、用户产品页、真实调用和首字前故障切换验收。"
+  },
+  "versions": {
+    "manyrouter": "d1c3bc8",
+    "new_api": "a3e8abb8",
+    "postgresql": "17.6"
+  },
+  "runtime": {
+    "site_id": "e4d61187-4bde-4853-a7af-71b4ca83c76c",
+    "route_plan_id": "2788e463-fbb5-4cf4-9425-8391387bb56d",
+    "product_contract": "m3-site-products-v1",
+    "product_snapshot_version": 4,
+    "balanced_group": "mrab",
+    "automation_run_id": "83459a50-bb10-4432-883c-8cb3eaf1ee78",
+    "score_run_id": "06321580-ebf0-4b39-8008-7ace6f95b865",
+    "request_id": "202609061559401810004208268d9d64wbJRUPM"
+  },
+  "counts": {
+    "dedicated_products": 3,
+    "fixed_auto_products": 1,
+    "fixed_auto_members": 3,
+    "real_model_calls": 1,
+    "observed_route_attempts": 2,
+    "managed_channels_before": 3,
+    "managed_channels_after": 3,
+    "temporary_channels_created": 1,
+    "temporary_channels_removed": 1,
+    "active_user_keys_before": 0,
+    "active_user_keys_after": 0,
+    "temporary_keys_created": 1,
+    "temporary_keys_removed": 1
+  },
+  "checks": {
+    "scope_passed": true,
+    "milestone_complete": false,
+    "new_api_uses_postgresql": true,
+    "manyrouter_uses_postgresql": true,
+    "three_dedicated_products_visible": true,
+    "balanced_auto_visible": true,
+    "balanced_auto_has_three_members": true,
+    "balanced_auto_reports_failover_ready": true,
+    "current_prices_visible": true,
+    "dedicated_prices_unchanged_after_basis_review": true,
+    "product_page_zhcn_locale_valid": true,
+    "product_page_console_clean_after_reload": true,
+    "real_request_succeeded": true,
+    "first_attempt_used_controlled_failure_channel": true,
+    "retry_used_managed_channel": true,
+    "retry_chain_was_4_to_1": true,
+    "request_log_collected": true,
+    "auto_product_sla_reflected_real_log": true,
+    "automation_compatibility_passed": true,
+    "automation_run_recorded": true,
+    "insufficient_evidence_kept_all_members": true,
+    "temporary_resources_removed": true,
+    "existing_managed_channels_preserved": true
+  },
+  "observations": {
+    "balanced_sla_percent": 100,
+    "balanced_status": "insufficient",
+    "automation_status": "no_change",
+    "automation_summary": "完整评分批次未产生成员变化",
+    "final_channel_id": 1,
+    "attempted_channel_ids": [4, 1]
+  },
+  "limitations": [
+    "本轮只覆盖 1 个独立 New API 实例，尚未满足 M3 的双站真实验收范围。",
+    "3 个供应商记录共用 1 个真实上游，未覆盖不同厂商的故障差异。",
+    "受控失败验证了 New API 首字前重试；没有伪造 M2 证据，因此没有强行制造自动成员退出与连续恢复。",
+    "当前真实样本量不足，页面正确显示数据不足；延迟、质量和高可信 SLA 仍需持续真实流量。",
+    "账号分组隔离、第二站产品刷新和自动成员变化后的价格保持仍待真实验收。"
+  ],
+  "post_run_cleanup": {
+    "temporary_channel_removed": true,
+    "temporary_key_removed": true,
+    "active_channels_restored_to_managed_set": true,
+    "historical_request_log_preserved": true,
+    "previous_application_containers_preserved_stopped": true
+  }
+}

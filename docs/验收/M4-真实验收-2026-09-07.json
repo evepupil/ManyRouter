@@ -1,0 +1,180 @@
+{
+  "version": 1,
+  "accepted_at": "2026-09-07",
+  "scope": {
+    "combination_version": "2026-09-07.1",
+    "wsl_instances": 2,
+    "native_linux_instances": 1,
+    "real_upstreams": 1,
+    "summary": "同一组 ManyRouter、New API 与 PostgreSQL 正式镜像在两套独立 WSL 环境和一套隔离原生 Linux 环境完成发布验证；两套 WSL 均完成真实模型调用、日志采集和临时令牌清理。"
+  },
+  "source": {
+    "manyrouter_commit": "7c9ffbaa9f83df2e2cfd6a2936540d0d5ac3fdfc",
+    "new_api_commit": "58e7a9af438da1308dc22282e5ae06ee635c0a3d",
+    "new_api_release_workflow_commit": "d780066bdb78dccefbf074ac82e27638a4f0dadb",
+    "compatibility_catalog": "2026-09-07.1",
+    "sync_contract": "m4-managed-sync-v1",
+    "product_contract": "m3-site-products-v1",
+    "postgresql": "17.6"
+  },
+  "published_images": {
+    "manyrouter": {
+      "reference": "ghcr.io/evepupil/manyrouter:2026-09-07.1",
+      "digest": "sha256:fbb9a29b75bd16533f1581be1ac246082826c8b91a9f0625cbb06bc8183db7a1",
+      "platforms": {
+        "linux_amd64": "sha256:20084e864a2e559a237076803623807217701f0899c36ff81eb8d226b47e51f2",
+        "linux_arm64": "sha256:3910dab94ad2761d945a25bc4e8e1151d1d6801cdfb84100c39fe3096d62c33d"
+      },
+      "workflow_run": "https://github.com/evepupil/ManyRouter/actions/runs/34060028112"
+    },
+    "new_api": {
+      "reference": "ghcr.io/evepupil/new-api:manyrouter-2026-09-07.1",
+      "digest": "sha256:375a5a0f6026da0078cfe7df99f7633852d2b364d07fd697c81cadaad8452005",
+      "platforms": {
+        "linux_amd64": "sha256:2f99b33f8af66c24d8ce4bf2109e6b0e93e0a6195fbe4ef2703a6f3a527cc915",
+        "linux_arm64": "sha256:faedee62fff9d02abac37be48dce4adc202eda19cbdc2869b1efb2c7e941184d"
+      },
+      "workflow_run": "https://github.com/evepupil/new-api/actions/runs/34060166684"
+    },
+    "public_digest_pull_verified": true,
+    "provenance_and_sbom_attached": true
+  },
+  "wsl_environments": [
+    {
+      "project": "manyrouter-release",
+      "ports": { "manyrouter": 8082, "new_api": 3001 },
+      "services_healthy": 4,
+      "named_volumes": 4,
+      "sites": 1,
+      "suppliers": 1,
+      "active_relations": 1,
+      "confirmed_plans": 1,
+      "succeeded_syncs": 1,
+      "managed_channels": 1,
+      "managed_groups": 1,
+      "products": 1,
+      "product_request_samples": 3,
+      "real_model_calls_on_published_digest": 1,
+      "collected_requests_in_final_call": 1,
+      "collected_attempts_in_final_call": 1,
+      "data_gap": false,
+      "resolved_test_log_quarantines": 1,
+      "unresolved_quarantines": 0,
+      "active_user_tokens_after": 0
+    },
+    {
+      "project": "manyrouter-release-2",
+      "ports": { "manyrouter": 8083, "new_api": 3003 },
+      "services_healthy": 4,
+      "named_volumes": 4,
+      "sites": 1,
+      "suppliers": 1,
+      "active_relations": 1,
+      "confirmed_plans": 1,
+      "succeeded_syncs": 1,
+      "managed_channels": 1,
+      "managed_groups": 1,
+      "products": 1,
+      "product_request_samples": 2,
+      "real_model_calls_on_published_digest": 1,
+      "collected_requests_in_final_call": 1,
+      "collected_attempts_in_final_call": 1,
+      "data_gap": false,
+      "resolved_test_log_quarantines": 0,
+      "unresolved_quarantines": 0,
+      "active_user_tokens_after": 0
+    }
+  ],
+  "isolation": {
+    "separate_compose_projects": true,
+    "separate_named_volumes": true,
+    "separate_databases": true,
+    "database_passwords_distinct": true,
+    "manyrouter_master_keys_distinct": true,
+    "operator_tokens_distinct": true,
+    "new_api_session_secrets_distinct": true,
+    "sync_tokens_distinct": true,
+    "product_tokens_distinct": true,
+    "original_ports_3000_and_8081_untouched": true,
+    "repeated_second_site_bootstrap_kept_single_site_and_product_token": true
+  },
+  "upgrade_and_rollback": {
+    "three_database_backups_before_each_upgrade": true,
+    "automatic_application_rollback_verified": true,
+    "rollback_returned_to_previous_image_pair": true,
+    "database_restore_performed": false,
+    "upgrade_after_rollback_succeeded": true,
+    "final_digest_upgrade_succeeded_on_both_wsl_projects": true,
+    "final_backup_bytes": {
+      "manyrouter-release": {
+        "manyrouter": 214036,
+        "new_api": 130722,
+        "new_api_log": 8567
+      },
+      "manyrouter-release-2": {
+        "manyrouter": 201698,
+        "new_api": 129842,
+        "new_api_log": 8380
+      }
+    }
+  },
+  "native_linux": {
+    "kernel": "Linux 6.8.0-71-generic",
+    "host_architecture": "x86_64",
+    "docker_version": "29.1.5",
+    "compose_version": "5.0.1",
+    "manyrouter_image_architecture": "amd64",
+    "new_api_image_architecture": "amd64",
+    "services_healthy": 4,
+    "named_volumes": 4,
+    "sites": 1,
+    "active_product_tokens": 1,
+    "compatibility": "compatible",
+    "new_api_version": "58e7a9af",
+    "repeated_compose_up": true,
+    "temporary_project_removed": true,
+    "temporary_volumes_removed": true,
+    "temporary_ports_released": true
+  },
+  "browser": {
+    "browser": "Microsoft Edge",
+    "desktop_viewport": "1440x900",
+    "mobile_viewport": "390x844",
+    "environments_checked": 2,
+    "desktop_document_overflow": false,
+    "mobile_document_overflow": false,
+    "mobile_table_scroll_containers_per_environment": 1,
+    "console_errors": 0,
+    "page_errors": 0,
+    "model_product_price_supplier_sla_latency_quality_and_time_visible": true,
+    "mobile_action_column_visible": true
+  },
+  "checks": {
+    "release_scope_passed": true,
+    "milestone_complete": false,
+    "multi_arch_images_published": true,
+    "published_digests_run_on_wsl": true,
+    "published_digests_run_on_native_linux": true,
+    "two_independent_sites_initialized": true,
+    "second_site_initialized_from_empty_volumes": true,
+    "repeat_initialization_idempotent": true,
+    "real_calls_succeeded_on_both_sites": true,
+    "real_logs_collected_on_both_sites": true,
+    "channel_test_logs_excluded": true,
+    "no_unresolved_data_gap": true,
+    "product_pages_verified_on_desktop_and_mobile": true,
+    "temporary_resources_removed": true
+  },
+  "limitations": [
+    "M4 依赖的 M3 仍缺真实证据驱动的自动成员变化、连续恢复和对应价格保持验收，因此 M4 里程碑整体状态继续为进行中。",
+    "原生 Linux 验收覆盖公开摘要拉取、空库初始化、兼容、产品合同、指标和重复启动；真实供应商调用已在两套 WSL 正式摘要环境完成，没有把上游密钥复制到远端主机。",
+    "当前每站真实样本仍少，产品页正确显示数据不足；这不影响发布链路验收，也不代表已经形成高可信 SLA、延迟或质量结论。"
+  ],
+  "post_run_cleanup": {
+    "temporary_user_tokens_removed": true,
+    "temporary_native_linux_environment_removed": true,
+    "wsl_release_environments_left_running": true,
+    "historical_call_logs_preserved": true,
+    "resolved_preflight_log_kept_as_history": true
+  }
+}

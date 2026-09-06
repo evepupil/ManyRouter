@@ -1,7 +1,7 @@
 # New API 正式集成与兼容模块设计
 
 > 模块定位：用每站窄权限令牌和整批接口替代正式站点上的广泛管理权限，并用能力合同判断 ManyRouter 与 New API 是否可以安全协作
-> 对应代码：`internal/application/compatibility`、`internal/adapters/gateway/newapi`、`internal/adapters/storage/postgres/compatibility.go`、`internal/application/reconciliation/site_managed_sync.go`、`internal/transport/http/runtime_health.go`、`api/operations.yaml`、`new-api/controller/manyrouter_sync.go`、`new-api/controller/manyrouter_logs.go`、`new-api/service/manyrouter/sync.go`、`new-api/model/manyrouter_sync*.go`、`new-api/router/api-router.go`
+> 对应代码：`internal/application/compatibility`、`internal/adapters/gateway/newapi`、`internal/adapters/storage/postgres/compatibility.go`、`internal/application/reconciliation/site_managed_sync.go`、`internal/transport/http/runtime_health.go`、`api/operations.yaml`、`new-api/controller/manyrouter_sync.go`、`new-api/controller/manyrouter_logs.go`、`new-api/service/manyrouter/sync.go`、`new-api/model/manyrouter_sync*.go`、`new-api/router/api-router.go`、`new-api/.github/workflows/manyrouter-release-image.yml`
 > 所属里程碑：[M4 - 完成正式集成与可复制发布](../roadmap.md#m4)
 > 当前状态：进行中
 > 最近更新时间：2026-09-07
@@ -191,6 +191,8 @@ ManyRouter 已实现对应客户端和整站同步执行：支持能力、状态
 
 当前自动化结果：New API 的 SQLite 合同测试、MySQL 8.4 与 PostgreSQL 17.6 数据库矩阵、裁剪日志合同、定向 `go vet` 和竞态检查通过；ManyRouter 的 New API 适配器、日志回退、兼容规则、整站同步批准门槛与 PostgreSQL 检查历史测试通过。
 
+2026-09-07 真实发布验收使用 New API `58e7a9af`：两套独立 PostgreSQL 实例均通过 `m4-managed-sync-v1` 兼容检查、整批同步、真实模型调用和裁剪日志采集。修复前一条渠道编号为 0 的“模型测试”日志经逐项核对后标记为已处理；最终两站窄日志均没有无效渠道记录，采集状态均为无数据缺口。New API 正式镜像已发布 `linux/amd64` 与 `linux/arm64` 清单，统一摘要见[M4 真实验收](../验收/M4-真实验收-2026-09-07.json)。
+
 ## 11. 待扩展项
 
 - 多个 ManyRouter 控制面共享同一 New API 的细粒度租户令牌。
@@ -202,6 +204,7 @@ ManyRouter 已实现对应客户端和整站同步执行：支持能力、状态
 
 | 日期 | 说明 |
 |---|---|
+| 2026-09-07 | 发布 New API 双架构正式镜像；完成两站窄权限同步、真实调用和无预检日志污染验收 |
 | 2026-09-07 | 排除渠道预检内部日志，避免新站首次采集出现无效渠道假缺口 |
 | 2026-09-07 | 修正手机产品表，价格、SLA、延迟和质量可通过横向滚动读取 |
 | 2026-09-07 | 增加裁剪日志读取、兼容清单与检查历史；正式整批同步必须先通过当前清单批准 |

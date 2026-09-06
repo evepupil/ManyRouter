@@ -34,7 +34,7 @@
 }
 
 .runtime-health-table .table {
-  min-width: 1320px;
+  min-width: 1120px;
 }
 
 .runtime-health-table .table-actions {
@@ -56,11 +56,9 @@
   background: #f8faf9;
 }
 
-.runtime-issue-cell {
-  display: flex;
-  max-width: 21rem;
-  flex-direction: column;
-  gap: var(--space-1);
+.runtime-site-issue {
+  max-width: 16rem;
+  color: var(--warning);
   overflow-wrap: anywhere;
 }
 

@@ -84,6 +84,13 @@ export function RuntimeHealthPage() {
                         {row.site_id === siteId && <Badge>当前站点</Badge>}
                       </div>
                       <div className="cell-sub">{row.site_code}</div>
+                      {row.reasons[0] && (
+                        <div className="cell-sub runtime-site-issue">
+                          {row.reasons[0].message}
+                          {row.reasons.length > 1 &&
+                            `，另有 ${row.reasons.length - 1} 项`}
+                        </div>
+                      )}
                     </>
                   ),
                 },
@@ -170,23 +177,6 @@ export function RuntimeHealthPage() {
                       empty="尚未生成"
                     />
                   ),
-                },
-                {
-                  key: "issues",
-                  title: "待处理",
-                  render: (row) =>
-                    row.reasons[0] ? (
-                      <div className="runtime-issue-cell">
-                        <span>{row.reasons[0].message}</span>
-                        {row.reasons.length > 1 && (
-                          <span className="cell-sub">
-                            另有 {row.reasons.length - 1} 项
-                          </span>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="muted">无</span>
-                    ),
                 },
                 {
                   key: "actions",

@@ -100,7 +100,9 @@ func bodyLimit() gin.HandlerFunc {
 
 func operatorAuthentication(expected string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if c.Request.URL.Path == managementAPI+"/healthz" || siteCatalogEndpoint(c.Request.Method, c.Request.URL.Path) {
+		path := c.Request.URL.Path
+		if (!strings.HasPrefix(path, "/api/") && path != "/api" && path != "/metrics") ||
+			path == managementAPI+"/healthz" || siteCatalogEndpoint(c.Request.Method, path) {
 			c.Next()
 			return
 		}

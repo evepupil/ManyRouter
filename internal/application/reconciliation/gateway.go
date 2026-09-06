@@ -130,6 +130,7 @@ type ManagedSyncFeatures struct {
 	EntryVisibility       bool
 	PersistentIdempotency bool
 	FinalStateDigest      bool
+	LogRead               bool
 }
 
 type ManagedSyncLimits struct {
@@ -189,6 +190,10 @@ type ManagedSyncGateway interface {
 	ReadManagedSyncCapabilities(context.Context) (ManagedSyncCapabilities, error)
 	ReadManagedState(context.Context) (ManagedSyncState, error)
 	ApplyManagedState(context.Context, ManagedSyncRequest) (ManagedSyncResult, error)
+}
+
+type ManagedSyncApprovalStore interface {
+	ManagedSyncApproved(context.Context, uuid.UUID, ManagedSyncCapabilities) (bool, error)
 }
 
 func failuref(kind FailureKind, code, format string, args ...any) *Failure {

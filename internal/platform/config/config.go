@@ -18,13 +18,14 @@ const (
 )
 
 type Config struct {
-	Mode             Mode
-	DatabaseURL      string
-	HTTPAddress      string
-	MasterKey        string
-	OperatorToken    string
-	LogLevel         string
-	AuthCookieSecure bool
+	Mode              Mode
+	DatabaseURL       string
+	HTTPAddress       string
+	MasterKey         string
+	OperatorToken     string
+	LogLevel          string
+	AuthCookieSecure  bool
+	CompatibilityFile string
 }
 
 func Load(mode Mode) (Config, error) {
@@ -32,13 +33,14 @@ func Load(mode Mode) (Config, error) {
 		return Config{}, fmt.Errorf("unsupported mode %q", mode)
 	}
 	config := Config{
-		Mode:             mode,
-		DatabaseURL:      strings.TrimSpace(os.Getenv("MANYROUTER_DATABASE_URL")),
-		HTTPAddress:      strings.TrimSpace(os.Getenv("MANYROUTER_HTTP_ADDRESS")),
-		MasterKey:        strings.TrimSpace(os.Getenv("MANYROUTER_MASTER_KEY")),
-		OperatorToken:    strings.TrimSpace(os.Getenv("MANYROUTER_OPERATOR_TOKEN")),
-		LogLevel:         strings.ToLower(strings.TrimSpace(os.Getenv("MANYROUTER_LOG_LEVEL"))),
-		AuthCookieSecure: true,
+		Mode:              mode,
+		DatabaseURL:       strings.TrimSpace(os.Getenv("MANYROUTER_DATABASE_URL")),
+		HTTPAddress:       strings.TrimSpace(os.Getenv("MANYROUTER_HTTP_ADDRESS")),
+		MasterKey:         strings.TrimSpace(os.Getenv("MANYROUTER_MASTER_KEY")),
+		OperatorToken:     strings.TrimSpace(os.Getenv("MANYROUTER_OPERATOR_TOKEN")),
+		LogLevel:          strings.ToLower(strings.TrimSpace(os.Getenv("MANYROUTER_LOG_LEVEL"))),
+		AuthCookieSecure:  true,
+		CompatibilityFile: strings.TrimSpace(os.Getenv("MANYROUTER_COMPATIBILITY_FILE")),
 	}
 	if raw := strings.TrimSpace(os.Getenv("MANYROUTER_AUTH_COOKIE_SECURE")); raw != "" {
 		secure, err := strconv.ParseBool(raw)
@@ -55,6 +57,9 @@ func Load(mode Mode) (Config, error) {
 	}
 	if config.LogLevel == "" {
 		config.LogLevel = "info"
+	}
+	if config.CompatibilityFile == "" {
+		config.CompatibilityFile = "deploy/compatibility.yaml"
 	}
 	if config.LogLevel != "debug" && config.LogLevel != "info" && config.LogLevel != "warn" && config.LogLevel != "error" {
 		return Config{}, errors.New("MANYROUTER_LOG_LEVEL must be debug, info, warn, or error")

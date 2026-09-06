@@ -14,6 +14,7 @@ import (
 	"github.com/evepupil/ManyRouter/internal/application/idempotency"
 	"github.com/evepupil/ManyRouter/internal/application/onboarding"
 	"github.com/evepupil/ManyRouter/internal/application/reconciliation"
+	"github.com/evepupil/ManyRouter/internal/application/runtimehealth"
 	"github.com/evepupil/ManyRouter/internal/domain/operations"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
@@ -90,6 +91,10 @@ func (h *Handler) writeApplicationError(c *gin.Context, err error) {
 	}
 	if errors.Is(err, operations.ErrNotFound) {
 		writeError(c, stdhttp.StatusNotFound, "not_found", "请求的业务对象不存在")
+		return
+	}
+	if errors.Is(err, runtimehealth.ErrNotFound) {
+		writeError(c, stdhttp.StatusNotFound, "not_found", "请求的站点不存在")
 		return
 	}
 	var gatewayFailure *reconciliation.Failure

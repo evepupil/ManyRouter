@@ -164,6 +164,51 @@ func (e OpAutomationRunTriggerKind) Valid() bool {
 	}
 }
 
+// Defines values for OpCompatibilityCheckMode.
+const (
+	OpCompatibilityCheckModeLegacy  OpCompatibilityCheckMode = "legacy"
+	OpCompatibilityCheckModeManaged OpCompatibilityCheckMode = "managed"
+	OpCompatibilityCheckModeUnknown OpCompatibilityCheckMode = "unknown"
+)
+
+// Valid indicates whether the value is a known member of the OpCompatibilityCheckMode enum.
+func (e OpCompatibilityCheckMode) Valid() bool {
+	switch e {
+	case OpCompatibilityCheckModeLegacy:
+		return true
+	case OpCompatibilityCheckModeManaged:
+		return true
+	case OpCompatibilityCheckModeUnknown:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpCompatibilityCheckVerdict.
+const (
+	OpCompatibilityCheckVerdictCompatible   OpCompatibilityCheckVerdict = "compatible"
+	OpCompatibilityCheckVerdictIncompatible OpCompatibilityCheckVerdict = "incompatible"
+	OpCompatibilityCheckVerdictUnreachable  OpCompatibilityCheckVerdict = "unreachable"
+	OpCompatibilityCheckVerdictUnverified   OpCompatibilityCheckVerdict = "unverified"
+)
+
+// Valid indicates whether the value is a known member of the OpCompatibilityCheckVerdict enum.
+func (e OpCompatibilityCheckVerdict) Valid() bool {
+	switch e {
+	case OpCompatibilityCheckVerdictCompatible:
+		return true
+	case OpCompatibilityCheckVerdictIncompatible:
+		return true
+	case OpCompatibilityCheckVerdictUnreachable:
+		return true
+	case OpCompatibilityCheckVerdictUnverified:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for OpCreateSiteInputStatus.
 const (
 	OpCreateSiteInputStatusDisabled OpCreateSiteInputStatus = "disabled"
@@ -461,6 +506,48 @@ func (e OpRelationInputDesiredStatus) Valid() bool {
 	case OpRelationInputDesiredStatusDisabled:
 		return true
 	case OpRelationInputDesiredStatusEnabled:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpRuntimeLevel.
+const (
+	OpRuntimeLevelAttention OpRuntimeLevel = "attention"
+	OpRuntimeLevelBlocked   OpRuntimeLevel = "blocked"
+	OpRuntimeLevelFault     OpRuntimeLevel = "fault"
+	OpRuntimeLevelNormal    OpRuntimeLevel = "normal"
+)
+
+// Valid indicates whether the value is a known member of the OpRuntimeLevel enum.
+func (e OpRuntimeLevel) Valid() bool {
+	switch e {
+	case OpRuntimeLevelAttention:
+		return true
+	case OpRuntimeLevelBlocked:
+		return true
+	case OpRuntimeLevelFault:
+		return true
+	case OpRuntimeLevelNormal:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpRuntimeSiteSiteStatus.
+const (
+	OpRuntimeSiteSiteStatusDisabled OpRuntimeSiteSiteStatus = "disabled"
+	OpRuntimeSiteSiteStatusEnabled  OpRuntimeSiteSiteStatus = "enabled"
+)
+
+// Valid indicates whether the value is a known member of the OpRuntimeSiteSiteStatus enum.
+func (e OpRuntimeSiteSiteStatus) Valid() bool {
+	switch e {
+	case OpRuntimeSiteSiteStatusDisabled:
+		return true
+	case OpRuntimeSiteSiteStatusEnabled:
 		return true
 	default:
 		return false
@@ -1100,6 +1187,71 @@ type OpCollectionStatusList struct {
 	Items []OpCollectionStatus `json:"items"`
 }
 
+// OpCompatibilityCapabilities defines model for OpCompatibilityCapabilities.
+type OpCompatibilityCapabilities struct {
+	Features         OpCompatibilityFeatures `json:"features"`
+	Limits           OpCompatibilityLimits   `json:"limits"`
+	RetryStatusCodes []string                `json:"retry_status_codes"`
+	RetryTimes       int                     `json:"retry_times"`
+}
+
+// OpCompatibilityCheck defines model for OpCompatibilityCheck.
+type OpCompatibilityCheck struct {
+	BillingBasisHash string                      `json:"billing_basis_hash"`
+	Capabilities     OpCompatibilityCapabilities `json:"capabilities"`
+	CatalogVersion   string                      `json:"catalog_version"`
+	CheckedAt        time.Time                   `json:"checked_at"`
+	CheckedBy        string                      `json:"checked_by"`
+	Conflicts        []string                    `json:"conflicts"`
+	ContractVersion  string                      `json:"contract_version"`
+	DatabaseType     string                      `json:"database_type"`
+	ErrorCode        *string                     `json:"error_code,omitempty"`
+	ErrorMessage     *string                     `json:"error_message,omitempty"`
+	Id               openapi_types.UUID          `json:"id"`
+	Mode             OpCompatibilityCheckMode    `json:"mode"`
+	NewApiVersion    string                      `json:"new_api_version"`
+	Reasons          []OpCompatibilityReason     `json:"reasons"`
+	SiteCode         string                      `json:"site_code"`
+	SiteId           openapi_types.UUID          `json:"site_id"`
+	SiteName         string                      `json:"site_name"`
+	StateHash        string                      `json:"state_hash"`
+	Verdict          OpCompatibilityCheckVerdict `json:"verdict"`
+}
+
+// OpCompatibilityCheckMode defines model for OpCompatibilityCheck.Mode.
+type OpCompatibilityCheckMode string
+
+// OpCompatibilityCheckVerdict defines model for OpCompatibilityCheck.Verdict.
+type OpCompatibilityCheckVerdict string
+
+// OpCompatibilityFeatures defines model for OpCompatibilityFeatures.
+type OpCompatibilityFeatures struct {
+	AtomicApply           bool `json:"atomic_apply"`
+	EntryVisibility       bool `json:"entry_visibility"`
+	FinalStateDigest      bool `json:"final_state_digest"`
+	GroupRatios           bool `json:"group_ratios"`
+	LogRead               bool `json:"log_read"`
+	ManagedChannels       bool `json:"managed_channels"`
+	MultipleGroups        bool `json:"multiple_groups"`
+	PersistentIdempotency bool `json:"persistent_idempotency"`
+}
+
+// OpCompatibilityLimits defines model for OpCompatibilityLimits.
+type OpCompatibilityLimits struct {
+	MaxChannels      int   `json:"max_channels"`
+	MaxGroupKeyBytes int   `json:"max_group_key_bytes"`
+	MaxGroups        int   `json:"max_groups"`
+	MaxModels        int   `json:"max_models"`
+	MaxRequestBytes  int64 `json:"max_request_bytes"`
+}
+
+// OpCompatibilityReason defines model for OpCompatibilityReason.
+type OpCompatibilityReason struct {
+	Action  *string `json:"action,omitempty"`
+	Code    string  `json:"code"`
+	Message string  `json:"message"`
+}
+
 // OpCreateSiteInput defines model for OpCreateSiteInput.
 type OpCreateSiteInput struct {
 	AdminUserId       *int64                   `json:"admin_user_id,omitempty"`
@@ -1432,6 +1584,138 @@ type OpRestoreInput struct {
 	Reason string `json:"reason"`
 }
 
+// OpRuntimeAutomationFacts defines model for OpRuntimeAutomationFacts.
+type OpRuntimeAutomationFacts struct {
+	AutomaticStrategies int        `json:"automatic_strategies"`
+	LastCompletedAt     *time.Time `json:"last_completed_at,omitempty"`
+	LastStatus          *string    `json:"last_status,omitempty"`
+}
+
+// OpRuntimeCollectionFacts defines model for OpRuntimeCollectionFacts.
+type OpRuntimeCollectionFacts struct {
+	ConsecutiveFailures int        `json:"consecutive_failures"`
+	DataGap             bool       `json:"data_gap"`
+	LastErrorAt         *time.Time `json:"last_error_at,omitempty"`
+	LastSuccessAt       *time.Time `json:"last_success_at,omitempty"`
+	SourceLatestAt      *time.Time `json:"source_latest_at,omitempty"`
+}
+
+// OpRuntimeHealth defines model for OpRuntimeHealth.
+type OpRuntimeHealth struct {
+	GeneratedAt time.Time       `json:"generated_at"`
+	Sites       []OpRuntimeSite `json:"sites"`
+	Status      OpRuntimeLevel  `json:"status"`
+	System      OpRuntimeSystem `json:"system"`
+}
+
+// OpRuntimeJobFacts defines model for OpRuntimeJobFacts.
+type OpRuntimeJobFacts struct {
+	Failed          int64      `json:"failed"`
+	OldestWaitingAt *time.Time `json:"oldest_waiting_at,omitempty"`
+	Retryable       int64      `json:"retryable"`
+	Running         int64      `json:"running"`
+	Waiting         int64      `json:"waiting"`
+}
+
+// OpRuntimeLevel defines model for OpRuntimeLevel.
+type OpRuntimeLevel string
+
+// OpRuntimePeriodicFacts defines model for OpRuntimePeriodicFacts.
+type OpRuntimePeriodicFacts struct {
+	AutomationAt    *time.Time `json:"automation_at,omitempty"`
+	CollectionAt    *time.Time `json:"collection_at,omitempty"`
+	CompatibilityAt *time.Time `json:"compatibility_at,omitempty"`
+	ScoringAt       *time.Time `json:"scoring_at,omitempty"`
+}
+
+// OpRuntimePoolFacts defines model for OpRuntimePoolFacts.
+type OpRuntimePoolFacts struct {
+	AcquireWait int64 `json:"acquire_wait"`
+	Idle        int   `json:"idle"`
+	InUse       int   `json:"in_use"`
+	Max         int   `json:"max"`
+	Open        int   `json:"open"`
+}
+
+// OpRuntimeProductFacts defines model for OpRuntimeProductFacts.
+type OpRuntimeProductFacts struct {
+	FactsThrough *time.Time `json:"facts_through,omitempty"`
+	GeneratedAt  *time.Time `json:"generated_at,omitempty"`
+	Version      int64      `json:"version"`
+}
+
+// OpRuntimeReason defines model for OpRuntimeReason.
+type OpRuntimeReason struct {
+	Action  *string `json:"action,omitempty"`
+	Code    string  `json:"code"`
+	Message string  `json:"message"`
+}
+
+// OpRuntimeRouteFacts defines model for OpRuntimeRouteFacts.
+type OpRuntimeRouteFacts struct {
+	ConfirmedAt         *time.Time          `json:"confirmed_at,omitempty"`
+	ConfirmedPlanId     *openapi_types.UUID `json:"confirmed_plan_id,omitempty"`
+	ConfirmedVersion    int64               `json:"confirmed_version"`
+	LastSyncAt          *time.Time          `json:"last_sync_at,omitempty"`
+	LastSyncError       *string             `json:"last_sync_error,omitempty"`
+	LastSyncErrorCode   *string             `json:"last_sync_error_code,omitempty"`
+	LastSyncStatus      *string             `json:"last_sync_status,omitempty"`
+	LatestPlanCreatedAt *time.Time          `json:"latest_plan_created_at,omitempty"`
+	LatestPlanStatus    *string             `json:"latest_plan_status,omitempty"`
+	LatestPlanVersion   int64               `json:"latest_plan_version"`
+	OldestPendingAt     *time.Time          `json:"oldest_pending_at,omitempty"`
+	PendingOperations   int64               `json:"pending_operations"`
+}
+
+// OpRuntimeScoringFacts defines model for OpRuntimeScoringFacts.
+type OpRuntimeScoringFacts struct {
+	CompletedAt  *time.Time `json:"completed_at,omitempty"`
+	LastStatus   *string    `json:"last_status,omitempty"`
+	LastWindowAt *time.Time `json:"last_window_at,omitempty"`
+}
+
+// OpRuntimeSite defines model for OpRuntimeSite.
+type OpRuntimeSite struct {
+	Automation       OpRuntimeAutomationFacts `json:"automation"`
+	Collection       OpRuntimeCollectionFacts `json:"collection"`
+	Compatibility    *OpCompatibilityCheck    `json:"compatibility,omitempty"`
+	ProblemSuppliers int                      `json:"problem_suppliers"`
+	Product          OpRuntimeProductFacts    `json:"product"`
+	Reasons          []OpRuntimeReason        `json:"reasons"`
+	RelationCount    int                      `json:"relation_count"`
+	Route            OpRuntimeRouteFacts      `json:"route"`
+	Scoring          OpRuntimeScoringFacts    `json:"scoring"`
+	SiteCode         string                   `json:"site_code"`
+	SiteId           openapi_types.UUID       `json:"site_id"`
+	SiteName         string                   `json:"site_name"`
+	SiteStatus       OpRuntimeSiteSiteStatus  `json:"site_status"`
+	Status           OpRuntimeLevel           `json:"status"`
+}
+
+// OpRuntimeSiteSiteStatus defines model for OpRuntimeSite.SiteStatus.
+type OpRuntimeSiteSiteStatus string
+
+// OpRuntimeSystem defines model for OpRuntimeSystem.
+type OpRuntimeSystem struct {
+	BuildCommit                 string               `json:"build_commit"`
+	BuildVersion                string               `json:"build_version"`
+	CompatibilityCatalogVersion string               `json:"compatibility_catalog_version"`
+	Facts                       OpRuntimeSystemFacts `json:"facts"`
+	Reasons                     []OpRuntimeReason    `json:"reasons"`
+	StartedAt                   time.Time            `json:"started_at"`
+	Status                      OpRuntimeLevel       `json:"status"`
+}
+
+// OpRuntimeSystemFacts defines model for OpRuntimeSystemFacts.
+type OpRuntimeSystemFacts struct {
+	DatabaseClockSkewSeconds float64                `json:"database_clock_skew_seconds"`
+	DatabaseUp               bool                   `json:"database_up"`
+	Jobs                     OpRuntimeJobFacts      `json:"jobs"`
+	MigrationVersion         int64                  `json:"migration_version"`
+	Periodic                 OpRuntimePeriodicFacts `json:"periodic"`
+	Pool                     OpRuntimePoolFacts     `json:"pool"`
+}
+
 // OpScoreInsight defines model for OpScoreInsight.
 type OpScoreInsight struct {
 	ActiveSamples       int64                             `json:"active_samples"`
@@ -1735,6 +2019,9 @@ type OpOffset = int
 // OpQuery defines model for OpQuery.
 type OpQuery = string
 
+// OpRuntimeSiteID defines model for OpRuntimeSiteID.
+type OpRuntimeSiteID = openapi_types.UUID
+
 // OpSiteFilter defines model for OpSiteFilter.
 type OpSiteFilter = openapi_types.UUID
 
@@ -1852,6 +2139,14 @@ type OpListRelationsParams struct {
 
 // OpUpdateRelationParams defines parameters for OpUpdateRelation.
 type OpUpdateRelationParams struct {
+	IdempotencyKey OpIdempotencyKey `json:"Idempotency-Key"`
+}
+
+// OpCheckRuntimeSiteHealthJSONBody defines parameters for OpCheckRuntimeSiteHealth.
+type OpCheckRuntimeSiteHealthJSONBody = map[string]interface{}
+
+// OpCheckRuntimeSiteHealthParams defines parameters for OpCheckRuntimeSiteHealth.
+type OpCheckRuntimeSiteHealthParams struct {
 	IdempotencyKey OpIdempotencyKey `json:"Idempotency-Key"`
 }
 
@@ -2009,6 +2304,9 @@ type OpPublishPriceJSONRequestBody = OpPublishInput
 
 // OpUpdateRelationJSONRequestBody defines body for OpUpdateRelation for application/json ContentType.
 type OpUpdateRelationJSONRequestBody = OpRelationInput
+
+// OpCheckRuntimeSiteHealthJSONRequestBody defines body for OpCheckRuntimeSiteHealth for application/json ContentType.
+type OpCheckRuntimeSiteHealthJSONRequestBody = OpCheckRuntimeSiteHealthJSONBody
 
 // OpRefreshScoresJSONRequestBody defines body for OpRefreshScores for application/json ContentType.
 type OpRefreshScoresJSONRequestBody = OpRefreshScoresJSONBody

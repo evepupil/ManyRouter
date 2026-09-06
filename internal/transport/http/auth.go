@@ -43,7 +43,7 @@ func OperatorActor(c *gin.Context) string {
 func sessionAuthentication(service *auth.Service, operatorToken string, secure bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		path := c.Request.URL.Path
-		if (!strings.HasPrefix(path, "/api/") && path != "/api") || publicAuthEndpoint(c.Request.Method, path) {
+		if (!strings.HasPrefix(path, "/api/") && path != "/api" && path != "/metrics") || publicAuthEndpoint(c.Request.Method, path) {
 			c.Next()
 			return
 		}

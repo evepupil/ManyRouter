@@ -1,0 +1,28 @@
+version: "2026-09-07.1"
+combinations:
+  - mode: managed
+    new_api_version: "78028d1c"
+    contract_version: "m4-managed-sync-v1"
+    database_types: ["postgres"]
+    support: recommended
+    minimum_rollback_version: "c88bf065"
+    notes:
+      - "窄权限整批同步已通过 SQLite、MySQL 8.4 和 PostgreSQL 17.6 合同测试。"
+      - "窄权限日志读取不会返回用户名、令牌名称或用户编号。"
+      - "正式组合只启用 PostgreSQL 17.6。"
+  - mode: managed
+    new_api_version: "c88bf065"
+    contract_version: "m4-managed-sync-v1"
+    database_types: ["postgres"]
+    support: supported
+    minimum_rollback_version: "c88bf065"
+    notes:
+      - "保留为当前正式组合的应用回退版本。"
+  - mode: legacy
+    new_api_version: "a3e8abb8"
+    contract_version: ""
+    database_types: []
+    support: transitional
+    minimum_rollback_version: "a3e8abb8"
+    notes:
+      - "保留当前管理接口作为迁移期回退，只用于已经接入的站点。"

@@ -2,6 +2,7 @@ package newapi
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -72,9 +73,31 @@ func (c *Client) ReadAdminLogs(
 	query.Set("p", strconv.Itoa(page))
 	query.Set("page_size", strconv.Itoa(pageSize))
 
+	encodedQuery := query.Encode()
+	if logType == 2 || logType == 5 {
+		page, err := c.readLogPage(ctx, "/api/manyrouter/sync/logs?"+encodedQuery)
+		if err == nil {
+			return page, nil
+		}
+		if !scopedLogFallback(err) {
+			return AdminLogPage{}, err
+		}
+	}
+	return c.readLogPage(ctx, "/api/log/?"+encodedQuery)
+}
+
+func (c *Client) readLogPage(ctx context.Context, path string) (AdminLogPage, error) {
 	var response apiResponse[AdminLogPage]
-	if err := c.request(ctx, http.MethodGet, "/api/log/?"+query.Encode(), nil, &response, false); err != nil {
+	if err := c.request(ctx, http.MethodGet, path, nil, &response, false); err != nil {
 		return AdminLogPage{}, err
 	}
 	return response.Data, nil
+}
+
+func scopedLogFallback(err error) bool {
+	var failure *reconciliation.Failure
+	if !errors.As(err, &failure) {
+		return false
+	}
+	return failure.Kind == reconciliation.FailureAuthentication || failure.Code == "gateway_http_404" || failure.Code == "gateway_http_503"
 }

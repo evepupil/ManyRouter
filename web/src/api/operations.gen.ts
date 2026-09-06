@@ -647,10 +647,252 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/ops/runtime-health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["opGetRuntimeHealth"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ops/runtime-health/{site_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                site_id: components["parameters"]["OpRuntimeSiteID"];
+            };
+            cookie?: never;
+        };
+        get: operations["opGetRuntimeSiteHealth"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ops/runtime-health/{site_id}/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                site_id: components["parameters"]["OpRuntimeSiteID"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["opCheckRuntimeSiteHealth"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @enum {string} */
+        OpRuntimeLevel: "normal" | "attention" | "blocked" | "fault";
+        OpRuntimeReason: {
+            code: string;
+            message: string;
+            action?: string;
+        };
+        OpCompatibilityFeatures: {
+            atomic_apply: boolean;
+            managed_channels: boolean;
+            multiple_groups: boolean;
+            group_ratios: boolean;
+            entry_visibility: boolean;
+            persistent_idempotency: boolean;
+            final_state_digest: boolean;
+            log_read: boolean;
+        };
+        OpCompatibilityLimits: {
+            max_channels: number;
+            max_groups: number;
+            max_models: number;
+            max_group_key_bytes: number;
+            /** Format: int64 */
+            max_request_bytes: number;
+        };
+        OpCompatibilityCapabilities: {
+            features: components["schemas"]["OpCompatibilityFeatures"];
+            limits: components["schemas"]["OpCompatibilityLimits"];
+            retry_times: number;
+            retry_status_codes: string[];
+        };
+        OpCompatibilityReason: {
+            code: string;
+            message: string;
+            action?: string;
+        };
+        OpCompatibilityCheck: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            site_id: string;
+            site_code: string;
+            site_name: string;
+            /** @enum {string} */
+            mode: "managed" | "legacy" | "unknown";
+            /** @enum {string} */
+            verdict: "compatible" | "unverified" | "incompatible" | "unreachable";
+            catalog_version: string;
+            new_api_version: string;
+            contract_version: string;
+            database_type: string;
+            capabilities: components["schemas"]["OpCompatibilityCapabilities"];
+            state_hash: string;
+            billing_basis_hash: string;
+            conflicts: string[];
+            reasons: components["schemas"]["OpCompatibilityReason"][];
+            error_code?: string;
+            error_message?: string;
+            checked_by: string;
+            /** Format: date-time */
+            checked_at: string;
+        };
+        OpRuntimePoolFacts: {
+            open: number;
+            in_use: number;
+            idle: number;
+            max: number;
+            /** Format: int64 */
+            acquire_wait: number;
+        };
+        OpRuntimeJobFacts: {
+            /** Format: int64 */
+            waiting: number;
+            /** Format: int64 */
+            running: number;
+            /** Format: int64 */
+            retryable: number;
+            /** Format: int64 */
+            failed: number;
+            /** Format: date-time */
+            oldest_waiting_at?: string;
+        };
+        OpRuntimePeriodicFacts: {
+            /** Format: date-time */
+            collection_at?: string;
+            /** Format: date-time */
+            scoring_at?: string;
+            /** Format: date-time */
+            automation_at?: string;
+            /** Format: date-time */
+            compatibility_at?: string;
+        };
+        OpRuntimeSystemFacts: {
+            database_up: boolean;
+            /** Format: int64 */
+            migration_version: number;
+            /** Format: double */
+            database_clock_skew_seconds: number;
+            pool: components["schemas"]["OpRuntimePoolFacts"];
+            jobs: components["schemas"]["OpRuntimeJobFacts"];
+            periodic: components["schemas"]["OpRuntimePeriodicFacts"];
+        };
+        OpRuntimeSystem: {
+            status: components["schemas"]["OpRuntimeLevel"];
+            build_version: string;
+            build_commit: string;
+            /** Format: date-time */
+            started_at: string;
+            compatibility_catalog_version: string;
+            facts: components["schemas"]["OpRuntimeSystemFacts"];
+            reasons: components["schemas"]["OpRuntimeReason"][];
+        };
+        OpRuntimeRouteFacts: {
+            /** Format: uuid */
+            confirmed_plan_id?: string;
+            /** Format: int64 */
+            confirmed_version: number;
+            /** Format: date-time */
+            confirmed_at?: string;
+            latest_plan_status?: string;
+            /** Format: int64 */
+            latest_plan_version: number;
+            /** Format: date-time */
+            latest_plan_created_at?: string;
+            last_sync_status?: string;
+            /** Format: date-time */
+            last_sync_at?: string;
+            last_sync_error_code?: string;
+            last_sync_error?: string;
+            /** Format: int64 */
+            pending_operations: number;
+            /** Format: date-time */
+            oldest_pending_at?: string;
+        };
+        OpRuntimeCollectionFacts: {
+            /** Format: date-time */
+            last_success_at?: string;
+            /** Format: date-time */
+            last_error_at?: string;
+            consecutive_failures: number;
+            data_gap: boolean;
+            /** Format: date-time */
+            source_latest_at?: string;
+        };
+        OpRuntimeScoringFacts: {
+            /** Format: date-time */
+            last_window_at?: string;
+            last_status?: string;
+            /** Format: date-time */
+            completed_at?: string;
+        };
+        OpRuntimeAutomationFacts: {
+            automatic_strategies: number;
+            last_status?: string;
+            /** Format: date-time */
+            last_completed_at?: string;
+        };
+        OpRuntimeProductFacts: {
+            /** Format: int64 */
+            version: number;
+            /** Format: date-time */
+            generated_at?: string;
+            /** Format: date-time */
+            facts_through?: string;
+        };
+        OpRuntimeSite: {
+            /** Format: uuid */
+            site_id: string;
+            site_code: string;
+            site_name: string;
+            /** @enum {string} */
+            site_status: "enabled" | "disabled";
+            relation_count: number;
+            problem_suppliers: number;
+            compatibility?: components["schemas"]["OpCompatibilityCheck"];
+            route: components["schemas"]["OpRuntimeRouteFacts"];
+            collection: components["schemas"]["OpRuntimeCollectionFacts"];
+            scoring: components["schemas"]["OpRuntimeScoringFacts"];
+            automation: components["schemas"]["OpRuntimeAutomationFacts"];
+            product: components["schemas"]["OpRuntimeProductFacts"];
+            status: components["schemas"]["OpRuntimeLevel"];
+            reasons: components["schemas"]["OpRuntimeReason"][];
+        };
+        OpRuntimeHealth: {
+            status: components["schemas"]["OpRuntimeLevel"];
+            /** Format: date-time */
+            generated_at: string;
+            system: components["schemas"]["OpRuntimeSystem"];
+            sites: components["schemas"]["OpRuntimeSite"][];
+        };
         OpCollectionRunInput: {
             /** Format: uuid */
             site_id: string;
@@ -1370,6 +1612,7 @@ export interface components {
     };
     parameters: {
         OpID: string;
+        OpRuntimeSiteID: string;
         OpIdempotencyKey: string;
         OpQuery: string;
         OpSiteFilter: string;
@@ -2469,6 +2712,79 @@ export interface operations {
                         /** @enum {string} */
                         status: "revoked";
                     };
+                };
+            };
+            default: components["responses"]["OpError"];
+        };
+    };
+    opGetRuntimeHealth: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current system and site runtime facts with computed operating levels */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpRuntimeHealth"];
+                };
+            };
+            default: components["responses"]["OpError"];
+        };
+    };
+    opGetRuntimeSiteHealth: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                site_id: components["parameters"]["OpRuntimeSiteID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current runtime facts for one site */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpRuntimeSite"];
+                };
+            };
+            default: components["responses"]["OpError"];
+        };
+    };
+    opCheckRuntimeSiteHealth: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": components["parameters"]["OpIdempotencyKey"];
+            };
+            path: {
+                site_id: components["parameters"]["OpRuntimeSiteID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": Record<string, never>;
+            };
+        };
+        responses: {
+            /** @description Compatibility and managed-state check completed and site facts reread */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpRuntimeSite"];
                 };
             };
             default: components["responses"]["OpError"];

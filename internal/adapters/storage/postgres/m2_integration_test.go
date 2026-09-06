@@ -94,7 +94,7 @@ func createM2IntegrationFixture(t *testing.T, ctx context.Context, store *postgr
 	fixture.model = "m2-model-" + suffix
 	siteData, err := onboard.CreateSite(ctx, onboarding.CreateSiteCommand{
 		Code: "m2-site-" + suffix, Name: "M2 Integration Site",
-		NewAPIBaseURL: "https://gateway.example", NewAPIAccessToken: "m2-admin-secret",
+		NewAPIBaseURL: "https://gateway-" + suffix + ".example", NewAPIAccessToken: "m2-admin-secret",
 	})
 	if err != nil {
 		t.Fatal(err)

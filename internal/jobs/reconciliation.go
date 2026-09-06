@@ -16,10 +16,11 @@ import (
 const reconciliationQueue = "reconciliation"
 
 type clientConfig struct {
-	collection CollectionRunner
-	evaluation EvaluationRunner
-	scoring    ScoringRunner
-	automation AutomationRunner
+	collection    CollectionRunner
+	evaluation    EvaluationRunner
+	scoring       ScoringRunner
+	automation    AutomationRunner
+	compatibility CompatibilityRunner
 }
 
 type ClientOption func(*clientConfig)
@@ -38,6 +39,10 @@ func WithScoring(runner ScoringRunner) ClientOption {
 
 func WithAutomation(runner AutomationRunner) ClientOption {
 	return func(config *clientConfig) { config.automation = runner }
+}
+
+func WithCompatibility(runner CompatibilityRunner) ClientOption {
+	return func(config *clientConfig) { config.compatibility = runner }
 }
 
 type ReconciliationArgs struct {
@@ -147,6 +152,10 @@ func NewClient(pool *pgxpool.Pool, runner ReconciliationRunner, execute bool, op
 		river.AddWorker(workers, &AutomationWorker{runner: clientOptions.automation})
 		config.PeriodicJobs = append(config.PeriodicJobs, automationPeriodicJobs()...)
 	}
+	if clientOptions.compatibility != nil {
+		river.AddWorker(workers, &CompatibilityWorker{runner: clientOptions.compatibility})
+		config.PeriodicJobs = append(config.PeriodicJobs, compatibilityPeriodicJobs()...)
+	}
 	if execute {
 		config.Queues = map[string]river.QueueConfig{
 			reconciliationQueue: {MaxWorkers: 4},
@@ -162,6 +171,9 @@ func NewClient(pool *pgxpool.Pool, runner ReconciliationRunner, execute bool, op
 		}
 		if clientOptions.automation != nil {
 			config.Queues[automationQueue] = river.QueueConfig{MaxWorkers: 1}
+		}
+		if clientOptions.compatibility != nil {
+			config.Queues[compatibilityQueue] = river.QueueConfig{MaxWorkers: 1}
 		}
 	}
 	return river.NewClient(riverpgxv5.New(pool), config)

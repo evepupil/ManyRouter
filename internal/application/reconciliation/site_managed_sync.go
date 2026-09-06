@@ -30,6 +30,20 @@ func (s *Service) tryRunManagedSite(
 	if err := validateManagedSyncCapabilities(capabilities, bundle.Plan.Snapshot); err != nil {
 		return true, s.finishFailure(ctx, bundle, "managed_sync_capabilities", err)
 	}
+	if approvals, ok := s.store.(ManagedSyncApprovalStore); ok {
+		approved, err := approvals.ManagedSyncApproved(ctx, bundle.Site.ID, capabilities)
+		if err != nil {
+			return true, s.finishFailure(ctx, bundle, "managed_sync_approval", err)
+		}
+		if !approved {
+			return true, s.finishFailure(ctx, bundle, "managed_sync_approval", NewFailure(
+				FailureCompatibility,
+				"managed_sync_unapproved",
+				"New API build has not passed the current compatibility catalog",
+				nil,
+			))
+		}
+	}
 	return true, s.runManagedSite(ctx, store, managed, capabilities, bundle)
 }
 
@@ -178,7 +192,7 @@ func validateManagedSyncCapabilities(capabilities ManagedSyncCapabilities, snaps
 	features := capabilities.Features
 	if capabilities.ContractVersion != ManagedSyncContractVersion || capabilities.NewAPIVersion == "" ||
 		!features.AtomicApply || !features.ManagedChannels || !features.MultipleGroups || !features.GroupRatios ||
-		!features.EntryVisibility || !features.PersistentIdempotency || !features.FinalStateDigest {
+		!features.EntryVisibility || !features.PersistentIdempotency || !features.FinalStateDigest || !features.LogRead {
 		return NewFailure(FailureCompatibility, "managed_sync_incompatible", "New API managed sync capabilities are incomplete", nil)
 	}
 	if capabilities.DatabaseType != "sqlite" && capabilities.DatabaseType != "mysql" && capabilities.DatabaseType != "postgres" {

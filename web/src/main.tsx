@@ -8,6 +8,7 @@ import "./i18n";
 import "./styles/tokens.css";
 import "./styles/components.css";
 import "./styles/layout.css";
+import "./styles/runtime-health.css";
 
 const client = new QueryClient({
   defaultOptions: {

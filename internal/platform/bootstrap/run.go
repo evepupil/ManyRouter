@@ -17,13 +17,16 @@ import (
 	automationapp "github.com/evepupil/ManyRouter/internal/application/automation"
 	catalogapp "github.com/evepupil/ManyRouter/internal/application/catalog"
 	"github.com/evepupil/ManyRouter/internal/application/collection"
+	compatibilityapp "github.com/evepupil/ManyRouter/internal/application/compatibility"
 	evaluationapp "github.com/evepupil/ManyRouter/internal/application/evaluation"
 	"github.com/evepupil/ManyRouter/internal/application/idempotency"
 	"github.com/evepupil/ManyRouter/internal/application/onboarding"
 	"github.com/evepupil/ManyRouter/internal/application/operations"
 	"github.com/evepupil/ManyRouter/internal/application/reconciliation"
+	runtimehealthapp "github.com/evepupil/ManyRouter/internal/application/runtimehealth"
 	scoringapp "github.com/evepupil/ManyRouter/internal/application/scoring"
 	"github.com/evepupil/ManyRouter/internal/jobs"
+	"github.com/evepupil/ManyRouter/internal/platform/buildinfo"
 	"github.com/evepupil/ManyRouter/internal/platform/config"
 	platformcrypto "github.com/evepupil/ManyRouter/internal/platform/crypto"
 	httptransport "github.com/evepupil/ManyRouter/internal/transport/http"
@@ -45,9 +48,26 @@ func Run(ctx context.Context, applicationConfig config.Config, logger *slog.Logg
 	defer store.Close()
 
 	now := time.Now
+	startedAt := now().UTC()
 	newID := uuid.New
 	gatewayClient := gatewayHTTPClient()
 	gatewayFactory := newapi.Factory{HTTPClient: gatewayClient}
+	compatibilityManifest, err := compatibilityapp.LoadManifest(applicationConfig.CompatibilityFile)
+	if err != nil {
+		return err
+	}
+	compatibilityService, err := compatibilityapp.NewService(store, vault, gatewayFactory, compatibilityManifest, now, newID)
+	if err != nil {
+		return err
+	}
+	runtimeHealthService, err := runtimehealthapp.NewService(
+		store, compatibilityService,
+		runtimehealthapp.BuildInfo{Version: buildinfo.Version, Commit: buildinfo.Commit},
+		compatibilityManifest.Version, startedAt, now,
+	)
+	if err != nil {
+		return err
+	}
 	collectionService, err := collection.NewService(store, vault, gatewayFactory, now)
 	if err != nil {
 		return err
@@ -94,6 +114,7 @@ func Run(ctx context.Context, applicationConfig config.Config, logger *slog.Logg
 		jobs.WithEvaluation(evaluationService),
 		jobs.WithScoring(scoringService),
 		jobs.WithAutomation(automationService),
+		jobs.WithCompatibility(compatibilityService),
 	)
 	if err != nil {
 		return fmt.Errorf("configure River: %w", err)
@@ -138,6 +159,7 @@ func Run(ctx context.Context, applicationConfig config.Config, logger *slog.Logg
 			httptransport.WithScoring(scoringService),
 			httptransport.WithAutomation(automationService),
 			httptransport.WithCatalog(catalogService),
+			httptransport.WithRuntimeHealth(runtimeHealthService),
 		)
 		if err != nil {
 			return err
@@ -152,6 +174,8 @@ func Run(ctx context.Context, applicationConfig config.Config, logger *slog.Logg
 		httptransport.RegisterScoringRoutes(router, handler)
 		httptransport.RegisterAutomationRoutes(router, handler)
 		httptransport.RegisterCatalogRoutes(router, handler)
+		httptransport.RegisterRuntimeHealthRoutes(router, handler)
+		httptransport.RegisterWebUI(router)
 		server = &http.Server{
 			Addr:              applicationConfig.HTTPAddress,
 			Handler:           router,

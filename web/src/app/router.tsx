@@ -14,6 +14,7 @@ import { PlansPage } from "../features/operations/plans-page";
 import { OperationsPage } from "../features/operations/operations-page";
 import { AuditPage } from "../features/operations/audit-page";
 import { ObservabilityPage } from "../features/observability/observability-page";
+import { RuntimeHealthPage } from "../features/runtime-health/runtime-health-page";
 import { Button, Empty } from "../components/ui";
 import { ScopeProvider } from "./scope";
 import { Shell } from "./shell";
@@ -99,6 +100,11 @@ const auditRoute = createRoute({
   path: "/audit",
   component: AuditPage,
 });
+const runtimeHealthRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/runtime-health",
+  component: RuntimeHealthPage,
+});
 
 export const router = createRouter({
   routeTree: rootRoute.addChildren([
@@ -110,6 +116,7 @@ export const router = createRouter({
     pricingRoute,
     planRoute,
     observabilityRoute,
+    runtimeHealthRoute,
     operationRoute,
     auditRoute,
   ]),

@@ -22,6 +22,15 @@ type fakeSiteStore struct {
 	pricesConfirmed bool
 }
 
+type approvalSiteStore struct {
+	*fakeSiteStore
+	approved bool
+}
+
+func (store *approvalSiteStore) ManagedSyncApproved(context.Context, uuid.UUID, reconciliation.ManagedSyncCapabilities) (bool, error) {
+	return store.approved, nil
+}
+
 func (s *fakeSiteStore) ConfirmSitePrices(context.Context, reconciliation.Bundle, time.Time) error {
 	s.pricesConfirmed = true
 	return nil
@@ -115,6 +124,7 @@ func (g *managedSiteGateway) ReadManagedSyncCapabilities(context.Context) (recon
 		Features: reconciliation.ManagedSyncFeatures{
 			AtomicApply: true, ManagedChannels: true, MultipleGroups: true, GroupRatios: true,
 			EntryVisibility: true, PersistentIdempotency: true, FinalStateDigest: true,
+			LogRead: true,
 		},
 		Limits: reconciliation.ManagedSyncLimits{
 			MaxChannels: 100, MaxGroups: 20, MaxModels: 500, MaxGroupKeyBytes: 64, MaxRequestBytes: 2 << 20,
@@ -209,6 +219,23 @@ func TestSiteRunUsesManagedBatchContractWhenAvailable(t *testing.T) {
 	}
 	if legacy.createCount != 0 || legacy.updateCount != 0 || legacy.ratioCount != 0 || legacy.userGroupCount != 0 {
 		t.Fatalf("legacy writes ran during managed batch: create=%d update=%d ratio=%d groups=%d", legacy.createCount, legacy.updateCount, legacy.ratioCount, legacy.userGroupCount)
+	}
+}
+
+func TestSiteRunBlocksManagedBatchUntilReleaseIsApproved(t *testing.T) {
+	t.Parallel()
+	baseStore, legacy, _ := siteFixture(t)
+	store := &approvalSiteStore{fakeSiteStore: baseStore, approved: false}
+	managed := &managedSiteGateway{siteTestGateway: legacy}
+	service, err := reconciliation.NewService(store, fakeVault{}, siteTestFactory{managed}, nil, time.Now, uuid.New)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := service.Run(context.Background(), store.bundle.Operation.ID); err != nil {
+		t.Fatal(err)
+	}
+	if managed.batchCalls != 0 || store.completed || store.failure == nil || store.failure.Code != "managed_sync_unapproved" {
+		t.Fatalf("unapproved batch calls=%d completed=%v failure=%#v", managed.batchCalls, store.completed, store.failure)
 	}
 }
 

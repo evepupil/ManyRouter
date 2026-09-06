@@ -646,6 +646,45 @@ paths:
                 properties:
                   status: { type: string, enum: [revoked] }
         default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/runtime-health:
+    get:
+      operationId: opGetRuntimeHealth
+      responses:
+        '200':
+          description: Current system and site runtime facts with computed operating levels
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpRuntimeHealth' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/runtime-health/{site_id}:
+    parameters: [{ $ref: '#/components/parameters/OpRuntimeSiteID' }]
+    get:
+      operationId: opGetRuntimeSiteHealth
+      responses:
+        '200':
+          description: Current runtime facts for one site
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpRuntimeSite' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/runtime-health/{site_id}/check:
+    parameters: [{ $ref: '#/components/parameters/OpRuntimeSiteID' }]
+    post:
+      operationId: opCheckRuntimeSiteHealth
+      security: *writeSecurity
+      parameters: [{ $ref: '#/components/parameters/OpIdempotencyKey' }]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: false }
+      responses:
+        '200':
+          description: Compatibility and managed-state check completed and site facts reread
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpRuntimeSite' }
+        default: { $ref: '#/components/responses/OpError' }
 components:
   securitySchemes:
     OpBearer: { type: http, scheme: bearer }
@@ -654,6 +693,11 @@ components:
   parameters:
     OpID:
       name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    OpRuntimeSiteID:
+      name: site_id
       in: path
       required: true
       schema: { type: string, format: uuid }
@@ -694,6 +738,222 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/OpPlanResult' }
   schemas:
+    OpRuntimeLevel:
+      type: string
+      enum: [normal, attention, blocked, fault]
+    OpRuntimeReason:
+      type: object
+      additionalProperties: false
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        action: { type: string }
+    OpCompatibilityFeatures:
+      type: object
+      additionalProperties: false
+      required: [atomic_apply, managed_channels, multiple_groups, group_ratios, entry_visibility, persistent_idempotency, final_state_digest, log_read]
+      properties:
+        atomic_apply: { type: boolean }
+        managed_channels: { type: boolean }
+        multiple_groups: { type: boolean }
+        group_ratios: { type: boolean }
+        entry_visibility: { type: boolean }
+        persistent_idempotency: { type: boolean }
+        final_state_digest: { type: boolean }
+        log_read: { type: boolean }
+    OpCompatibilityLimits:
+      type: object
+      additionalProperties: false
+      required: [max_channels, max_groups, max_models, max_group_key_bytes, max_request_bytes]
+      properties:
+        max_channels: { type: integer }
+        max_groups: { type: integer }
+        max_models: { type: integer }
+        max_group_key_bytes: { type: integer }
+        max_request_bytes: { type: integer, format: int64 }
+    OpCompatibilityCapabilities:
+      type: object
+      additionalProperties: false
+      required: [features, limits, retry_times, retry_status_codes]
+      properties:
+        features: { $ref: '#/components/schemas/OpCompatibilityFeatures' }
+        limits: { $ref: '#/components/schemas/OpCompatibilityLimits' }
+        retry_times: { type: integer }
+        retry_status_codes:
+          type: array
+          items: { type: string }
+    OpCompatibilityReason:
+      type: object
+      additionalProperties: false
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        action: { type: string }
+    OpCompatibilityCheck:
+      type: object
+      additionalProperties: false
+      required: [id, site_id, site_code, site_name, mode, verdict, catalog_version, new_api_version, contract_version, database_type, capabilities, state_hash, billing_basis_hash, conflicts, reasons, checked_by, checked_at]
+      properties:
+        id: { type: string, format: uuid }
+        site_id: { type: string, format: uuid }
+        site_code: { type: string }
+        site_name: { type: string }
+        mode: { type: string, enum: [managed, legacy, unknown] }
+        verdict: { type: string, enum: [compatible, unverified, incompatible, unreachable] }
+        catalog_version: { type: string }
+        new_api_version: { type: string }
+        contract_version: { type: string }
+        database_type: { type: string }
+        capabilities: { $ref: '#/components/schemas/OpCompatibilityCapabilities' }
+        state_hash: { type: string }
+        billing_basis_hash: { type: string }
+        conflicts:
+          type: array
+          items: { type: string }
+        reasons:
+          type: array
+          items: { $ref: '#/components/schemas/OpCompatibilityReason' }
+        error_code: { type: string }
+        error_message: { type: string }
+        checked_by: { type: string }
+        checked_at: { type: string, format: date-time }
+    OpRuntimePoolFacts:
+      type: object
+      additionalProperties: false
+      required: [open, in_use, idle, max, acquire_wait]
+      properties:
+        open: { type: integer }
+        in_use: { type: integer }
+        idle: { type: integer }
+        max: { type: integer }
+        acquire_wait: { type: integer, format: int64 }
+    OpRuntimeJobFacts:
+      type: object
+      additionalProperties: false
+      required: [waiting, running, retryable, failed]
+      properties:
+        waiting: { type: integer, format: int64 }
+        running: { type: integer, format: int64 }
+        retryable: { type: integer, format: int64 }
+        failed: { type: integer, format: int64 }
+        oldest_waiting_at: { type: string, format: date-time }
+    OpRuntimePeriodicFacts:
+      type: object
+      additionalProperties: false
+      properties:
+        collection_at: { type: string, format: date-time }
+        scoring_at: { type: string, format: date-time }
+        automation_at: { type: string, format: date-time }
+        compatibility_at: { type: string, format: date-time }
+    OpRuntimeSystemFacts:
+      type: object
+      additionalProperties: false
+      required: [database_up, migration_version, database_clock_skew_seconds, pool, jobs, periodic]
+      properties:
+        database_up: { type: boolean }
+        migration_version: { type: integer, format: int64 }
+        database_clock_skew_seconds: { type: number, format: double }
+        pool: { $ref: '#/components/schemas/OpRuntimePoolFacts' }
+        jobs: { $ref: '#/components/schemas/OpRuntimeJobFacts' }
+        periodic: { $ref: '#/components/schemas/OpRuntimePeriodicFacts' }
+    OpRuntimeSystem:
+      type: object
+      additionalProperties: false
+      required: [status, build_version, build_commit, started_at, compatibility_catalog_version, facts, reasons]
+      properties:
+        status: { $ref: '#/components/schemas/OpRuntimeLevel' }
+        build_version: { type: string }
+        build_commit: { type: string }
+        started_at: { type: string, format: date-time }
+        compatibility_catalog_version: { type: string }
+        facts: { $ref: '#/components/schemas/OpRuntimeSystemFacts' }
+        reasons:
+          type: array
+          items: { $ref: '#/components/schemas/OpRuntimeReason' }
+    OpRuntimeRouteFacts:
+      type: object
+      additionalProperties: false
+      required: [confirmed_version, latest_plan_version, pending_operations]
+      properties:
+        confirmed_plan_id: { type: string, format: uuid }
+        confirmed_version: { type: integer, format: int64 }
+        confirmed_at: { type: string, format: date-time }
+        latest_plan_status: { type: string }
+        latest_plan_version: { type: integer, format: int64 }
+        latest_plan_created_at: { type: string, format: date-time }
+        last_sync_status: { type: string }
+        last_sync_at: { type: string, format: date-time }
+        last_sync_error_code: { type: string }
+        last_sync_error: { type: string }
+        pending_operations: { type: integer, format: int64 }
+        oldest_pending_at: { type: string, format: date-time }
+    OpRuntimeCollectionFacts:
+      type: object
+      additionalProperties: false
+      required: [consecutive_failures, data_gap]
+      properties:
+        last_success_at: { type: string, format: date-time }
+        last_error_at: { type: string, format: date-time }
+        consecutive_failures: { type: integer }
+        data_gap: { type: boolean }
+        source_latest_at: { type: string, format: date-time }
+    OpRuntimeScoringFacts:
+      type: object
+      additionalProperties: false
+      properties:
+        last_window_at: { type: string, format: date-time }
+        last_status: { type: string }
+        completed_at: { type: string, format: date-time }
+    OpRuntimeAutomationFacts:
+      type: object
+      additionalProperties: false
+      required: [automatic_strategies]
+      properties:
+        automatic_strategies: { type: integer }
+        last_status: { type: string }
+        last_completed_at: { type: string, format: date-time }
+    OpRuntimeProductFacts:
+      type: object
+      additionalProperties: false
+      required: [version]
+      properties:
+        version: { type: integer, format: int64 }
+        generated_at: { type: string, format: date-time }
+        facts_through: { type: string, format: date-time }
+    OpRuntimeSite:
+      type: object
+      additionalProperties: false
+      required: [site_id, site_code, site_name, site_status, relation_count, problem_suppliers, route, collection, scoring, automation, product, status, reasons]
+      properties:
+        site_id: { type: string, format: uuid }
+        site_code: { type: string }
+        site_name: { type: string }
+        site_status: { type: string, enum: [enabled, disabled] }
+        relation_count: { type: integer }
+        problem_suppliers: { type: integer }
+        compatibility: { $ref: '#/components/schemas/OpCompatibilityCheck' }
+        route: { $ref: '#/components/schemas/OpRuntimeRouteFacts' }
+        collection: { $ref: '#/components/schemas/OpRuntimeCollectionFacts' }
+        scoring: { $ref: '#/components/schemas/OpRuntimeScoringFacts' }
+        automation: { $ref: '#/components/schemas/OpRuntimeAutomationFacts' }
+        product: { $ref: '#/components/schemas/OpRuntimeProductFacts' }
+        status: { $ref: '#/components/schemas/OpRuntimeLevel' }
+        reasons:
+          type: array
+          items: { $ref: '#/components/schemas/OpRuntimeReason' }
+    OpRuntimeHealth:
+      type: object
+      additionalProperties: false
+      required: [status, generated_at, system, sites]
+      properties:
+        status: { $ref: '#/components/schemas/OpRuntimeLevel' }
+        generated_at: { type: string, format: date-time }
+        system: { $ref: '#/components/schemas/OpRuntimeSystem' }
+        sites:
+          type: array
+          items: { $ref: '#/components/schemas/OpRuntimeSite' }
     OpCollectionRunInput:
       type: object
       required: [site_id]

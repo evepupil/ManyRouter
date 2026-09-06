@@ -18,7 +18,7 @@ func TestReadAdminLogsSendsFiltersAndParsesStableFields(t *testing.T) {
 	t.Parallel()
 	const other = `{"first_token_time":1.25,"stream_status":{"status":"completed"}}`
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		if request.Method != http.MethodGet || request.URL.Path != "/api/log/" {
+		if request.Method != http.MethodGet || request.URL.Path != "/api/manyrouter/sync/logs" {
 			t.Errorf("unexpected request: %s %s", request.Method, request.URL.Path)
 		}
 		if request.Header.Get("Authorization") != "Bearer admin-token" || request.Header.Get("New-Api-User") != "1" {
@@ -70,6 +70,35 @@ func TestReadAdminLogsSendsFiltersAndParsesStableFields(t *testing.T) {
 	}
 	if entry.ChannelID != 44 || entry.Group != "mr_s_supplier" || entry.RequestID != "request-1" || entry.UpstreamRequestID != "upstream-1" || entry.Other != other {
 		t.Fatalf("unexpected log attribution: %#v", entry)
+	}
+}
+
+func TestReadAdminLogsFallsBackForLegacyAdministratorToken(t *testing.T) {
+	t.Parallel()
+	var scopedCalls, legacyCalls atomic.Int64
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		switch request.URL.Path {
+		case "/api/manyrouter/sync/logs":
+			scopedCalls.Add(1)
+			writer.WriteHeader(http.StatusUnauthorized)
+			_, _ = writer.Write([]byte(`{"success":false,"message":"sync token required"}`))
+		case "/api/log/":
+			legacyCalls.Add(1)
+			_, _ = writer.Write([]byte(`{"success":true,"data":{"items":[],"total":0,"page":1,"page_size":20}}`))
+		default:
+			http.NotFound(writer, request)
+		}
+	}))
+	defer server.Close()
+	client, err := newapi.NewClient(server.URL, []byte("admin-token"), server.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := client.ReadAdminLogs(context.Background(), 2, 1, 2, 1, 20); err != nil {
+		t.Fatal(err)
+	}
+	if scopedCalls.Load() != 1 || legacyCalls.Load() != 1 {
+		t.Fatalf("scoped calls=%d legacy calls=%d", scopedCalls.Load(), legacyCalls.Load())
 	}
 }
 

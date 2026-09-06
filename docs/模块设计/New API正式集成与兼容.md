@@ -1,7 +1,7 @@
 # New API 正式集成与兼容模块设计
 
 > 模块定位：用每站窄权限令牌和整批接口替代正式站点上的广泛管理权限，并用能力合同判断 ManyRouter 与 New API 是否可以安全协作
-> 对应代码：`internal/application/compatibility`、`internal/adapters/gateway/newapi/managed_sync.go`、`internal/application/reconciliation/site_managed_sync.go`、`internal/transport/http`、`api/operations.yaml`、`new-api/controller/manyrouter_sync.go`、`new-api/service/manyrouter/sync.go`、`new-api/model/manyrouter_sync*.go`、`new-api/router/api-router.go`
+> 对应代码：`internal/application/compatibility`、`internal/adapters/gateway/newapi`、`internal/adapters/storage/postgres/compatibility.go`、`internal/application/reconciliation/site_managed_sync.go`、`internal/transport/http/runtime_health.go`、`api/operations.yaml`、`new-api/controller/manyrouter_sync.go`、`new-api/controller/manyrouter_logs.go`、`new-api/service/manyrouter/sync.go`、`new-api/model/manyrouter_sync*.go`、`new-api/router/api-router.go`
 > 所属里程碑：[M4 - 完成正式集成与可复制发布](../roadmap.md#m4)
 > 当前状态：进行中
 > 最近更新时间：2026-09-07
@@ -15,6 +15,7 @@
 - 用一个整批请求提交站点期望的渠道、分组倍率和用户入口状态。
 - 在 New API 内完成完整校验、数据库事务、缓存刷新、审计和最终摘要返回。
 - 向 ManyRouter 返回能力合同、限制、运行版本和重试配置。
+- 通过同一窄令牌向 ManyRouter 返回裁剪后的调用日志，延续 M2 统计采集。
 - 在 ManyRouter 保存最近兼容检查结果，并在能力不足时停止自动写入。
 - 继续保护 New API 中由管理员或其他系统维护的渠道、分组和设置。
 - 保留现有逐项管理接口适配器，供旧站点迁移和回归测试使用。
@@ -52,6 +53,7 @@ ManyRouter 已确认线路快照
 | 位置 | 职责 |
 |---|---|
 | `controller/manyrouter_sync.go` | 三个专用 HTTP 接口、请求大小和错误清洗 |
+| `controller/manyrouter_logs.go` | 裁剪日志字段，只向 ManyRouter 返回测量和归属所需数据 |
 | `service/manyrouter/sync.go` | 所有权校验、期望状态规范化、差异计算和事务组织 |
 | `model/manyrouter_sync.go` | 跨 SQLite、MySQL、PostgreSQL 的事务写入和幂等记录 |
 | `router/api-router.go` | 注册独立于普通用户和管理员身份的同步路由 |
@@ -120,6 +122,15 @@ ManyRouter 根据能力字段判断，不只比较版本字符串。构建版本
 
 同一操作编号和相同请求返回原结果；相同编号用于不同请求返回冲突。幂等记录保存 24 小时，不保存渠道密钥正文。
 
+### 4.4 日志读取
+
+`GET /api/manyrouter/sync/logs`
+
+- 只允许读取调用成功和调用失败两类日志，并限制单页最多 100 条。
+- 返回时间、模型、令牌量、耗时、流式状态、渠道、分组、请求编号和已有错误归属元数据。
+- 不返回用户名、令牌名称、用户编号、用户 IP 和渠道密钥。
+- ManyRouter 优先使用该接口；旧站点返回未授权或不存在时，继续使用原管理员日志接口。
+
 ## 5. 受管边界
 
 - 渠道所有权由合法的 `manyrouter:<UUID>` 标签确认，名称不能作为所有权依据。
@@ -163,9 +174,11 @@ ManyRouter 提供：
 
 ## 9. 当前实现
 
-截至 2026-09-07，New API fork 已在提交 `f60dc42a` 实现窄令牌鉴权、能力查询、受管状态读取和事务整批应用。接口只返回受管渠道与分组，不返回渠道密钥；整批应用会预检真实渠道、保留非受管资源和人工停用锁，并保存 24 小时持久幂等结果。
+截至 2026-09-07，New API fork 已在提交 `78028d1c` 实现窄令牌鉴权、能力查询、受管状态读取、事务整批应用和裁剪日志读取。接口只返回受管渠道、分组与测量所需日志字段，不返回渠道密钥和用户身份字段；整批应用会预检真实渠道、保留非受管资源和人工停用锁，并保存 24 小时持久幂等结果。
 
-ManyRouter 已实现对应客户端和整站同步执行：支持能力、状态、重试和计费依据读取；能力可用时一次提交站点完整渠道与分组状态，写入后再次读取并核对，再逐项确认渠道绑定、凭证版本、价格和线路版本。旧站点的专用接口返回未授权或不存在时继续使用原管理接口。兼容结果持久化、运营查询和立即检查接口仍待本模块后续实现。
+ManyRouter 已实现对应客户端和整站同步执行：支持能力、状态、重试、计费依据与日志读取；能力可用时一次提交站点完整渠道与分组状态，写入后再次读取并核对，再逐项确认渠道绑定、凭证版本、价格和线路版本。旧站点的专用接口返回未授权或不存在时继续使用原管理接口。
+
+兼容清单、检查历史、15 分钟定时检查、手动立即检查和运营详情已经实现。正式整批同步前会核对最新检查是否批准同一构建、合同和数据库类型；没有批准记录时停止写入。
 
 ## 10. 验证方式
 
@@ -176,7 +189,7 @@ ManyRouter 已实现对应客户端和整站同步执行：支持能力、状态
 - ManyRouter 合同测试覆盖能力判断、批量成功、超时后重读、结果未知、旧接口回退和不兼容只读。
 - 真实验收比较同步前后全部非受管资源，确认数量和内容不变。
 
-当前自动化结果：New API 的 SQLite 合同测试、MySQL 8.4 与 PostgreSQL 17.6 数据库矩阵、定向 `go vet` 和竞态检查通过；ManyRouter 的 New API 适配器与整站同步应用测试通过。
+当前自动化结果：New API 的 SQLite 合同测试、MySQL 8.4 与 PostgreSQL 17.6 数据库矩阵、裁剪日志合同、定向 `go vet` 和竞态检查通过；ManyRouter 的 New API 适配器、日志回退、兼容规则、整站同步批准门槛与 PostgreSQL 检查历史测试通过。
 
 ## 11. 待扩展项
 
@@ -189,5 +202,6 @@ ManyRouter 已实现对应客户端和整站同步执行：支持能力、状态
 
 | 日期 | 说明 |
 |---|---|
+| 2026-09-07 | 增加裁剪日志读取、兼容清单与检查历史；正式整批同步必须先通过当前清单批准 |
 | 2026-09-07 | 实现 New API 窄令牌整批接口及 ManyRouter 整站同步客户端，通过三种数据库与定向竞态验证 |
 | 2026-09-07 | 用户确认 M4 首版采用每站环境令牌、整批受管状态接口、能力合同和旧接口过渡方案 |

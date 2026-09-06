@@ -1,0 +1,128 @@
+.runtime-overview {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.runtime-overview-item {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: 5.25rem;
+  padding: var(--space-3) var(--space-4);
+  border-right: 1px solid var(--border);
+}
+
+.runtime-overview-item:last-child {
+  border-right: 0;
+}
+
+.runtime-overview-item > span:first-child,
+.runtime-overview-item small {
+  color: var(--text-muted);
+  font-size: var(--font-xs);
+}
+
+.runtime-overview-item strong {
+  overflow-wrap: anywhere;
+  font-size: var(--font-md);
+  font-variant-numeric: tabular-nums;
+}
+
+.runtime-health-table .table {
+  min-width: 1320px;
+}
+
+.runtime-issue-cell {
+  display: flex;
+  max-width: 21rem;
+  flex-direction: column;
+  gap: var(--space-1);
+  overflow-wrap: anywhere;
+}
+
+.runtime-detail {
+  min-width: 0;
+}
+
+.runtime-reason-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.runtime-reason-list li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+
+.runtime-reason-list li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.runtime-reason-list span {
+  color: var(--text-muted);
+}
+
+.runtime-detail .detail-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.runtime-detail-pair {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+@media (max-width: 960px) {
+  .runtime-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .runtime-overview-item:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .runtime-overview-item:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .runtime-overview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .runtime-overview-item,
+  .runtime-overview-item:nth-child(2n) {
+    min-height: 4.5rem;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .runtime-overview-item:last-child {
+    grid-column: auto;
+    border-bottom: 0;
+  }
+
+  .runtime-detail .detail-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .runtime-detail-pair {
+    grid-template-columns: 6rem minmax(0, 1fr);
+  }
+}

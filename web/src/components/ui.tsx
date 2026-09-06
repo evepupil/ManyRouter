@@ -221,6 +221,14 @@ const statusNames: Record<string, string> = {
   preview: "仅预览",
   no_change: "无变化",
   pending_sync: "等待线路核对",
+  normal: "正常",
+  attention: "注意",
+  blocked: "阻塞",
+  fault: "故障",
+  unverified: "待验证",
+  unreachable: "无法连接",
+  managed: "整批同步",
+  legacy: "旧接口",
 };
 
 export function Status({ value }: { value: string }) {
@@ -234,11 +242,12 @@ export function Status({ value }: { value: string }) {
     "succeeded",
     "automatic",
     "no_change",
+    "normal",
   ].includes(value)
     ? "success"
-    : ["failed", "incompatible"].includes(value)
+    : ["failed", "incompatible", "fault", "unreachable"].includes(value)
       ? "danger"
-      : ["syncing", "running", "applying"].includes(value)
+      : ["syncing", "running", "applying", "managed"].includes(value)
         ? "info"
         : [
               "pending",
@@ -250,6 +259,10 @@ export function Status({ value }: { value: string }) {
               "frozen",
               "preview",
               "pending_sync",
+              "attention",
+              "blocked",
+              "unverified",
+              "legacy",
             ].includes(value)
           ? "warning"
           : "";

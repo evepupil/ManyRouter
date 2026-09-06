@@ -31,6 +31,7 @@ type managedSyncFeatures struct {
 	EntryVisibility       bool `json:"entry_visibility"`
 	PersistentIdempotency bool `json:"persistent_idempotency"`
 	FinalStateDigest      bool `json:"final_state_digest"`
+	LogRead               bool `json:"log_read"`
 }
 
 type managedSyncLimits struct {
@@ -145,6 +146,7 @@ func (c *Client) ReadManagedSyncCapabilities(ctx context.Context) (reconciliatio
 			EntryVisibility:       response.Data.Features.EntryVisibility,
 			PersistentIdempotency: response.Data.Features.PersistentIdempotency,
 			FinalStateDigest:      response.Data.Features.FinalStateDigest,
+			LogRead:               response.Data.Features.LogRead,
 		},
 		Limits: reconciliation.ManagedSyncLimits{
 			MaxChannels:      response.Data.Limits.MaxChannels,

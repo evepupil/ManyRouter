@@ -28,3 +28,7 @@ export type AutomationSetting = Schemas["OpAutomationSetting"];
 export type AutomationRun = Schemas["OpAutomationRun"];
 export type SiteProductToken = Schemas["OpSiteProductToken"];
 export type IssuedSiteProductToken = Schemas["OpIssuedSiteProductToken"];
+export type RuntimeHealth = Schemas["OpRuntimeHealth"];
+export type RuntimeSite = Schemas["OpRuntimeSite"];
+export type RuntimeReason = Schemas["OpRuntimeReason"];
+export type CompatibilityCheck = Schemas["OpCompatibilityCheck"];

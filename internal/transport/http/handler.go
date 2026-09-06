@@ -14,6 +14,7 @@ import (
 	"github.com/evepupil/ManyRouter/internal/application/idempotency"
 	"github.com/evepupil/ManyRouter/internal/application/onboarding"
 	"github.com/evepupil/ManyRouter/internal/application/reconciliation"
+	"github.com/evepupil/ManyRouter/internal/application/runtimehealth"
 	scoringapp "github.com/evepupil/ManyRouter/internal/application/scoring"
 	domaincatalog "github.com/evepupil/ManyRouter/internal/domain/catalog"
 	domainevaluation "github.com/evepupil/ManyRouter/internal/domain/evaluation"
@@ -78,6 +79,13 @@ type catalogUseCases interface {
 	GetProducts(context.Context, string) (domaincatalog.Snapshot, error)
 }
 
+type runtimeHealthUseCases interface {
+	Summary(context.Context) (runtimehealth.Snapshot, error)
+	Detail(context.Context, uuid.UUID) (runtimehealth.SiteSnapshot, error)
+	Check(context.Context, uuid.UUID, string) (runtimehealth.SiteSnapshot, error)
+	Prometheus(context.Context) (string, error)
+}
+
 type HandlerOption func(*Handler)
 
 func WithOperations(service operationsUseCases) HandlerOption {
@@ -104,6 +112,10 @@ func WithCatalog(service catalogUseCases) HandlerOption {
 	return func(handler *Handler) { handler.catalog = service }
 }
 
+func WithRuntimeHealth(service runtimeHealthUseCases) HandlerOption {
+	return func(handler *Handler) { handler.runtimeHealth = service }
+}
+
 type Handler struct {
 	onboarding     onboardingUseCases
 	reconciliation reconciliationUseCases
@@ -115,6 +127,7 @@ type Handler struct {
 	scoring        scoringUseCases
 	automation     automationUseCases
 	catalog        catalogUseCases
+	runtimeHealth  runtimeHealthUseCases
 }
 
 func NewHandler(

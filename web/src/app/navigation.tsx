@@ -10,6 +10,7 @@ import {
   History,
   LayoutList,
   Network,
+  HeartPulse,
   Server,
   X,
 } from "lucide-react";
@@ -23,6 +24,7 @@ const links = [
   { path: "/pricing", key: "pricing", icon: CircleDollarSign },
   { path: "/plans", key: "plans", icon: History },
   { path: "/observability", key: "observability", icon: Activity },
+  { path: "/runtime-health", key: "runtimeHealth", icon: HeartPulse },
   { path: "/operations", key: "operations", icon: LayoutList },
   { path: "/audit", key: "audit", icon: ClipboardList },
 ] as const;

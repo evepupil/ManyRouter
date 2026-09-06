@@ -502,6 +502,26 @@ type Site struct {
 	AdminUserID         int64              `json:"admin_user_id"`
 }
 
+type SiteCompatibilityCheck struct {
+	ID               uuid.UUID          `json:"id"`
+	SiteID           uuid.UUID          `json:"site_id"`
+	Mode             string             `json:"mode"`
+	Verdict          string             `json:"verdict"`
+	CatalogVersion   string             `json:"catalog_version"`
+	NewApiVersion    string             `json:"new_api_version"`
+	ContractVersion  string             `json:"contract_version"`
+	DatabaseType     string             `json:"database_type"`
+	Capabilities     []byte             `json:"capabilities"`
+	StateHash        string             `json:"state_hash"`
+	BillingBasisHash string             `json:"billing_basis_hash"`
+	Conflicts        []byte             `json:"conflicts"`
+	Reasons          []byte             `json:"reasons"`
+	ErrorCode        string             `json:"error_code"`
+	ErrorMessage     string             `json:"error_message"`
+	CheckedBy        string             `json:"checked_by"`
+	CheckedAt        pgtype.Timestamptz `json:"checked_at"`
+}
+
 type SiteProductSnapshot struct {
 	ID           uuid.UUID          `json:"id"`
 	SiteID       uuid.UUID          `json:"site_id"`

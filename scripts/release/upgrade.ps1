@@ -1,6 +1,9 @@
 param(
     [Parameter(Mandatory)][string]$ManyRouterImage,
     [Parameter(Mandatory)][string]$NewAPIImage,
+    [Parameter(Mandatory)][string]$ManyRouterVersion,
+    [Parameter(Mandatory)][string]$ManyRouterCommit,
+    [Parameter(Mandatory)][string]$NewAPIVersion,
     [string]$EnvironmentFile = ""
 )
 
@@ -42,6 +45,9 @@ $release = [ordered]@{
     previous_new_api_image = $environment["NEW_API_IMAGE"]
     target_manyrouter_image = $ManyRouterImage
     target_new_api_image = $NewAPIImage
+    target_manyrouter_version = $ManyRouterVersion
+    target_manyrouter_commit = $ManyRouterCommit
+    target_new_api_version = $NewAPIVersion
     database_backups = @("manyrouter.dump", "new-api.dump", "new-api-log.dump")
 }
 [System.IO.File]::WriteAllText((Join-Path $releaseDirectory "release.json"), ($release | ConvertTo-Json -Depth 5), [System.Text.UTF8Encoding]::new($false))
@@ -52,6 +58,9 @@ try {
     }
     Set-ReleaseEnvironmentValue -Key "MANYROUTER_IMAGE" -Value $ManyRouterImage
     Set-ReleaseEnvironmentValue -Key "NEW_API_IMAGE" -Value $NewAPIImage
+    Set-ReleaseEnvironmentValue -Key "MANYROUTER_BUILD_VERSION" -Value $ManyRouterVersion
+    Set-ReleaseEnvironmentValue -Key "MANYROUTER_BUILD_COMMIT" -Value $ManyRouterCommit
+    Set-ReleaseEnvironmentValue -Key "NEW_API_BUILD_VERSION" -Value $NewAPIVersion
     Invoke-ReleaseCompose up -d
     & (Join-Path $PSScriptRoot "smoke.ps1") | Out-Null
     [System.IO.File]::WriteAllText((Join-Path $releaseDirectory "result.txt"), "upgrade_succeeded`n", [System.Text.UTF8Encoding]::new($false))

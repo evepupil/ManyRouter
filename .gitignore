@@ -13,6 +13,9 @@
 /dist/
 node_modules/
 /web/dist/
+/deploy/.env
+/deploy/backups/
+/deploy/evidence/
 /.impeccable/review/
 /coverage/
 /.cache/

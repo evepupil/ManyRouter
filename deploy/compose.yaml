@@ -1,0 +1,118 @@
+name: ${COMPOSE_PROJECT_NAME:?COMPOSE_PROJECT_NAME is required}
+
+services:
+  manyrouter-db:
+    image: ${POSTGRES_IMAGE:?POSTGRES_IMAGE is required}
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${MANYROUTER_DB_NAME:?MANYROUTER_DB_NAME is required}
+      POSTGRES_USER: ${MANYROUTER_DB_USER:?MANYROUTER_DB_USER is required}
+      POSTGRES_PASSWORD: ${MANYROUTER_DB_PASSWORD:?MANYROUTER_DB_PASSWORD is required}
+      TZ: ${TZ:-Asia/Shanghai}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - manyrouter_database:/var/lib/postgresql/data
+    security_opt: ["no-new-privileges:true"]
+
+  new-api-db:
+    image: ${POSTGRES_IMAGE:?POSTGRES_IMAGE is required}
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: ${NEW_API_DB_ADMIN_USER:?NEW_API_DB_ADMIN_USER is required}
+      POSTGRES_PASSWORD: ${NEW_API_DB_ADMIN_PASSWORD:?NEW_API_DB_ADMIN_PASSWORD is required}
+      NEW_API_DB_NAME: ${NEW_API_DB_NAME:?NEW_API_DB_NAME is required}
+      NEW_API_DB_USER: ${NEW_API_DB_USER:?NEW_API_DB_USER is required}
+      NEW_API_DB_PASSWORD: ${NEW_API_DB_PASSWORD:?NEW_API_DB_PASSWORD is required}
+      NEW_API_LOG_DB_NAME: ${NEW_API_LOG_DB_NAME:?NEW_API_LOG_DB_NAME is required}
+      NEW_API_LOG_DB_USER: ${NEW_API_LOG_DB_USER:?NEW_API_LOG_DB_USER is required}
+      NEW_API_LOG_DB_PASSWORD: ${NEW_API_LOG_DB_PASSWORD:?NEW_API_LOG_DB_PASSWORD is required}
+      TZ: ${TZ:-Asia/Shanghai}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - new_api_database:/var/lib/postgresql/data
+      - ./postgres/init-new-api.sh:/docker-entrypoint-initdb.d/10-init-new-api.sh:ro
+      - ./postgres/init-new-api.sql:/opt/manyrouter/init-new-api.sql:ro
+    security_opt: ["no-new-privileges:true"]
+
+  manyrouter-migrate:
+    image: ${MANYROUTER_IMAGE:?MANYROUTER_IMAGE is required}
+    command: ["migrate"]
+    restart: "no"
+    environment: &manyrouter-environment
+      MANYROUTER_DATABASE_URL: postgresql://${MANYROUTER_DB_USER}:${MANYROUTER_DB_PASSWORD}@manyrouter-db:5432/${MANYROUTER_DB_NAME}?sslmode=disable
+      MANYROUTER_HTTP_ADDRESS: 0.0.0.0:8080
+      MANYROUTER_MASTER_KEY: ${MANYROUTER_MASTER_KEY:?MANYROUTER_MASTER_KEY is required}
+      MANYROUTER_OPERATOR_TOKEN: ${MANYROUTER_OPERATOR_TOKEN:?MANYROUTER_OPERATOR_TOKEN is required}
+      MANYROUTER_AUTH_COOKIE_SECURE: ${MANYROUTER_AUTH_COOKIE_SECURE:-false}
+      MANYROUTER_LOG_LEVEL: ${MANYROUTER_LOG_LEVEL:-info}
+      MANYROUTER_COMPATIBILITY_FILE: /app/deploy/compatibility.yaml
+      TZ: ${TZ:-Asia/Shanghai}
+    depends_on:
+      manyrouter-db: { condition: service_healthy }
+    security_opt: ["no-new-privileges:true"]
+
+  manyrouter:
+    image: ${MANYROUTER_IMAGE:?MANYROUTER_IMAGE is required}
+    command: ["all"]
+    restart: unless-stopped
+    environment: *manyrouter-environment
+    ports:
+      - "127.0.0.1:${MANYROUTER_PORT:-8082}:8080"
+    depends_on:
+      manyrouter-migrate: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/api/v1/healthz || exit 1"]
+      interval: 10s
+      timeout: 3s
+      start_period: 20s
+      retries: 12
+    tmpfs: ["/tmp"]
+    security_opt: ["no-new-privileges:true"]
+
+  new-api:
+    image: ${NEW_API_IMAGE:?NEW_API_IMAGE is required}
+    command: ["--log-dir", "/app/logs"]
+    restart: unless-stopped
+    environment:
+      SQL_DSN: postgresql://${NEW_API_DB_USER}:${NEW_API_DB_PASSWORD}@new-api-db:5432/${NEW_API_DB_NAME}?sslmode=disable
+      LOG_SQL_DSN: postgresql://${NEW_API_LOG_DB_USER}:${NEW_API_LOG_DB_PASSWORD}@new-api-db:5432/${NEW_API_LOG_DB_NAME}?sslmode=disable
+      SESSION_SECRET: ${NEW_API_SESSION_SECRET:?NEW_API_SESSION_SECRET is required}
+      SESSION_COOKIE_SECURE: ${NEW_API_SESSION_COOKIE_SECURE:-false}
+      MANYROUTER_SYNC_TOKEN: ${MANYROUTER_SYNC_TOKEN:?MANYROUTER_SYNC_TOKEN is required}
+      MANYROUTER_SYNC_TOKEN_PREVIOUS: ${MANYROUTER_SYNC_TOKEN_PREVIOUS:-}
+      MANYROUTER_URL: http://manyrouter:8080
+      MANYROUTER_SITE_TOKEN: ${MANYROUTER_SITE_TOKEN:-}
+      VERSION: ${NEW_API_BUILD_VERSION:?NEW_API_BUILD_VERSION is required}
+      ERROR_LOG_ENABLED: "true"
+      BATCH_UPDATE_ENABLED: "true"
+      TZ: ${TZ:-Asia/Shanghai}
+    ports:
+      - "127.0.0.1:${NEW_API_PORT:-3001}:3000"
+    depends_on:
+      new-api-db: { condition: service_healthy }
+      manyrouter: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/api/status || exit 1"]
+      interval: 10s
+      timeout: 3s
+      start_period: 30s
+      retries: 18
+    volumes:
+      - new_api_data:/data
+      - new_api_logs:/app/logs
+    security_opt: ["no-new-privileges:true"]
+
+volumes:
+  manyrouter_database:
+  new_api_database:
+  new_api_data:
+  new_api_logs:

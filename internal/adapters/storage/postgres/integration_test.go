@@ -52,7 +52,7 @@ func TestMigrateAndPersistM0Onboarding(t *testing.T) {
 	}
 	suffix := strings.ReplaceAll(uuid.NewString(), "-", "")[:12]
 	siteData, err := service.CreateSite(ctx, onboarding.CreateSiteCommand{
-		Code: "site-" + suffix, Name: "Integration Site", NewAPIBaseURL: "http://127.0.0.1:3000", NewAPIAccessToken: "database-admin-secret",
+		Code: "site-" + suffix, Name: "Integration Site", NewAPIBaseURL: "https://site-" + suffix + ".example", NewAPIAccessToken: "database-admin-secret",
 	})
 	if err != nil {
 		t.Fatal(err)

@@ -134,3 +134,15 @@ for (const moduleDocument of [
     throw new Error(`M3 document link is incomplete: ${moduleDocument}`)
   }
 }
+
+for (const moduleDocument of [
+  'New API正式集成与兼容.md',
+  '组合发布与新站初始化.md',
+  '运行监控与升级回退.md',
+]) {
+  const contents = readFileSync(join(root, 'docs/模块设计', moduleDocument), 'utf8')
+  const roadmapLink = moduleDocument.replaceAll(' ', '%20')
+  if (!roadmap.includes(roadmapLink) || !contents.includes('../roadmap.md#m4')) {
+    throw new Error(`M4 document link is incomplete: ${moduleDocument}`)
+  }
+}

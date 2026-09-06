@@ -155,8 +155,9 @@ func (run *acceptanceRun) must(phase string, err error) {
 	run.evidence.Stages = append(run.evidence.Stages, stage)
 	_ = run.writeEvidence()
 	if err != nil {
-		run.t.Fatalf("M1 acceptance stopped at %s (%s)", phase, stage.ErrorCode)
+		run.t.Fatalf("acceptance stopped at %s (%s)", phase, stage.ErrorCode)
 	}
+	run.t.Logf("acceptance stage passed: %s", phase)
 }
 
 func acceptanceErrorCode(err error) string {

@@ -27,10 +27,13 @@ import (
 	"github.com/evepupil/ManyRouter/internal/adapters/storage/postgres"
 	supplieropenai "github.com/evepupil/ManyRouter/internal/adapters/supplier/openai"
 	"github.com/evepupil/ManyRouter/internal/application/auth"
+	"github.com/evepupil/ManyRouter/internal/application/collection"
+	evaluationapp "github.com/evepupil/ManyRouter/internal/application/evaluation"
 	"github.com/evepupil/ManyRouter/internal/application/idempotency"
 	"github.com/evepupil/ManyRouter/internal/application/onboarding"
 	"github.com/evepupil/ManyRouter/internal/application/operations"
 	"github.com/evepupil/ManyRouter/internal/application/reconciliation"
+	scoringapp "github.com/evepupil/ManyRouter/internal/application/scoring"
 	"github.com/evepupil/ManyRouter/internal/jobs"
 	platformcrypto "github.com/evepupil/ManyRouter/internal/platform/crypto"
 	httptransport "github.com/evepupil/ManyRouter/internal/transport/http"
@@ -216,6 +219,14 @@ func (run *acceptanceRun) prepareDatabase() error {
 }
 
 func (run *acceptanceRun) startBackend() error {
+	return run.startBackendWithM2(false)
+}
+
+func (run *acceptanceRun) startM2Backend() error {
+	return run.startBackendWithM2(true)
+}
+
+func (run *acceptanceRun) startBackendWithM2(includeM2 bool) error {
 	vault, err := platformcrypto.NewVaultFromBase64(run.state.MasterKey, 1)
 	if err != nil {
 		return err
@@ -225,11 +236,39 @@ func (run *acceptanceRun) startBackend() error {
 	slog.SetDefault(logger)
 	run.t.Cleanup(func() { slog.SetDefault(previousLogger) })
 	dispatcher := jobs.NewDispatcher()
-	reconciler, err := reconciliation.NewService(run.store, vault, newapi.Factory{HTTPClient: run.client}, dispatcher, time.Now, uuid.New)
+	gatewayFactory := newapi.Factory{HTTPClient: run.client}
+	reconciler, err := reconciliation.NewService(run.store, vault, gatewayFactory, dispatcher, time.Now, uuid.New)
 	if err != nil {
 		return err
 	}
-	run.worker, err = jobs.NewClient(run.store.Pool(), reconciler, true)
+	clientOptions := make([]jobs.ClientOption, 0, 3)
+	var collectionService *collection.Service
+	var evaluationService *evaluationapp.Service
+	var scoringService *scoringapp.Service
+	if includeM2 {
+		collectionService, err = collection.NewService(run.store, vault, gatewayFactory, time.Now)
+		if err != nil {
+			return err
+		}
+		prober, proberErr := supplieropenai.NewEvaluationProber(run.client)
+		if proberErr != nil {
+			return proberErr
+		}
+		evaluationService, err = evaluationapp.NewService(run.store, vault, prober, dispatcher, time.Now, uuid.New)
+		if err != nil {
+			return err
+		}
+		scoringService, err = scoringapp.NewService(run.store, time.Now, uuid.New)
+		if err != nil {
+			return err
+		}
+		clientOptions = append(clientOptions,
+			jobs.WithCollection(collectionService),
+			jobs.WithEvaluation(evaluationService),
+			jobs.WithScoring(scoringService),
+		)
+	}
+	run.worker, err = jobs.NewClient(run.store.Pool(), reconciler, true, clientOptions...)
 	if err != nil {
 		return err
 	}
@@ -248,7 +287,7 @@ func (run *acceptanceRun) startBackend() error {
 	if err != nil {
 		return err
 	}
-	service, err := operations.NewService(run.store, vault, newapi.Factory{HTTPClient: run.client}, checker)
+	service, err := operations.NewService(run.store, vault, gatewayFactory, checker)
 	if err != nil {
 		return err
 	}
@@ -257,7 +296,15 @@ func (run *acceptanceRun) startBackend() error {
 	if err != nil {
 		return err
 	}
-	handler, err := httptransport.NewHandler(onboard, reconciler, idempotent, logger, httptransport.WithOperations(service))
+	handlerOptions := []httptransport.HandlerOption{httptransport.WithOperations(service)}
+	if includeM2 {
+		handlerOptions = append(handlerOptions,
+			httptransport.WithCollection(collectionService),
+			httptransport.WithEvaluation(evaluationService),
+			httptransport.WithScoring(scoringService),
+		)
+	}
+	handler, err := httptransport.NewHandler(onboard, reconciler, idempotent, logger, handlerOptions...)
 	if err != nil {
 		return err
 	}
@@ -266,6 +313,11 @@ func (run *acceptanceRun) startBackend() error {
 		return err
 	}
 	httptransport.RegisterOperationsRoutes(router, handler)
+	if includeM2 {
+		httptransport.RegisterCollectionRoutes(router, handler)
+		httptransport.RegisterEvaluationRoutes(router, handler)
+		httptransport.RegisterScoringRoutes(router, handler)
+	}
 	run.api = httptest.NewServer(router)
 	run.t.Cleanup(run.api.Close)
 	return nil

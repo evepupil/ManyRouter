@@ -123,3 +123,14 @@ for (const moduleDocument of [
     throw new Error(`M2 document link is incomplete: ${moduleDocument}`)
   }
 }
+
+for (const moduleDocument of [
+  '自动线路发布与故障恢复.md',
+  '用户产品数据与 New API 页面.md',
+]) {
+  const contents = readFileSync(join(root, 'docs/模块设计', moduleDocument), 'utf8')
+  const roadmapLink = moduleDocument.replaceAll(' ', '%20')
+  if (!roadmap.includes(roadmapLink) || !contents.includes('../roadmap.md#m3')) {
+    throw new Error(`M3 document link is incomplete: ${moduleDocument}`)
+  }
+}

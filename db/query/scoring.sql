@@ -403,13 +403,13 @@ INSERT INTO score_snapshots (
     facts_through, passive_samples, active_samples, price_score, latency_score,
     sla_score, quality_score, total_score, confidence, eligibility,
     hard_reasons, explanation, authenticity_assessment_id,
-    capability_assessment_id, created_at
+    capability_assessment_id, score_run_id, created_at
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7,
     $8, $9, $10, $11, $12,
     $13, $14, $15, $16, $17,
     $18, $19, $20,
-    $21, $22
+    $21, $22, $23
 )
 ON CONFLICT (site_id, supplier_id, model, policy_version, window_end) DO NOTHING;
 

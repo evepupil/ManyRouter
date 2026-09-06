@@ -24,3 +24,7 @@ export type TrustedReferenceInput = Schemas["OpTrustedReferenceInput"];
 export type TrustedReference = Schemas["OpTrustedReference"];
 export type ShadowRecommendation = Schemas["OpShadowRecommendation"];
 export type ScoreInsight = Schemas["OpScoreInsight"];
+export type AutomationSetting = Schemas["OpAutomationSetting"];
+export type AutomationRun = Schemas["OpAutomationRun"];
+export type SiteProductToken = Schemas["OpSiteProductToken"];
+export type IssuedSiteProductToken = Schemas["OpIssuedSiteProductToken"];

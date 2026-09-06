@@ -236,13 +236,13 @@ INSERT INTO score_snapshots (
     facts_through, passive_samples, active_samples, price_score, latency_score,
     sla_score, quality_score, total_score, confidence, eligibility,
     hard_reasons, explanation, authenticity_assessment_id,
-    capability_assessment_id, created_at
+    capability_assessment_id, score_run_id, created_at
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7,
     $8, $9, $10, $11, $12,
     $13, $14, $15, $16, $17,
     $18, $19, $20,
-    $21, $22
+    $21, $22, $23
 )
 ON CONFLICT (site_id, supplier_id, model, policy_version, window_end) DO NOTHING
 `
@@ -269,6 +269,7 @@ type CreateScoreSnapshotParams struct {
 	Explanation              []byte             `json:"explanation"`
 	AuthenticityAssessmentID pgtype.UUID        `json:"authenticity_assessment_id"`
 	CapabilityAssessmentID   pgtype.UUID        `json:"capability_assessment_id"`
+	ScoreRunID               pgtype.UUID        `json:"score_run_id"`
 	CreatedAt                pgtype.Timestamptz `json:"created_at"`
 }
 
@@ -295,6 +296,7 @@ func (q *Queries) CreateScoreSnapshot(ctx context.Context, arg CreateScoreSnapsh
 		arg.Explanation,
 		arg.AuthenticityAssessmentID,
 		arg.CapabilityAssessmentID,
+		arg.ScoreRunID,
 		arg.CreatedAt,
 	)
 	return err
@@ -805,7 +807,7 @@ func (q *Queries) GetWindowRecoveryMillis(ctx context.Context, arg GetWindowReco
 
 const listLatestScoreSnapshots = `-- name: ListLatestScoreSnapshots :many
 SELECT
-    snapshot.id, snapshot.site_id, snapshot.supplier_id, snapshot.model, snapshot.policy_version, snapshot.window_start, snapshot.window_end, snapshot.facts_through, snapshot.passive_samples, snapshot.active_samples, snapshot.price_score, snapshot.latency_score, snapshot.sla_score, snapshot.quality_score, snapshot.total_score, snapshot.confidence, snapshot.eligibility, snapshot.hard_reasons, snapshot.explanation, snapshot.authenticity_assessment_id, snapshot.capability_assessment_id, snapshot.created_at,
+    snapshot.id, snapshot.site_id, snapshot.supplier_id, snapshot.model, snapshot.policy_version, snapshot.window_start, snapshot.window_end, snapshot.facts_through, snapshot.passive_samples, snapshot.active_samples, snapshot.price_score, snapshot.latency_score, snapshot.sla_score, snapshot.quality_score, snapshot.total_score, snapshot.confidence, snapshot.eligibility, snapshot.hard_reasons, snapshot.explanation, snapshot.authenticity_assessment_id, snapshot.capability_assessment_id, snapshot.created_at, snapshot.score_run_id,
     supplier.name AS supplier_name,
     COALESCE(authenticity.verdict, 'insufficient')::text AS authenticity_verdict,
     COUNT(*) OVER()::bigint AS total_count
@@ -855,6 +857,7 @@ type ListLatestScoreSnapshotsRow struct {
 	AuthenticityAssessmentID pgtype.UUID        `json:"authenticity_assessment_id"`
 	CapabilityAssessmentID   pgtype.UUID        `json:"capability_assessment_id"`
 	CreatedAt                pgtype.Timestamptz `json:"created_at"`
+	ScoreRunID               pgtype.UUID        `json:"score_run_id"`
 	SupplierName             string             `json:"supplier_name"`
 	AuthenticityVerdict      string             `json:"authenticity_verdict"`
 	TotalCount               int64              `json:"total_count"`
@@ -898,6 +901,7 @@ func (q *Queries) ListLatestScoreSnapshots(ctx context.Context, arg ListLatestSc
 			&i.AuthenticityAssessmentID,
 			&i.CapabilityAssessmentID,
 			&i.CreatedAt,
+			&i.ScoreRunID,
 			&i.SupplierName,
 			&i.AuthenticityVerdict,
 			&i.TotalCount,

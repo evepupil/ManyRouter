@@ -72,6 +72,9 @@ func sessionAuthentication(service *auth.Service, operatorToken string, secure b
 }
 
 func publicAuthEndpoint(method, path string) bool {
+	if siteCatalogEndpoint(method, path) {
+		return true
+	}
 	if method == stdhttp.MethodGet && path == managementAPI+"/healthz" {
 		return true
 	}

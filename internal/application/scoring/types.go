@@ -85,6 +85,7 @@ type EvaluationEvidence struct {
 
 type Snapshot struct {
 	ID                       uuid.UUID
+	ScoreRunID               *uuid.UUID
 	Target                   Target
 	WindowStart              time.Time
 	WindowEnd                time.Time
@@ -101,6 +102,20 @@ type Snapshot struct {
 	CapabilityAssessmentID   *uuid.UUID
 	CreatedAt                time.Time
 	Recommendations          []domainscoring.ShadowAdvice
+}
+
+type ScoreRun struct {
+	ID              uuid.UUID
+	SiteID          uuid.UUID
+	PolicyVersion   string
+	WindowEnd       time.Time
+	ExpectedTargets int
+	StartedAt       time.Time
+}
+
+type ScoreRunRecorder interface {
+	BeginScoreRun(context.Context, ScoreRun) (bool, error)
+	FinishScoreRun(context.Context, uuid.UUID, int, bool, string, time.Time) error
 }
 
 type Repository interface {

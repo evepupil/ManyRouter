@@ -8,6 +8,8 @@ import (
 	stdhttp "net/http"
 	"strings"
 
+	automationapp "github.com/evepupil/ManyRouter/internal/application/automation"
+	catalogapp "github.com/evepupil/ManyRouter/internal/application/catalog"
 	evaluationapp "github.com/evepupil/ManyRouter/internal/application/evaluation"
 	"github.com/evepupil/ManyRouter/internal/application/idempotency"
 	"github.com/evepupil/ManyRouter/internal/application/onboarding"
@@ -50,6 +52,18 @@ func (h *Handler) writeIdempotent(c *gin.Context, scope, key, requestHash string
 }
 
 func (h *Handler) writeApplicationError(c *gin.Context, err error) {
+	if errors.Is(err, automationapp.ErrInvalid) {
+		writeError(c, stdhttp.StatusBadRequest, "invalid_automation", strings.TrimPrefix(err.Error(), automationapp.ErrInvalid.Error()+": "))
+		return
+	}
+	if errors.Is(err, catalogapp.ErrInvalid) {
+		writeError(c, stdhttp.StatusBadRequest, "invalid_catalog_request", strings.TrimPrefix(err.Error(), catalogapp.ErrInvalid.Error()+": "))
+		return
+	}
+	if errors.Is(err, catalogapp.ErrUnauthorized) {
+		writeError(c, stdhttp.StatusUnauthorized, "site_token_unauthorized", "站点产品访问凭证无效")
+		return
+	}
 	if errors.Is(err, evaluationapp.ErrInvalid) {
 		writeError(c, stdhttp.StatusBadRequest, "invalid_evaluation", strings.TrimPrefix(err.Error(), evaluationapp.ErrInvalid.Error()+": "))
 		return

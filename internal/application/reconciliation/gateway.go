@@ -95,6 +95,29 @@ type BillingBasisReader interface {
 	ReadBillingBasis(context.Context) (map[string]json.RawMessage, string, error)
 }
 
+type StatusCodeRange struct {
+	Start int
+	End   int
+}
+
+type RetryPolicy struct {
+	RetryTimes  int
+	StatusCodes []StatusCodeRange
+}
+
+func (policy RetryPolicy) AllowsStatus(code int) bool {
+	for _, candidate := range policy.StatusCodes {
+		if code >= candidate.Start && code <= candidate.End {
+			return true
+		}
+	}
+	return false
+}
+
+type RetryPolicyReader interface {
+	ReadRetryPolicy(context.Context) (RetryPolicy, error)
+}
+
 func failuref(kind FailureKind, code, format string, args ...any) *Failure {
 	return NewFailure(kind, code, fmt.Sprintf(format, args...), nil)
 }

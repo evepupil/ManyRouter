@@ -1,10 +1,23 @@
 import { useDeferredValue, useState, type FormEvent } from "react";
-import { Pencil, Plus, PowerOff, Save } from "lucide-react";
+import {
+  Copy,
+  KeyRound,
+  Pencil,
+  Plus,
+  PowerOff,
+  Save,
+  Trash2,
+} from "lucide-react";
 import { useAction, useList } from "../../api/hooks";
-import type { Site } from "../../api/types";
+import type {
+  IssuedSiteProductToken,
+  Site,
+  SiteProductToken,
+} from "../../api/types";
 import { DataTable, Pagination, Toolbar } from "../../components/data-table";
 import {
   Button,
+  DateTime,
   Field,
   IconButton,
   Input,
@@ -19,6 +32,7 @@ export function SitesPage() {
   const [search, setSearch] = useState("");
   const [offset, setOffset] = useState(0);
   const [editing, setEditing] = useState<Site | "new" | null>(null);
+  const [productTokensFor, setProductTokensFor] = useState<Site | null>(null);
   const query = useList<Site>("sites", { q: useDeferredValue(search), offset });
   return (
     <Page
@@ -87,6 +101,12 @@ export function SitesPage() {
                 >
                   <Pencil size={16} />
                 </IconButton>
+                <IconButton
+                  label={`管理 ${site.name} 的用户页面令牌`}
+                  onClick={() => setProductTokensFor(site)}
+                >
+                  <KeyRound size={16} />
+                </IconButton>
               </div>
             ),
           },
@@ -103,7 +123,143 @@ export function SitesPage() {
           onClose={() => setEditing(null)}
         />
       )}
+      {productTokensFor && (
+        <ProductTokenManager
+          site={productTokensFor}
+          onClose={() => setProductTokensFor(null)}
+        />
+      )}
     </Page>
+  );
+}
+
+function ProductTokenManager({
+  site,
+  onClose,
+}: {
+  site: Site;
+  onClose: () => void;
+}) {
+  const [reason, setReason] = useState("");
+  const [issued, setIssued] = useState("");
+  const [copied, setCopied] = useState(false);
+  const query = useList<SiteProductToken>("site-product-tokens", {
+    site_id: site.id,
+    limit: 100,
+  });
+  const createAction = useAction<IssuedSiteProductToken>((result) => {
+    setIssued(result.token);
+    setReason("");
+    setCopied(false);
+  });
+  const revokeAction = useAction();
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    createAction.mutate({
+      path: `sites/${site.id}/product-tokens`,
+      body: { reason },
+    });
+  };
+  return (
+    <Modal
+      open
+      wide
+      busy={createAction.isPending || revokeAction.isPending}
+      onClose={onClose}
+      title={`用户页面令牌 · ${site.name}`}
+    >
+      <div className="form-stack">
+        <form className="toolbar" onSubmit={submit}>
+          <Field label="创建原因">
+            <Input
+              required
+              minLength={3}
+              maxLength={500}
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+            />
+          </Field>
+          <Button
+            type="submit"
+            variant="primary"
+            icon={<KeyRound />}
+            pending={createAction.isPending}
+          >
+            创建令牌
+          </Button>
+        </form>
+        {issued && (
+          <div className="form-stack">
+            <div className="notice notice-warning" role="note">
+              该令牌只显示一次，请配置到对应 New API 服务端。
+            </div>
+            <div className="toolbar">
+              <pre className="code-block">{issued}</pre>
+              <Button
+                icon={<Copy />}
+                onClick={() => {
+                  void navigator.clipboard
+                    .writeText(issued)
+                    .then(() => setCopied(true));
+                }}
+              >
+                {copied ? "已复制" : "复制"}
+              </Button>
+            </div>
+          </div>
+        )}
+        <Notice
+          error={createAction.error ?? revokeAction.error ?? query.error}
+        />
+        <DataTable
+          items={query.data?.items ?? []}
+          loading={query.isPending}
+          error={query.error}
+          empty="尚未创建用户页面令牌"
+          columns={[
+            {
+              key: "created",
+              title: "创建时间",
+              render: (token) => <DateTime value={token.created_at} />,
+            },
+            {
+              key: "used",
+              title: "最近使用",
+              render: (token) => <DateTime value={token.last_used_at} />,
+            },
+            {
+              key: "reason",
+              title: "原因",
+              render: (token) => token.reason,
+            },
+            {
+              key: "status",
+              title: "状态",
+              render: (token) => <Status value={token.status} />,
+            },
+            {
+              key: "actions",
+              title: "操作",
+              render: (token) =>
+                token.status === "active" ? (
+                  <IconButton
+                    label="撤销用户页面令牌"
+                    disabled={revokeAction.isPending}
+                    onClick={() =>
+                      revokeAction.mutate({
+                        path: `sites/${site.id}/product-tokens/${token.id}/revoke`,
+                        body: { reason: "运营人员撤销站点用户页面访问" },
+                      })
+                    }
+                  >
+                    <Trash2 size={16} />
+                  </IconButton>
+                ) : null,
+            },
+          ]}
+        />
+      </div>
+    </Modal>
   );
 }
 

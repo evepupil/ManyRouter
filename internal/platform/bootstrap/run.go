@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"context"
+	cryptorand "crypto/rand"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -13,6 +14,8 @@ import (
 	"github.com/evepupil/ManyRouter/internal/adapters/storage/postgres"
 	supplieropenai "github.com/evepupil/ManyRouter/internal/adapters/supplier/openai"
 	"github.com/evepupil/ManyRouter/internal/application/auth"
+	automationapp "github.com/evepupil/ManyRouter/internal/application/automation"
+	catalogapp "github.com/evepupil/ManyRouter/internal/application/catalog"
 	"github.com/evepupil/ManyRouter/internal/application/collection"
 	evaluationapp "github.com/evepupil/ManyRouter/internal/application/evaluation"
 	"github.com/evepupil/ManyRouter/internal/application/idempotency"
@@ -73,11 +76,24 @@ func Run(ctx context.Context, applicationConfig config.Config, logger *slog.Logg
 	if err != nil {
 		return err
 	}
+	automationChecker, err := newapi.NewAutomationChecker(store, vault, gatewayFactory)
+	if err != nil {
+		return err
+	}
+	automationService, err := automationapp.NewService(store, automationChecker, now, newID)
+	if err != nil {
+		return err
+	}
+	catalogService, err := catalogapp.NewService(store, cryptorand.Reader, now, newID)
+	if err != nil {
+		return err
+	}
 	riverClient, err := jobs.NewClient(
 		store.Pool(), reconciliationService, applicationConfig.RunsWorkers(),
 		jobs.WithCollection(collectionService),
 		jobs.WithEvaluation(evaluationService),
 		jobs.WithScoring(scoringService),
+		jobs.WithAutomation(automationService),
 	)
 	if err != nil {
 		return fmt.Errorf("configure River: %w", err)
@@ -120,6 +136,8 @@ func Run(ctx context.Context, applicationConfig config.Config, logger *slog.Logg
 			httptransport.WithCollection(collectionService),
 			httptransport.WithEvaluation(evaluationService),
 			httptransport.WithScoring(scoringService),
+			httptransport.WithAutomation(automationService),
+			httptransport.WithCatalog(catalogService),
 		)
 		if err != nil {
 			return err
@@ -132,6 +150,8 @@ func Run(ctx context.Context, applicationConfig config.Config, logger *slog.Logg
 		httptransport.RegisterCollectionRoutes(router, handler)
 		httptransport.RegisterEvaluationRoutes(router, handler)
 		httptransport.RegisterScoringRoutes(router, handler)
+		httptransport.RegisterAutomationRoutes(router, handler)
+		httptransport.RegisterCatalogRoutes(router, handler)
 		server = &http.Server{
 			Addr:              applicationConfig.HTTPAddress,
 			Handler:           router,

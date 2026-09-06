@@ -7,12 +7,15 @@ import (
 	"log/slog"
 	stdhttp "net/http"
 
+	automationapp "github.com/evepupil/ManyRouter/internal/application/automation"
+	catalogapp "github.com/evepupil/ManyRouter/internal/application/catalog"
 	"github.com/evepupil/ManyRouter/internal/application/collection"
 	evaluationapp "github.com/evepupil/ManyRouter/internal/application/evaluation"
 	"github.com/evepupil/ManyRouter/internal/application/idempotency"
 	"github.com/evepupil/ManyRouter/internal/application/onboarding"
 	"github.com/evepupil/ManyRouter/internal/application/reconciliation"
 	scoringapp "github.com/evepupil/ManyRouter/internal/application/scoring"
+	domaincatalog "github.com/evepupil/ManyRouter/internal/domain/catalog"
 	domainevaluation "github.com/evepupil/ManyRouter/internal/domain/evaluation"
 	"github.com/evepupil/ManyRouter/internal/domain/operations"
 	"github.com/evepupil/ManyRouter/internal/domain/routing"
@@ -60,6 +63,21 @@ type scoringUseCases interface {
 	ListInsights(context.Context, scoringapp.InsightFilter) (scoringapp.InsightPage, error)
 }
 
+type automationUseCases interface {
+	ProcessLatest(context.Context, uuid.UUID) (automationapp.Run, error)
+	ListSettings(context.Context, uuid.UUID) ([]automationapp.Setting, error)
+	UpdateSetting(context.Context, automationapp.UpdateSettingCommand) (automationapp.Setting, error)
+	ListRuns(context.Context, automationapp.RunFilter) (automationapp.RunPage, error)
+}
+
+type catalogUseCases interface {
+	CreateToken(context.Context, uuid.UUID, string, string) (catalogapp.IssuedToken, error)
+	ListTokens(context.Context, uuid.UUID) ([]catalogapp.TokenRecord, error)
+	RevokeToken(context.Context, uuid.UUID, uuid.UUID, string, string) error
+	Authenticate(context.Context, string) (uuid.UUID, error)
+	GetProducts(context.Context, string) (domaincatalog.Snapshot, error)
+}
+
 type HandlerOption func(*Handler)
 
 func WithOperations(service operationsUseCases) HandlerOption {
@@ -78,6 +96,14 @@ func WithScoring(service scoringUseCases) HandlerOption {
 	return func(handler *Handler) { handler.scoring = service }
 }
 
+func WithAutomation(service automationUseCases) HandlerOption {
+	return func(handler *Handler) { handler.automation = service }
+}
+
+func WithCatalog(service catalogUseCases) HandlerOption {
+	return func(handler *Handler) { handler.catalog = service }
+}
+
 type Handler struct {
 	onboarding     onboardingUseCases
 	reconciliation reconciliationUseCases
@@ -87,6 +113,8 @@ type Handler struct {
 	collection     collectionUseCases
 	evaluation     evaluationUseCases
 	scoring        scoringUseCases
+	automation     automationUseCases
+	catalog        catalogUseCases
 }
 
 func NewHandler(

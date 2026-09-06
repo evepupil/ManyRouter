@@ -19,6 +19,7 @@ type clientConfig struct {
 	collection CollectionRunner
 	evaluation EvaluationRunner
 	scoring    ScoringRunner
+	automation AutomationRunner
 }
 
 type ClientOption func(*clientConfig)
@@ -33,6 +34,10 @@ func WithEvaluation(runner EvaluationRunner) ClientOption {
 
 func WithScoring(runner ScoringRunner) ClientOption {
 	return func(config *clientConfig) { config.scoring = runner }
+}
+
+func WithAutomation(runner AutomationRunner) ClientOption {
+	return func(config *clientConfig) { config.automation = runner }
 }
 
 type ReconciliationArgs struct {
@@ -138,6 +143,10 @@ func NewClient(pool *pgxpool.Pool, runner ReconciliationRunner, execute bool, op
 		river.AddWorker(workers, &ScoringWorker{runner: clientOptions.scoring})
 		config.PeriodicJobs = append(config.PeriodicJobs, scoringPeriodicJobs()...)
 	}
+	if clientOptions.automation != nil {
+		river.AddWorker(workers, &AutomationWorker{runner: clientOptions.automation})
+		config.PeriodicJobs = append(config.PeriodicJobs, automationPeriodicJobs()...)
+	}
 	if execute {
 		config.Queues = map[string]river.QueueConfig{
 			reconciliationQueue: {MaxWorkers: 4},
@@ -150,6 +159,9 @@ func NewClient(pool *pgxpool.Pool, runner ReconciliationRunner, execute bool, op
 		}
 		if clientOptions.scoring != nil {
 			config.Queues[scoringQueue] = river.QueueConfig{MaxWorkers: 1}
+		}
+		if clientOptions.automation != nil {
+			config.Queues[automationQueue] = river.QueueConfig{MaxWorkers: 1}
 		}
 	}
 	return river.NewClient(riverpgxv5.New(pool), config)

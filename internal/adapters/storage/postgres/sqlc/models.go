@@ -91,6 +91,32 @@ type AuthenticityAssessment struct {
 	ExpiresAt        pgtype.Timestamptz `json:"expires_at"`
 }
 
+type AutomationDecision struct {
+	ID               uuid.UUID          `json:"id"`
+	RunID            uuid.UUID          `json:"run_id"`
+	StrategyID       uuid.UUID          `json:"strategy_id"`
+	RelationID       uuid.UUID          `json:"relation_id"`
+	Action           string             `json:"action"`
+	CurrentMember    bool               `json:"current_member"`
+	TargetMember     bool               `json:"target_member"`
+	HoldAction       string             `json:"hold_action"`
+	Reasons          []byte             `json:"reasons"`
+	ScoreSnapshotIds []uuid.UUID        `json:"score_snapshot_ids"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+}
+
+type AutomationRun struct {
+	ID          uuid.UUID          `json:"id"`
+	SiteID      uuid.UUID          `json:"site_id"`
+	ScoreRunID  uuid.UUID          `json:"score_run_id"`
+	Status      string             `json:"status"`
+	TriggerKind string             `json:"trigger_kind"`
+	RoutePlanID pgtype.UUID        `json:"route_plan_id"`
+	Summary     string             `json:"summary"`
+	StartedAt   pgtype.Timestamptz `json:"started_at"`
+	CompletedAt pgtype.Timestamptz `json:"completed_at"`
+}
+
 type CapabilityAssessment struct {
 	ID              uuid.UUID          `json:"id"`
 	RunID           uuid.UUID          `json:"run_id"`
@@ -392,6 +418,19 @@ type RoutePlanVersion struct {
 	ConfirmedAt    pgtype.Timestamptz `json:"confirmed_at"`
 }
 
+type ScoreRun struct {
+	ID               uuid.UUID          `json:"id"`
+	SiteID           uuid.UUID          `json:"site_id"`
+	PolicyVersion    string             `json:"policy_version"`
+	WindowEnd        pgtype.Timestamptz `json:"window_end"`
+	ExpectedTargets  int32              `json:"expected_targets"`
+	CompletedTargets int32              `json:"completed_targets"`
+	Status           string             `json:"status"`
+	ErrorSummary     pgtype.Text        `json:"error_summary"`
+	StartedAt        pgtype.Timestamptz `json:"started_at"`
+	CompletedAt      pgtype.Timestamptz `json:"completed_at"`
+}
+
 type ScoreSnapshot struct {
 	ID                       uuid.UUID          `json:"id"`
 	SiteID                   uuid.UUID          `json:"site_id"`
@@ -415,6 +454,7 @@ type ScoreSnapshot struct {
 	AuthenticityAssessmentID pgtype.UUID        `json:"authenticity_assessment_id"`
 	CapabilityAssessmentID   pgtype.UUID        `json:"capability_assessment_id"`
 	CreatedAt                pgtype.Timestamptz `json:"created_at"`
+	ScoreRunID               pgtype.UUID        `json:"score_run_id"`
 }
 
 type ScoringAggregationState struct {
@@ -462,6 +502,30 @@ type Site struct {
 	AdminUserID         int64              `json:"admin_user_id"`
 }
 
+type SiteProductSnapshot struct {
+	ID           uuid.UUID          `json:"id"`
+	SiteID       uuid.UUID          `json:"site_id"`
+	Version      int64              `json:"version"`
+	RoutePlanID  uuid.UUID          `json:"route_plan_id"`
+	ScoreRunID   pgtype.UUID        `json:"score_run_id"`
+	Content      []byte             `json:"content"`
+	ContentHash  string             `json:"content_hash"`
+	FactsThrough pgtype.Timestamptz `json:"facts_through"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+}
+
+type SiteProductToken struct {
+	ID         uuid.UUID          `json:"id"`
+	SiteID     uuid.UUID          `json:"site_id"`
+	TokenHash  string             `json:"token_hash"`
+	Status     string             `json:"status"`
+	Reason     string             `json:"reason"`
+	CreatedBy  string             `json:"created_by"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	LastUsedAt pgtype.Timestamptz `json:"last_used_at"`
+	RevokedAt  pgtype.Timestamptz `json:"revoked_at"`
+}
+
 type SiteStrategy struct {
 	ID          uuid.UUID          `json:"id"`
 	SiteID      uuid.UUID          `json:"site_id"`
@@ -492,6 +556,15 @@ type SiteSupplier struct {
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
 }
 
+type SiteSupplierAutomationHold struct {
+	RelationID  uuid.UUID          `json:"relation_id"`
+	Active      bool               `json:"active"`
+	ReasonCodes []byte             `json:"reason_codes"`
+	SourceRunID uuid.UUID          `json:"source_run_id"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	ClearedAt   pgtype.Timestamptz `json:"cleared_at"`
+}
+
 type SiteSupplierChannel struct {
 	ID                             uuid.UUID          `json:"id"`
 	SiteSupplierID                 uuid.UUID          `json:"site_supplier_id"`
@@ -503,6 +576,16 @@ type SiteSupplierChannel struct {
 	LastConfirmedCredentialID      pgtype.UUID        `json:"last_confirmed_credential_id"`
 	LastConfirmedCredentialVersion pgtype.Int4        `json:"last_confirmed_credential_version"`
 	LastConfirmedEnabled           pgtype.Bool        `json:"last_confirmed_enabled"`
+}
+
+type StrategyAutomationSetting struct {
+	StrategyID              uuid.UUID          `json:"strategy_id"`
+	Mode                    string             `json:"mode"`
+	Version                 int64              `json:"version"`
+	EntryClosedByAutomation bool               `json:"entry_closed_by_automation"`
+	Reason                  string             `json:"reason"`
+	UpdatedBy               string             `json:"updated_by"`
+	UpdatedAt               pgtype.Timestamptz `json:"updated_at"`
 }
 
 type StrategyMember struct {

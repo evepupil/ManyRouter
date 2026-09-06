@@ -26,7 +26,7 @@ export function useList<T>(
   });
 }
 
-export function useAction(onSuccess?: () => void) {
+export function useAction<T = unknown>(onSuccess?: (result: T) => void) {
   const client = useQueryClient();
   const pendingAttempt = useRef<RequestAttempt | null>(null);
   return useMutation({
@@ -37,7 +37,7 @@ export function useAction(onSuccess?: () => void) {
         () => crypto.randomUUID(),
       );
       pendingAttempt.current = attempt;
-      const result = await request<unknown>(`/ops/${action.path}`, {
+      const result = await request<T>(`/ops/${action.path}`, {
         method: action.method ?? "POST",
         body: action.body,
         idempotencyKey: attempt.key,
@@ -48,9 +48,9 @@ export function useAction(onSuccess?: () => void) {
       );
       return result;
     },
-    onSuccess: async () => {
+    onSuccess: async (result) => {
       await client.invalidateQueries({ queryKey: ["ops"] });
-      onSuccess?.();
+      onSuccess?.(result);
     },
   });
 }

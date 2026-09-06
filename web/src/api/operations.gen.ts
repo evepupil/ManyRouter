@@ -543,6 +543,110 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/ops/automation-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["opListAutomationSettings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ops/sites/{id}/automation/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["OpID"];
+                kind: components["schemas"]["OpStrategyKind"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["opUpdateAutomationSetting"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ops/automation-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["opListAutomationRuns"];
+        put?: never;
+        post: operations["opRunAutomation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ops/site-product-tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["opListSiteProductTokens"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ops/sites/{id}/product-tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["OpID"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["opCreateSiteProductToken"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ops/sites/{id}/product-tokens/{token_id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["OpID"];
+                token_id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["opRevokeSiteProductToken"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -717,6 +821,102 @@ export interface components {
         };
         OpScoreInsightPage: components["schemas"]["OpPagination"] & {
             items: components["schemas"]["OpScoreInsight"][];
+        };
+        /** @enum {string} */
+        OpAutomationMode: "manual" | "automatic";
+        OpAutomationSettingInput: {
+            mode: components["schemas"]["OpAutomationMode"];
+            /** Format: int64 */
+            version: number;
+            reason: string;
+        };
+        OpAutomationSetting: {
+            /** Format: uuid */
+            strategy_id: string;
+            /** Format: uuid */
+            site_id: string;
+            strategy_kind: components["schemas"]["OpStrategyKind"];
+            display_name: string;
+            mode: components["schemas"]["OpAutomationMode"];
+            /** Format: int64 */
+            version: number;
+            entry_closed_by_automation: boolean;
+            reason: string;
+            updated_by: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        OpAutomationSettingList: {
+            items: components["schemas"]["OpAutomationSetting"][];
+        };
+        OpAutomationRunInput: {
+            /** Format: uuid */
+            site_id: string;
+        };
+        OpAutomationDecision: {
+            /** Format: uuid */
+            id: string;
+            strategy_kind: components["schemas"]["OpStrategyKind"];
+            /** Format: uuid */
+            relation_id: string;
+            supplier_name: string;
+            /** @enum {string} */
+            action: "join" | "keep" | "exit" | "exclude" | "watch" | "recover";
+            current_member: boolean;
+            target_member: boolean;
+            /** @enum {string} */
+            hold_action: "none" | "apply" | "clear";
+            reasons: string[];
+            /** Format: date-time */
+            created_at: string;
+        };
+        OpAutomationRun: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            site_id: string;
+            /** Format: uuid */
+            score_run_id: string;
+            /** @enum {string} */
+            status: "frozen" | "preview" | "no_change" | "pending_sync" | "succeeded" | "failed" | "uncertain";
+            /** @enum {string} */
+            trigger_kind: "scheduled" | "operator";
+            /** Format: uuid */
+            route_plan_id?: string | null;
+            summary: string;
+            /** Format: date-time */
+            started_at: string;
+            /** Format: date-time */
+            completed_at: string;
+            decisions: components["schemas"]["OpAutomationDecision"][];
+        };
+        OpAutomationRunPage: components["schemas"]["OpPagination"] & {
+            items: components["schemas"]["OpAutomationRun"][];
+        };
+        OpReasonInput: {
+            reason: string;
+        };
+        OpSiteProductToken: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            site_id: string;
+            /** @enum {string} */
+            status: "active" | "revoked";
+            reason: string;
+            created_by: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            last_used_at?: string | null;
+            /** Format: date-time */
+            revoked_at?: string | null;
+        };
+        OpIssuedSiteProductToken: components["schemas"]["OpSiteProductToken"] & {
+            token: string;
+        };
+        OpSiteProductTokenList: {
+            items: components["schemas"]["OpSiteProductToken"][];
         };
         OpError: {
             code: string;
@@ -2078,6 +2278,196 @@ export interface operations {
                     "application/json": {
                         /** @enum {string} */
                         status: "completed";
+                    };
+                };
+            };
+            default: components["responses"]["OpError"];
+        };
+    };
+    opListAutomationSettings: {
+        parameters: {
+            query?: {
+                site_id?: components["parameters"]["OpSiteFilter"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Fixed Auto maintenance modes for one site */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpAutomationSettingList"];
+                };
+            };
+            default: components["responses"]["OpError"];
+        };
+    };
+    opUpdateAutomationSetting: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": components["parameters"]["OpIdempotencyKey"];
+            };
+            path: {
+                id: components["parameters"]["OpID"];
+                kind: components["schemas"]["OpStrategyKind"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpAutomationSettingInput"];
+            };
+        };
+        responses: {
+            /** @description Updated fixed Auto maintenance mode */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpAutomationSetting"];
+                };
+            };
+            default: components["responses"]["OpError"];
+        };
+    };
+    opListAutomationRuns: {
+        parameters: {
+            query?: {
+                site_id?: components["parameters"]["OpSiteFilter"];
+                limit?: components["parameters"]["OpLimit"];
+                offset?: components["parameters"]["OpOffset"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Fixed Auto previews and automatic adjustment history */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpAutomationRunPage"];
+                };
+            };
+            default: components["responses"]["OpError"];
+        };
+    };
+    opRunAutomation: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": components["parameters"]["OpIdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpAutomationRunInput"];
+            };
+        };
+        responses: {
+            /** @description Previewed or applied the latest complete score run for one site */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpAutomationRun"];
+                };
+            };
+            default: components["responses"]["OpError"];
+        };
+    };
+    opListSiteProductTokens: {
+        parameters: {
+            query?: {
+                site_id?: components["parameters"]["OpSiteFilter"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Site-scoped product data token metadata without token hashes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpSiteProductTokenList"];
+                };
+            };
+            default: components["responses"]["OpError"];
+        };
+    };
+    opCreateSiteProductToken: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": components["parameters"]["OpIdempotencyKey"];
+            };
+            path: {
+                id: components["parameters"]["OpID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpReasonInput"];
+            };
+        };
+        responses: {
+            /** @description Product data token returned once */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpIssuedSiteProductToken"];
+                };
+            };
+            default: components["responses"]["OpError"];
+        };
+    };
+    opRevokeSiteProductToken: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": components["parameters"]["OpIdempotencyKey"];
+            };
+            path: {
+                id: components["parameters"]["OpID"];
+                token_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpReasonInput"];
+            };
+        };
+        responses: {
+            /** @description Product data token revoked */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        status: "revoked";
                     };
                 };
             };

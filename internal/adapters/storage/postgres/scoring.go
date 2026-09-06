@@ -458,6 +458,7 @@ func (store *Store) SaveScoreSnapshot(ctx context.Context, snapshot scoringapp.S
 		Eligibility: snapshot.Eligibility, HardReasons: hardReasons, Explanation: explanation,
 		AuthenticityAssessmentID: databaseUUIDPointer(snapshot.AuthenticityAssessmentID),
 		CapabilityAssessmentID:   databaseUUIDPointer(snapshot.CapabilityAssessmentID),
+		ScoreRunID:               databaseUUIDPointer(snapshot.ScoreRunID),
 		CreatedAt:                databaseTime(snapshot.CreatedAt),
 	}); err != nil {
 		return err

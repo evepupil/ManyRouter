@@ -44,6 +44,126 @@ func (e OpAuthUserRole) Valid() bool {
 	}
 }
 
+// Defines values for OpAutomationDecisionAction.
+const (
+	OpAutomationDecisionActionExclude OpAutomationDecisionAction = "exclude"
+	OpAutomationDecisionActionExit    OpAutomationDecisionAction = "exit"
+	OpAutomationDecisionActionJoin    OpAutomationDecisionAction = "join"
+	OpAutomationDecisionActionKeep    OpAutomationDecisionAction = "keep"
+	OpAutomationDecisionActionRecover OpAutomationDecisionAction = "recover"
+	OpAutomationDecisionActionWatch   OpAutomationDecisionAction = "watch"
+)
+
+// Valid indicates whether the value is a known member of the OpAutomationDecisionAction enum.
+func (e OpAutomationDecisionAction) Valid() bool {
+	switch e {
+	case OpAutomationDecisionActionExclude:
+		return true
+	case OpAutomationDecisionActionExit:
+		return true
+	case OpAutomationDecisionActionJoin:
+		return true
+	case OpAutomationDecisionActionKeep:
+		return true
+	case OpAutomationDecisionActionRecover:
+		return true
+	case OpAutomationDecisionActionWatch:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpAutomationDecisionHoldAction.
+const (
+	OpAutomationDecisionHoldActionApply OpAutomationDecisionHoldAction = "apply"
+	OpAutomationDecisionHoldActionClear OpAutomationDecisionHoldAction = "clear"
+	OpAutomationDecisionHoldActionNone  OpAutomationDecisionHoldAction = "none"
+)
+
+// Valid indicates whether the value is a known member of the OpAutomationDecisionHoldAction enum.
+func (e OpAutomationDecisionHoldAction) Valid() bool {
+	switch e {
+	case OpAutomationDecisionHoldActionApply:
+		return true
+	case OpAutomationDecisionHoldActionClear:
+		return true
+	case OpAutomationDecisionHoldActionNone:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpAutomationMode.
+const (
+	OpAutomationModeAutomatic OpAutomationMode = "automatic"
+	OpAutomationModeManual    OpAutomationMode = "manual"
+)
+
+// Valid indicates whether the value is a known member of the OpAutomationMode enum.
+func (e OpAutomationMode) Valid() bool {
+	switch e {
+	case OpAutomationModeAutomatic:
+		return true
+	case OpAutomationModeManual:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpAutomationRunStatus.
+const (
+	OpAutomationRunStatusFailed      OpAutomationRunStatus = "failed"
+	OpAutomationRunStatusFrozen      OpAutomationRunStatus = "frozen"
+	OpAutomationRunStatusNoChange    OpAutomationRunStatus = "no_change"
+	OpAutomationRunStatusPendingSync OpAutomationRunStatus = "pending_sync"
+	OpAutomationRunStatusPreview     OpAutomationRunStatus = "preview"
+	OpAutomationRunStatusSucceeded   OpAutomationRunStatus = "succeeded"
+	OpAutomationRunStatusUncertain   OpAutomationRunStatus = "uncertain"
+)
+
+// Valid indicates whether the value is a known member of the OpAutomationRunStatus enum.
+func (e OpAutomationRunStatus) Valid() bool {
+	switch e {
+	case OpAutomationRunStatusFailed:
+		return true
+	case OpAutomationRunStatusFrozen:
+		return true
+	case OpAutomationRunStatusNoChange:
+		return true
+	case OpAutomationRunStatusPendingSync:
+		return true
+	case OpAutomationRunStatusPreview:
+		return true
+	case OpAutomationRunStatusSucceeded:
+		return true
+	case OpAutomationRunStatusUncertain:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpAutomationRunTriggerKind.
+const (
+	OpAutomationRunTriggerKindOperator  OpAutomationRunTriggerKind = "operator"
+	OpAutomationRunTriggerKindScheduled OpAutomationRunTriggerKind = "scheduled"
+)
+
+// Valid indicates whether the value is a known member of the OpAutomationRunTriggerKind enum.
+func (e OpAutomationRunTriggerKind) Valid() bool {
+	switch e {
+	case OpAutomationRunTriggerKindOperator:
+		return true
+	case OpAutomationRunTriggerKindScheduled:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for OpCreateSiteInputStatus.
 const (
 	OpCreateSiteInputStatusDisabled OpCreateSiteInputStatus = "disabled"
@@ -185,6 +305,24 @@ const (
 func (e OpEvaluationRunInputTargetKind) Valid() bool {
 	switch e {
 	case OpEvaluationRunInputTargetKindSupplierDirect:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OpIssuedSiteProductTokenStatus.
+const (
+	OpIssuedSiteProductTokenStatusActive  OpIssuedSiteProductTokenStatus = "active"
+	OpIssuedSiteProductTokenStatusRevoked OpIssuedSiteProductTokenStatus = "revoked"
+)
+
+// Valid indicates whether the value is a known member of the OpIssuedSiteProductTokenStatus enum.
+func (e OpIssuedSiteProductTokenStatus) Valid() bool {
+	switch e {
+	case OpIssuedSiteProductTokenStatusActive:
+		return true
+	case OpIssuedSiteProductTokenStatusRevoked:
 		return true
 	default:
 		return false
@@ -515,6 +653,24 @@ func (e OpSiteStatus) Valid() bool {
 	}
 }
 
+// Defines values for OpSiteProductTokenStatus.
+const (
+	OpSiteProductTokenStatusActive  OpSiteProductTokenStatus = "active"
+	OpSiteProductTokenStatusRevoked OpSiteProductTokenStatus = "revoked"
+)
+
+// Valid indicates whether the value is a known member of the OpSiteProductTokenStatus enum.
+func (e OpSiteProductTokenStatus) Valid() bool {
+	switch e {
+	case OpSiteProductTokenStatusActive:
+		return true
+	case OpSiteProductTokenStatusRevoked:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for OpStrategyKind.
 const (
 	OpStrategyKindBalanced    OpStrategyKind = "balanced"
@@ -755,6 +911,21 @@ func (e OpRefreshScores200JSONResponseBodyStatus) Valid() bool {
 	}
 }
 
+// Defines values for OpRevokeSiteProductToken200JSONResponseBodyStatus.
+const (
+	OpRevokeSiteProductToken200JSONResponseBodyStatusRevoked OpRevokeSiteProductToken200JSONResponseBodyStatus = "revoked"
+)
+
+// Valid indicates whether the value is a known member of the OpRevokeSiteProductToken200JSONResponseBodyStatus enum.
+func (e OpRevokeSiteProductToken200JSONResponseBodyStatus) Valid() bool {
+	switch e {
+	case OpRevokeSiteProductToken200JSONResponseBodyStatusRevoked:
+		return true
+	default:
+		return false
+	}
+}
+
 // OpAudit defines model for OpAudit.
 type OpAudit struct {
 	Action      string                  `json:"action"`
@@ -803,6 +974,88 @@ type OpAuthUser struct {
 
 // OpAuthUserRole defines model for OpAuthUser.Role.
 type OpAuthUserRole string
+
+// OpAutomationDecision defines model for OpAutomationDecision.
+type OpAutomationDecision struct {
+	Action        OpAutomationDecisionAction     `json:"action"`
+	CreatedAt     time.Time                      `json:"created_at"`
+	CurrentMember bool                           `json:"current_member"`
+	HoldAction    OpAutomationDecisionHoldAction `json:"hold_action"`
+	Id            openapi_types.UUID             `json:"id"`
+	Reasons       []string                       `json:"reasons"`
+	RelationId    openapi_types.UUID             `json:"relation_id"`
+	StrategyKind  OpStrategyKind                 `json:"strategy_kind"`
+	SupplierName  string                         `json:"supplier_name"`
+	TargetMember  bool                           `json:"target_member"`
+}
+
+// OpAutomationDecisionAction defines model for OpAutomationDecision.Action.
+type OpAutomationDecisionAction string
+
+// OpAutomationDecisionHoldAction defines model for OpAutomationDecision.HoldAction.
+type OpAutomationDecisionHoldAction string
+
+// OpAutomationMode defines model for OpAutomationMode.
+type OpAutomationMode string
+
+// OpAutomationRun defines model for OpAutomationRun.
+type OpAutomationRun struct {
+	CompletedAt time.Time                  `json:"completed_at"`
+	Decisions   []OpAutomationDecision     `json:"decisions"`
+	Id          openapi_types.UUID         `json:"id"`
+	RoutePlanId *openapi_types.UUID        `json:"route_plan_id,omitempty"`
+	ScoreRunId  openapi_types.UUID         `json:"score_run_id"`
+	SiteId      openapi_types.UUID         `json:"site_id"`
+	StartedAt   time.Time                  `json:"started_at"`
+	Status      OpAutomationRunStatus      `json:"status"`
+	Summary     string                     `json:"summary"`
+	TriggerKind OpAutomationRunTriggerKind `json:"trigger_kind"`
+}
+
+// OpAutomationRunStatus defines model for OpAutomationRun.Status.
+type OpAutomationRunStatus string
+
+// OpAutomationRunTriggerKind defines model for OpAutomationRun.TriggerKind.
+type OpAutomationRunTriggerKind string
+
+// OpAutomationRunInput defines model for OpAutomationRunInput.
+type OpAutomationRunInput struct {
+	SiteId openapi_types.UUID `json:"site_id"`
+}
+
+// OpAutomationRunPage defines model for OpAutomationRunPage.
+type OpAutomationRunPage struct {
+	Items  []OpAutomationRun `json:"items"`
+	Limit  int               `json:"limit"`
+	Offset int               `json:"offset"`
+	Total  int64             `json:"total"`
+}
+
+// OpAutomationSetting defines model for OpAutomationSetting.
+type OpAutomationSetting struct {
+	DisplayName             string             `json:"display_name"`
+	EntryClosedByAutomation bool               `json:"entry_closed_by_automation"`
+	Mode                    OpAutomationMode   `json:"mode"`
+	Reason                  string             `json:"reason"`
+	SiteId                  openapi_types.UUID `json:"site_id"`
+	StrategyId              openapi_types.UUID `json:"strategy_id"`
+	StrategyKind            OpStrategyKind     `json:"strategy_kind"`
+	UpdatedAt               time.Time          `json:"updated_at"`
+	UpdatedBy               string             `json:"updated_by"`
+	Version                 int64              `json:"version"`
+}
+
+// OpAutomationSettingInput defines model for OpAutomationSettingInput.
+type OpAutomationSettingInput struct {
+	Mode    OpAutomationMode `json:"mode"`
+	Reason  string           `json:"reason"`
+	Version int64            `json:"version"`
+}
+
+// OpAutomationSettingList defines model for OpAutomationSettingList.
+type OpAutomationSettingList struct {
+	Items []OpAutomationSetting `json:"items"`
+}
 
 // OpCollectionRunInput defines model for OpCollectionRunInput.
 type OpCollectionRunInput struct {
@@ -975,6 +1228,22 @@ type OpEvaluationRunPage struct {
 	Total  int64             `json:"total"`
 }
 
+// OpIssuedSiteProductToken defines model for OpIssuedSiteProductToken.
+type OpIssuedSiteProductToken struct {
+	CreatedAt  time.Time                      `json:"created_at"`
+	CreatedBy  string                         `json:"created_by"`
+	Id         openapi_types.UUID             `json:"id"`
+	LastUsedAt *time.Time                     `json:"last_used_at,omitempty"`
+	Reason     string                         `json:"reason"`
+	RevokedAt  *time.Time                     `json:"revoked_at,omitempty"`
+	SiteId     openapi_types.UUID             `json:"site_id"`
+	Status     OpIssuedSiteProductTokenStatus `json:"status"`
+	Token      *string                        `json:"token,omitempty"`
+}
+
+// OpIssuedSiteProductTokenStatus defines model for OpIssuedSiteProductToken.Status.
+type OpIssuedSiteProductTokenStatus string
+
 // OpLoginInput defines model for OpLoginInput.
 type OpLoginInput struct {
 	Password *string `json:"password,omitempty"`
@@ -1095,6 +1364,11 @@ type OpPricePage struct {
 // OpPublishInput defines model for OpPublishInput.
 type OpPublishInput struct {
 	Version int64 `json:"version"`
+}
+
+// OpReasonInput defines model for OpReasonInput.
+type OpReasonInput struct {
+	Reason string `json:"reason"`
 }
 
 // OpRelation defines model for OpRelation.
@@ -1254,6 +1528,26 @@ type OpSitePage struct {
 	Limit  int      `json:"limit"`
 	Offset int      `json:"offset"`
 	Total  int64    `json:"total"`
+}
+
+// OpSiteProductToken defines model for OpSiteProductToken.
+type OpSiteProductToken struct {
+	CreatedAt  time.Time                `json:"created_at"`
+	CreatedBy  string                   `json:"created_by"`
+	Id         openapi_types.UUID       `json:"id"`
+	LastUsedAt *time.Time               `json:"last_used_at,omitempty"`
+	Reason     string                   `json:"reason"`
+	RevokedAt  *time.Time               `json:"revoked_at,omitempty"`
+	SiteId     openapi_types.UUID       `json:"site_id"`
+	Status     OpSiteProductTokenStatus `json:"status"`
+}
+
+// OpSiteProductTokenStatus defines model for OpSiteProductToken.Status.
+type OpSiteProductTokenStatus string
+
+// OpSiteProductTokenList defines model for OpSiteProductTokenList.
+type OpSiteProductTokenList struct {
+	Items []OpSiteProductToken `json:"items"`
 }
 
 // OpStrategy defines model for OpStrategy.
@@ -1459,6 +1753,23 @@ type OpListAuditParams struct {
 	Offset     *OpOffset         `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
+// OpListAutomationRunsParams defines parameters for OpListAutomationRuns.
+type OpListAutomationRunsParams struct {
+	SiteId *OpSiteFilter `form:"site_id,omitempty" json:"site_id,omitempty"`
+	Limit  *OpLimit      `form:"limit,omitempty" json:"limit,omitempty"`
+	Offset *OpOffset     `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// OpRunAutomationParams defines parameters for OpRunAutomation.
+type OpRunAutomationParams struct {
+	IdempotencyKey OpIdempotencyKey `json:"Idempotency-Key"`
+}
+
+// OpListAutomationSettingsParams defines parameters for OpListAutomationSettings.
+type OpListAutomationSettingsParams struct {
+	SiteId *OpSiteFilter `form:"site_id,omitempty" json:"site_id,omitempty"`
+}
+
 // OpRunCollectionParams defines parameters for OpRunCollection.
 type OpRunCollectionParams struct {
 	IdempotencyKey OpIdempotencyKey `json:"Idempotency-Key"`
@@ -1564,6 +1875,11 @@ type OpRefreshScoresParams struct {
 // OpRefreshScores200JSONResponseBodyStatus defines parameters for OpRefreshScores.
 type OpRefreshScores200JSONResponseBodyStatus string
 
+// OpListSiteProductTokensParams defines parameters for OpListSiteProductTokens.
+type OpListSiteProductTokensParams struct {
+	SiteId *OpSiteFilter `form:"site_id,omitempty" json:"site_id,omitempty"`
+}
+
 // OpListSitesParams defines parameters for OpListSites.
 type OpListSitesParams struct {
 	Q          *OpQuery          `form:"q,omitempty" json:"q,omitempty"`
@@ -1582,6 +1898,24 @@ type OpCreateSiteParams struct {
 type OpUpdateSiteParams struct {
 	IdempotencyKey OpIdempotencyKey `json:"Idempotency-Key"`
 }
+
+// OpUpdateAutomationSettingParams defines parameters for OpUpdateAutomationSetting.
+type OpUpdateAutomationSettingParams struct {
+	IdempotencyKey OpIdempotencyKey `json:"Idempotency-Key"`
+}
+
+// OpCreateSiteProductTokenParams defines parameters for OpCreateSiteProductToken.
+type OpCreateSiteProductTokenParams struct {
+	IdempotencyKey OpIdempotencyKey `json:"Idempotency-Key"`
+}
+
+// OpRevokeSiteProductTokenParams defines parameters for OpRevokeSiteProductToken.
+type OpRevokeSiteProductTokenParams struct {
+	IdempotencyKey OpIdempotencyKey `json:"Idempotency-Key"`
+}
+
+// OpRevokeSiteProductToken200JSONResponseBodyStatus defines parameters for OpRevokeSiteProductToken.
+type OpRevokeSiteProductToken200JSONResponseBodyStatus string
 
 // OpSaveStrategyParams defines parameters for OpSaveStrategy.
 type OpSaveStrategyParams struct {
@@ -1649,6 +1983,9 @@ type OpAuthLoginJSONRequestBody = OpLoginInput
 // OpAuthSetupJSONRequestBody defines body for OpAuthSetup for application/json ContentType.
 type OpAuthSetupJSONRequestBody = OpSetupInput
 
+// OpRunAutomationJSONRequestBody defines body for OpRunAutomation for application/json ContentType.
+type OpRunAutomationJSONRequestBody = OpAutomationRunInput
+
 // OpRunCollectionJSONRequestBody defines body for OpRunCollection for application/json ContentType.
 type OpRunCollectionJSONRequestBody = OpCollectionRunInput
 
@@ -1681,6 +2018,15 @@ type OpCreateSiteJSONRequestBody = OpCreateSiteInput
 
 // OpUpdateSiteJSONRequestBody defines body for OpUpdateSite for application/json ContentType.
 type OpUpdateSiteJSONRequestBody = OpUpdateSiteInput
+
+// OpUpdateAutomationSettingJSONRequestBody defines body for OpUpdateAutomationSetting for application/json ContentType.
+type OpUpdateAutomationSettingJSONRequestBody = OpAutomationSettingInput
+
+// OpCreateSiteProductTokenJSONRequestBody defines body for OpCreateSiteProductToken for application/json ContentType.
+type OpCreateSiteProductTokenJSONRequestBody = OpReasonInput
+
+// OpRevokeSiteProductTokenJSONRequestBody defines body for OpRevokeSiteProductToken for application/json ContentType.
+type OpRevokeSiteProductTokenJSONRequestBody = OpReasonInput
 
 // OpSaveStrategyJSONRequestBody defines body for OpSaveStrategy for application/json ContentType.
 type OpSaveStrategyJSONRequestBody = OpStrategyInput

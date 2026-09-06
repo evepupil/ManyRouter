@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -29,23 +30,80 @@ func NewService(repository Repository, now func() time.Time, newID func() uuid.U
 }
 
 func (service *Service) Refresh(ctx context.Context) error {
-	end := service.now().UTC().Truncate(time.Minute)
+	now := service.now().UTC()
+	end := now.Truncate(time.Minute)
 	start := end.Add(-scoreHistoryWindow)
 	recentStart := end.Add(-10 * time.Minute)
-	if err := service.repository.RefreshMinuteMetrics(ctx, start, recentStart, end, service.now().UTC()); err != nil {
+	if err := service.repository.RefreshMinuteMetrics(ctx, start, recentStart, end, now); err != nil {
 		return err
 	}
 	targets, err := service.repository.ListScoringTargets(ctx)
 	if err != nil {
 		return err
 	}
+	recorder, recordsRuns := service.repository.(ScoreRunRecorder)
+	runs := make(map[uuid.UUID]uuid.UUID)
+	completed := make(map[uuid.UUID]int)
+	skipped := make(map[uuid.UUID]bool)
+	if recordsRuns {
+		expected := make(map[uuid.UUID]int)
+		for _, target := range targets {
+			if target.DesiredStatus == "enabled" && target.SyncStatus == "active" {
+				expected[target.SiteID]++
+			}
+		}
+		sites := make([]uuid.UUID, 0, len(expected))
+		for siteID := range expected {
+			sites = append(sites, siteID)
+		}
+		sort.Slice(sites, func(i, j int) bool { return sites[i].String() < sites[j].String() })
+		for _, siteID := range sites {
+			run := ScoreRun{
+				ID: service.newID(), SiteID: siteID, PolicyVersion: domainscoring.PolicyVersionM2ShadowV1,
+				WindowEnd: end, ExpectedTargets: expected[siteID], StartedAt: now,
+			}
+			created, err := recorder.BeginScoreRun(ctx, run)
+			if err != nil {
+				return err
+			}
+			if !created {
+				skipped[siteID] = true
+				continue
+			}
+			runs[siteID] = run.ID
+		}
+	}
 	var failures []error
+	failedBySite := make(map[uuid.UUID]int)
 	for _, target := range targets {
 		if target.DesiredStatus != "enabled" || target.SyncStatus != "active" {
 			continue
 		}
-		if err := service.scoreTarget(ctx, target, end); err != nil {
+		if skipped[target.SiteID] {
+			continue
+		}
+		var runID *uuid.UUID
+		if id, ok := runs[target.SiteID]; ok {
+			value := id
+			runID = &value
+		}
+		if err := service.scoreTarget(ctx, target, end, runID); err != nil {
 			failures = append(failures, fmt.Errorf("score %s/%s/%s: %w", target.SiteID, target.SupplierID, target.Model, err))
+			failedBySite[target.SiteID]++
+			continue
+		}
+		completed[target.SiteID]++
+	}
+	if recordsRuns {
+		for siteID, runID := range runs {
+			failed := failedBySite[siteID]
+			summary := ""
+			if failed > 0 {
+				summary = fmt.Sprintf("%d 个评分目标失败", failed)
+			}
+			if err := recorder.FinishScoreRun(ctx, runID, completed[siteID], failed == 0, summary, service.now().UTC()); err != nil {
+				failures = append(failures, fmt.Errorf("finish score run %s: %w", runID, err))
+			}
 		}
 	}
 	return errors.Join(failures...)
@@ -62,7 +120,7 @@ func (service *Service) ListInsights(ctx context.Context, filter InsightFilter) 
 	return service.repository.ListInsights(ctx, filter)
 }
 
-func (service *Service) scoreTarget(ctx context.Context, target Target, end time.Time) error {
+func (service *Service) scoreTarget(ctx context.Context, target Target, end time.Time, scoreRunID *uuid.UUID) error {
 	collection, err := service.repository.GetCollectionEvidence(ctx, target.SiteID)
 	if err != nil {
 		return err
@@ -173,7 +231,7 @@ func (service *Service) scoreTarget(ctx context.Context, target Target, end time
 		factsThroughPointer = &copyOfFactsThrough
 	}
 	return service.repository.SaveScoreSnapshot(ctx, Snapshot{
-		ID: service.newID(), Target: target, WindowStart: end.Add(-scoreHistoryWindow), WindowEnd: end,
+		ID: service.newID(), ScoreRunID: scoreRunID, Target: target, WindowStart: end.Add(-scoreHistoryWindow), WindowEnd: end,
 		FactsThrough: factsThroughPointer, PassiveSamples: latestMetrics.SLAAttemptCount,
 		ActiveSamples: uint64(max(evaluation.CapabilityChecks, 0)), Scores: scores,
 		BalancedScore: balancedScore, Confidence: combined.Confidence, Eligibility: eligibility,

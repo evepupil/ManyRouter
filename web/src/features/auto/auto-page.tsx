@@ -1,7 +1,13 @@
 import { useState, type FormEvent } from "react";
-import { Pencil, PowerOff, Save } from "lucide-react";
+import { Bot, Pencil, Play, PowerOff, Save } from "lucide-react";
 import { useAction, useList } from "../../api/hooks";
-import type { Relation, Strategy, StrategyKind } from "../../api/types";
+import type {
+  AutomationRun,
+  AutomationSetting,
+  Relation,
+  Strategy,
+  StrategyKind,
+} from "../../api/types";
 import { useScope } from "../../app/scope";
 import { DataTable } from "../../components/data-table";
 import {
@@ -32,12 +38,13 @@ interface StrategyRow {
   kind: StrategyKind;
   name: string;
   strategy?: Strategy;
+  automation?: AutomationSetting;
 }
 
 export function AutoPage() {
   const { siteId, site } = useScope();
   return (
-    <Page title={site ? `人工 Auto · ${site.name}` : "人工 Auto"}>
+    <Page title={site ? `固定 Auto · ${site.name}` : "固定 Auto"}>
       <SiteRequired>
         <AutoList key={siteId} siteId={siteId} />
       </SiteRequired>
@@ -50,19 +57,34 @@ function AutoList({ siteId }: { siteId: string }) {
     site_id: siteId,
     limit: 100,
   });
+  const settings = useList<AutomationSetting>("automation-settings", {
+    site_id: siteId,
+    limit: 100,
+  });
+  const runs = useList<AutomationRun>(
+    "automation-runs",
+    { site_id: siteId, limit: 10 },
+    { poll: true },
+  );
+  const runAction = useAction<AutomationRun>();
   const [editing, setEditing] = useState<StrategyRow | null>(null);
+  const [editingAutomation, setEditingAutomation] =
+    useState<StrategyRow | null>(null);
   const rows: StrategyRow[] = kinds.map(({ kind, name }) => ({
     id: kind,
     kind,
     name,
     strategy: query.data?.items.find((item) => item.kind === kind),
+    automation: settings.data?.items.find(
+      (item) => item.strategy_kind === kind,
+    ),
   }));
   return (
     <>
       <DataTable
         items={rows}
-        loading={query.isPending}
-        error={query.error}
+        loading={query.isPending || settings.isPending}
+        error={query.error ?? settings.error}
         columns={[
           {
             key: "name",
@@ -75,6 +97,16 @@ function AutoList({ siteId }: { siteId: string }) {
                 <div className="cell-sub">{row.name}</div>
               </>
             ),
+          },
+          {
+            key: "automation",
+            title: "维护方式",
+            render: (row) =>
+              row.strategy ? (
+                <Status value={row.automation?.mode ?? "manual"} />
+              ) : (
+                <span className="badge">未配置</span>
+              ),
           },
           {
             key: "members",
@@ -119,8 +151,61 @@ function AutoList({ siteId }: { siteId: string }) {
                 >
                   <Pencil size={16} />
                 </IconButton>
+                {row.strategy && (
+                  <IconButton
+                    label={`设置 ${row.name} 自动调整`}
+                    onClick={() => setEditingAutomation(row)}
+                  >
+                    <Bot size={16} />
+                  </IconButton>
+                )}
               </div>
             ),
+          },
+        ]}
+      />
+      <div className="section-title">
+        <h2>最近调整</h2>
+        <Button
+          icon={<Play />}
+          onClick={() =>
+            runAction.mutate({
+              path: "automation-runs",
+              body: { site_id: siteId },
+            })
+          }
+          pending={runAction.isPending}
+        >
+          评估最新评分
+        </Button>
+      </div>
+      <Notice error={runAction.error ?? runs.error} />
+      <DataTable
+        items={runs.data?.items ?? []}
+        loading={runs.isPending}
+        error={runs.error}
+        empty="尚无自动调整记录"
+        columns={[
+          {
+            key: "time",
+            title: "时间",
+            render: (run) => new Date(run.completed_at).toLocaleString(),
+          },
+          {
+            key: "summary",
+            title: "结果",
+            render: (run) => <span className="cell-title">{run.summary}</span>,
+          },
+          {
+            key: "decisions",
+            title: "决定",
+            className: "numeric",
+            render: (run) => run.decisions.length,
+          },
+          {
+            key: "status",
+            title: "状态",
+            render: (run) => <Status value={run.status} />,
           },
         ]}
       />
@@ -128,7 +213,15 @@ function AutoList({ siteId }: { siteId: string }) {
         <StrategyEditor
           siteId={siteId}
           row={editing}
+          automation={editing.automation}
           onClose={() => setEditing(null)}
+        />
+      )}
+      {editingAutomation && editingAutomation.strategy && (
+        <AutomationEditor
+          siteId={siteId}
+          row={editingAutomation}
+          onClose={() => setEditingAutomation(null)}
         />
       )}
     </>
@@ -138,10 +231,12 @@ function AutoList({ siteId }: { siteId: string }) {
 function StrategyEditor({
   siteId,
   row,
+  automation,
   onClose,
 }: {
   siteId: string;
   row: StrategyRow;
+  automation?: AutomationSetting;
   onClose: () => void;
 }) {
   const [name, setName] = useState(row.strategy?.display_name ?? row.name);
@@ -196,6 +291,11 @@ function StrategyEditor({
         </div>
         <EntryAccess open={visible} onChange={setVisible} auto />
         <h2>供应商成员</h2>
+        {automation?.mode === "automatic" && (
+          <div className="notice notice-warning" role="note">
+            当前成员由自动调整维护。切回人工维护后才能修改成员。
+          </div>
+        )}
         <Notice error={relations.error} />
         {relations.error && (
           <Button
@@ -216,6 +316,7 @@ function StrategyEditor({
                 <Checkbox
                   label={relation.supplier_name ?? relation.group_display_name}
                   checked={members.includes(relation.id)}
+                  disabled={automation?.mode === "automatic"}
                   onChange={(event) =>
                     setMembers((value) =>
                       event.target.checked
@@ -249,13 +350,89 @@ function StrategyEditor({
             variant={!enabled || !visible ? "danger" : "primary"}
             icon={!enabled ? <PowerOff /> : <Save />}
             pending={action.isPending}
-            disabled={relations.isPending || !!relations.error}
+            disabled={
+              relations.isPending ||
+              !!relations.error ||
+              automation?.mode === "automatic"
+            }
           >
             {!enabled
               ? "保存并停用 Auto"
               : visible
                 ? "保存 Auto"
                 : "保存并关闭用户入口"}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function AutomationEditor({
+  siteId,
+  row,
+  onClose,
+}: {
+  siteId: string;
+  row: StrategyRow;
+  onClose: () => void;
+}) {
+  const [automatic, setAutomatic] = useState(
+    row.automation?.mode === "automatic",
+  );
+  const [reason, setReason] = useState("");
+  const action = useAction(onClose);
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    action.mutate({
+      path: `sites/${siteId}/automation/${row.kind}`,
+      method: "PUT",
+      body: {
+        mode: automatic ? "automatic" : "manual",
+        version: row.automation?.version ?? 0,
+        reason,
+      },
+    });
+  };
+  return (
+    <Modal
+      open
+      busy={action.isPending}
+      onClose={onClose}
+      title={`维护方式 · ${row.strategy?.display_name ?? row.name}`}
+    >
+      <form className="form-stack" onSubmit={submit}>
+        <Checkbox
+          label="自动调整成员"
+          checked={automatic}
+          onChange={(event) => setAutomatic(event.target.checked)}
+        />
+        {automatic && (
+          <div className="notice notice-warning" role="note">
+            开启后，完整评分批次可以生成并发布新的成员线路。
+          </div>
+        )}
+        <Field label="修改原因">
+          <Input
+            required
+            minLength={3}
+            maxLength={500}
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+          />
+        </Field>
+        <Notice error={action.error} />
+        <div className="form-actions">
+          <Button onClick={onClose} disabled={action.isPending}>
+            取消
+          </Button>
+          <Button
+            type="submit"
+            variant={automatic ? "danger" : "primary"}
+            icon={automatic ? <Bot /> : <Save />}
+            pending={action.isPending}
+          >
+            {automatic ? "开启自动调整" : "切回人工维护"}
           </Button>
         </div>
       </form>

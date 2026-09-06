@@ -215,6 +215,12 @@ const statusNames: Record<string, string> = {
   manual_locked: "人工停用",
   superseded: "已被替代",
   expired: "已过期",
+  manual: "人工维护",
+  automatic: "自动调整",
+  frozen: "已冻结",
+  preview: "仅预览",
+  no_change: "无变化",
+  pending_sync: "等待线路核对",
 };
 
 export function Status({ value }: { value: string }) {
@@ -226,6 +232,8 @@ export function Status({ value }: { value: string }) {
     "published",
     "applied",
     "succeeded",
+    "automatic",
+    "no_change",
   ].includes(value)
     ? "success"
     : ["failed", "incompatible"].includes(value)
@@ -239,6 +247,9 @@ export function Status({ value }: { value: string }) {
               "retryable_failed",
               "manual_required",
               "manual_locked",
+              "frozen",
+              "preview",
+              "pending_sync",
             ].includes(value)
           ? "warning"
           : "";

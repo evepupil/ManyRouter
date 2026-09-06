@@ -1,8 +1,10 @@
-schema_version: 1
+schema_version: 2
 adapter: new_api_existing_admin_v1
 source:
   repository: https://github.com/QuantumNous/new-api
-  inspected_commit: 0ed497f0
+  inspected_commit: 49ec4696
+  integration_repository: https://github.com/evepupil/new-api
+  integration_commit: 9ee1a6461d286304472679e11b577414d696234d
 verification:
   source_inspection: passed
   simulated_http_contract: passed
@@ -31,10 +33,25 @@ m1_verification:
   controlled_group_quota_consumption: passed
   browser_auth_catalog_and_responsive_flow: passed
   real_multi_supplier_acceptance: pending
-  browser_auto_price_and_restore_flow: pending
+  browser_auto_price_and_restore_flow: passed
   group_access_semantics: accepted_existing_keys_are_blocked_when_closed
   observed_hidden_existing_key_status: 403
   observed_empty_auto_status: 503
+m2_verification:
+  two_site_real_log_reconciliation: passed
+  supplier_direct_health_and_quality: passed
+  shared_upstream_authenticity_positive_path: passed
+  explainable_shadow_scoring_without_route_changes: passed
+m3_verification:
+  retry_policy_read: passed
+  pre_first_token_failover_to_lower_priority_channel: passed
+  automatic_join_exclude_and_recovery_transaction: passed
+  site_scoped_product_token_and_snapshot: passed
+  logged_in_user_group_filter: passed
+  new_api_user_page_typecheck_and_build: passed
+  product_group_key_creation_flow: passed
+  post_first_token_no_replay: passed
+  two_site_real_product_page_acceptance: pending
 capabilities:
   status_and_version: implemented
   channel_list: implemented
@@ -47,10 +64,15 @@ capabilities:
   legacy_root_user_header: implemented
   openai_base_url_normalization: implemented
   channel_create_cache_refresh: implemented
+  retry_policy_read: implemented
+  site_product_server_proxy: implemented
+  logged_in_models_and_auto_page: implemented
 limitations:
   - M0 uses an existing high-privilege New API access token.
   - New API releases that require New-Api-User are supported for the initial root account with user ID 1.
   - Existing channel creation has no server-side idempotency key.
   - GroupRatio updates replace one whole option and require a single automatic writer.
   - M0 expects the acceptance user's group to have no special rule that removes the managed group.
-  - User groups, user API keys, Auto groups, and request logs remain outside M0.
+  - Automatic routing still uses the existing high-privilege New API management API until the M4 batch endpoint is available.
+  - M3 relies on New API native retry and never retries after streamed content has reached the user.
+  - The user product page requires server-only MANYROUTER_URL and MANYROUTER_SITE_TOKEN configuration.

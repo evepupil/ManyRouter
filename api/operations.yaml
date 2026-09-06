@@ -524,6 +524,128 @@ paths:
                 properties:
                   status: { type: string, enum: [completed] }
         default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/automation-settings:
+    get:
+      operationId: opListAutomationSettings
+      parameters:
+        - { $ref: '#/components/parameters/OpSiteFilter' }
+      responses:
+        '200':
+          description: Fixed Auto maintenance modes for one site
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpAutomationSettingList' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/sites/{id}/automation/{kind}:
+    parameters:
+      - { $ref: '#/components/parameters/OpID' }
+      - name: kind
+        in: path
+        required: true
+        schema: { $ref: '#/components/schemas/OpStrategyKind' }
+    put:
+      operationId: opUpdateAutomationSetting
+      security: *writeSecurity
+      parameters: [{ $ref: '#/components/parameters/OpIdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OpAutomationSettingInput' }
+      responses:
+        '200':
+          description: Updated fixed Auto maintenance mode
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpAutomationSetting' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/automation-runs:
+    get:
+      operationId: opListAutomationRuns
+      parameters:
+        - { $ref: '#/components/parameters/OpSiteFilter' }
+        - { $ref: '#/components/parameters/OpLimit' }
+        - { $ref: '#/components/parameters/OpOffset' }
+      responses:
+        '200':
+          description: Fixed Auto previews and automatic adjustment history
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpAutomationRunPage' }
+        default: { $ref: '#/components/responses/OpError' }
+    post:
+      operationId: opRunAutomation
+      security: *writeSecurity
+      parameters: [{ $ref: '#/components/parameters/OpIdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OpAutomationRunInput' }
+      responses:
+        '202':
+          description: Previewed or applied the latest complete score run for one site
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpAutomationRun' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/site-product-tokens:
+    get:
+      operationId: opListSiteProductTokens
+      parameters:
+        - { $ref: '#/components/parameters/OpSiteFilter' }
+      responses:
+        '200':
+          description: Site-scoped product data token metadata without token hashes
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpSiteProductTokenList' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/sites/{id}/product-tokens:
+    parameters: [{ $ref: '#/components/parameters/OpID' }]
+    post:
+      operationId: opCreateSiteProductToken
+      security: *writeSecurity
+      parameters: [{ $ref: '#/components/parameters/OpIdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OpReasonInput' }
+      responses:
+        '201':
+          description: Product data token returned once
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpIssuedSiteProductToken' }
+        default: { $ref: '#/components/responses/OpError' }
+  /api/v1/ops/sites/{id}/product-tokens/{token_id}/revoke:
+    parameters:
+      - { $ref: '#/components/parameters/OpID' }
+      - name: token_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      operationId: opRevokeSiteProductToken
+      security: *writeSecurity
+      parameters: [{ $ref: '#/components/parameters/OpIdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OpReasonInput' }
+      responses:
+        '200':
+          description: Product data token revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { type: string, enum: [revoked] }
+        default: { $ref: '#/components/responses/OpError' }
 components:
   securitySchemes:
     OpBearer: { type: http, scheme: bearer }
@@ -731,6 +853,115 @@ components:
           required: [items]
           properties:
             items: { type: array, items: { $ref: '#/components/schemas/OpScoreInsight' } }
+    OpAutomationMode:
+      type: string
+      enum: [manual, automatic]
+    OpAutomationSettingInput:
+      type: object
+      additionalProperties: false
+      required: [mode, version, reason]
+      properties:
+        mode: { $ref: '#/components/schemas/OpAutomationMode' }
+        version: { type: integer, format: int64, minimum: 0 }
+        reason: { type: string, minLength: 3, maxLength: 500 }
+    OpAutomationSetting:
+      type: object
+      required: [strategy_id, site_id, strategy_kind, display_name, mode, version, entry_closed_by_automation, reason, updated_by, updated_at]
+      properties:
+        strategy_id: { type: string, format: uuid }
+        site_id: { type: string, format: uuid }
+        strategy_kind: { $ref: '#/components/schemas/OpStrategyKind' }
+        display_name: { type: string }
+        mode: { $ref: '#/components/schemas/OpAutomationMode' }
+        version: { type: integer, format: int64, minimum: 0 }
+        entry_closed_by_automation: { type: boolean }
+        reason: { type: string }
+        updated_by: { type: string }
+        updated_at: { type: string, format: date-time }
+    OpAutomationSettingList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/OpAutomationSetting' }
+    OpAutomationRunInput:
+      type: object
+      additionalProperties: false
+      required: [site_id]
+      properties:
+        site_id: { type: string, format: uuid }
+    OpAutomationDecision:
+      type: object
+      required: [id, strategy_kind, relation_id, supplier_name, action, current_member, target_member, hold_action, reasons, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        strategy_kind: { $ref: '#/components/schemas/OpStrategyKind' }
+        relation_id: { type: string, format: uuid }
+        supplier_name: { type: string }
+        action: { type: string, enum: [join, keep, exit, exclude, watch, recover] }
+        current_member: { type: boolean }
+        target_member: { type: boolean }
+        hold_action: { type: string, enum: [none, apply, clear] }
+        reasons:
+          type: array
+          items: { type: string }
+        created_at: { type: string, format: date-time }
+    OpAutomationRun:
+      type: object
+      required: [id, site_id, score_run_id, status, trigger_kind, summary, started_at, completed_at, decisions]
+      properties:
+        id: { type: string, format: uuid }
+        site_id: { type: string, format: uuid }
+        score_run_id: { type: string, format: uuid }
+        status: { type: string, enum: [frozen, preview, no_change, pending_sync, succeeded, failed, uncertain] }
+        trigger_kind: { type: string, enum: [scheduled, operator] }
+        route_plan_id: { type: string, format: uuid, nullable: true }
+        summary: { type: string }
+        started_at: { type: string, format: date-time }
+        completed_at: { type: string, format: date-time }
+        decisions:
+          type: array
+          items: { $ref: '#/components/schemas/OpAutomationDecision' }
+    OpAutomationRunPage:
+      allOf:
+        - { $ref: '#/components/schemas/OpPagination' }
+        - type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/OpAutomationRun' } }
+    OpReasonInput:
+      type: object
+      additionalProperties: false
+      required: [reason]
+      properties:
+        reason: { type: string, minLength: 3, maxLength: 500 }
+    OpSiteProductToken:
+      type: object
+      required: [id, site_id, status, reason, created_by, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        site_id: { type: string, format: uuid }
+        status: { type: string, enum: [active, revoked] }
+        reason: { type: string }
+        created_by: { type: string }
+        created_at: { type: string, format: date-time }
+        last_used_at: { type: string, format: date-time, nullable: true }
+        revoked_at: { type: string, format: date-time, nullable: true }
+    OpIssuedSiteProductToken:
+      allOf:
+        - { $ref: '#/components/schemas/OpSiteProductToken' }
+        - type: object
+          required: [token]
+          properties:
+            token: { type: string, writeOnly: true }
+    OpSiteProductTokenList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/OpSiteProductToken' }
     OpError:
       type: object
       required: [code, message, request_id]

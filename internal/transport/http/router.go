@@ -100,7 +100,7 @@ func bodyLimit() gin.HandlerFunc {
 
 func operatorAuthentication(expected string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if c.Request.URL.Path == managementAPI+"/healthz" {
+		if c.Request.URL.Path == managementAPI+"/healthz" || siteCatalogEndpoint(c.Request.Method, c.Request.URL.Path) {
 			c.Next()
 			return
 		}
@@ -112,6 +112,13 @@ func operatorAuthentication(expected string) gin.HandlerFunc {
 		}
 		c.Next()
 	}
+}
+
+func siteCatalogEndpoint(method, path string) bool {
+	if method != stdhttp.MethodGet {
+		return false
+	}
+	return path == managementAPI+"/site/products" || path == managementAPI+"/site/capabilities"
 }
 
 func bearerToken(header string) string {

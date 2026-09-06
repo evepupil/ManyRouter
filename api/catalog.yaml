@@ -1,0 +1,103 @@
+openapi: 3.0.3
+info:
+  title: ManyRouter Site Product API
+  version: 1.0.0
+  description: >-
+    Read-only site product data for a New API server. The bearer token maps to
+    exactly one site and cannot call operator APIs. Responses contain public
+    product facts and never contain supplier credentials, balances, internal
+    supplier names, scoring formulas, or model evaluation prompts.
+servers:
+  - url: /
+security:
+  - SiteProductBearer: []
+paths:
+  /api/v1/site/capabilities:
+    get:
+      operationId: siteProductCapabilities
+      responses:
+        '200':
+          description: Supported site product contract
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [contract_version, site_id]
+                properties:
+                  contract_version: { type: string, enum: [m3-site-products-v1] }
+                  site_id: { type: string, format: uuid }
+        default: { $ref: '#/components/responses/Error' }
+  /api/v1/site/products:
+    get:
+      operationId: siteProducts
+      parameters:
+        - name: If-None-Match
+          in: header
+          schema: { type: string }
+      responses:
+        '200':
+          description: Latest product snapshot built from confirmed site state
+          headers:
+            ETag: { schema: { type: string } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SiteProductSnapshot' }
+        '304': { description: Snapshot has not changed }
+        default: { $ref: '#/components/responses/Error' }
+components:
+  securitySchemes:
+    SiteProductBearer: { type: http, scheme: bearer }
+  responses:
+    Error:
+      description: Request failed
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+  schemas:
+    SiteProduct:
+      type: object
+      required: [model, kind, display_name, group_key, entry_open, sale_ratio, available_suppliers, failover_ready, request_samples, quality_grade, confidence, status]
+      properties:
+        model: { type: string, minLength: 1, maxLength: 191 }
+        kind: { type: string, enum: [dedicated, fixed_auto] }
+        strategy_kind: { type: string, enum: [lowest_price, low_latency, high_sla, high_quality, balanced, custom] }
+        display_name: { type: string }
+        group_key: { type: string, maxLength: 64 }
+        entry_open: { type: boolean }
+        sale_ratio: { type: string }
+        price_version_id: { type: string, format: uuid, nullable: true }
+        price_confirmed_at: { type: string, format: date-time, nullable: true }
+        available_suppliers: { type: integer, minimum: 0 }
+        failover_ready: { type: boolean }
+        request_samples: { type: integer, format: int64, minimum: 0 }
+        sla_percent: { type: number, minimum: 0, maximum: 100, nullable: true }
+        ttft_p50_ms: { type: integer, format: int64, minimum: 0, nullable: true }
+        ttft_p95_ms: { type: integer, format: int64, minimum: 0, nullable: true }
+        quality_grade: { type: string, enum: [excellent, good, fair, poor, insufficient] }
+        confidence: { type: string, enum: [high, medium, low, insufficient] }
+        facts_through: { type: string, format: date-time, nullable: true }
+        status: { type: string, enum: [available, insufficient, stale, unavailable, closed] }
+    SiteProductSnapshot:
+      type: object
+      required: [id, contract_version, version, site_id, site_name, route_plan_id, generated_at, products, content_hash]
+      properties:
+        id: { type: string, format: uuid }
+        contract_version: { type: string, enum: [m3-site-products-v1] }
+        version: { type: integer, format: int64, minimum: 1 }
+        site_id: { type: string, format: uuid }
+        site_name: { type: string }
+        route_plan_id: { type: string, format: uuid }
+        score_run_id: { type: string, format: uuid, nullable: true }
+        generated_at: { type: string, format: date-time }
+        facts_through: { type: string, format: date-time, nullable: true }
+        products:
+          type: array
+          items: { $ref: '#/components/schemas/SiteProduct' }
+        content_hash: { type: string, pattern: '^[a-f0-9]{64}$' }
+    Error:
+      type: object
+      required: [code, message, request_id]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        request_id: { type: string }

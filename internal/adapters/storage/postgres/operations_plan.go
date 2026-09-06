@@ -80,7 +80,10 @@ func (o *operationTx) buildSitePlan(ctx context.Context, siteID uuid.UUID) (json
 		return nil, nil
 	}
 	id := uuid.New()
-	reason := mutationReason(o.mutation)
+	reason := o.planReason
+	if reason == "" {
+		reason = mutationReason(o.mutation)
+	}
 	if _, err = o.tx.Exec(ctx, `INSERT INTO route_plan_versions(id,site_id,site_supplier_id,version,previous_plan_id,reason,snapshot,content_hash,status,created_at)
         VALUES($1,$2,$3,$4,$5,$6,$7,$8,'pending',$9)`, id, siteID, snapshot.RelationID, previousVersion+1, databaseUUID(previousID), reason, payload, hash, o.now); err != nil {
 		return nil, err
@@ -125,7 +128,13 @@ func (o *operationTx) buildResource(ctx context.Context, q *sqlc.Queries, siteDa
 		supplierData.CredentialID = uuid.UUID(supplierRow.PendingCredentialID.Bytes)
 		supplierData.CredentialVersion = supplierRow.PendingCredentialVersion.Int32
 	}
-	enabled := supplierData.Status == supplier.StatusEnabled && relation.DesiredStatus != routing.DesiredDisabled
+	var automationHeld bool
+	if err = o.tx.QueryRow(ctx, `SELECT EXISTS(
+		SELECT 1 FROM site_supplier_automation_holds WHERE relation_id=$1 AND active
+	)`, id).Scan(&automationHeld); err != nil {
+		return routing.Snapshot{}, err
+	}
+	enabled := supplierData.Status == supplier.StatusEnabled && relation.DesiredStatus != routing.DesiredDisabled && !automationHeld
 	supplierData.Status = supplier.StatusEnabled
 	if enabled {
 		relation.DesiredStatus = routing.DesiredEnabled

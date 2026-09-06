@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	domain "github.com/evepupil/ManyRouter/internal/domain/operations"
@@ -14,11 +15,12 @@ import (
 )
 
 type operationTx struct {
-	tx       pgx.Tx
-	mutation domain.Mutation
-	now      time.Time
-	affected map[uuid.UUID]bool
-	resumes  map[uuid.UUID]bool
+	tx         pgx.Tx
+	mutation   domain.Mutation
+	now        time.Time
+	affected   map[uuid.UUID]bool
+	resumes    map[uuid.UUID]bool
+	planReason string
 }
 
 func (s *Store) MutateOperations(ctx context.Context, m domain.Mutation) (json.RawMessage, error) {
@@ -160,8 +162,12 @@ func (o *operationTx) audit(ctx context.Context, siteID uuid.UUID, objectType st
 	if reason == "" {
 		reason = "运营录入"
 	}
+	actorType := "operator"
+	if strings.HasPrefix(o.mutation.Actor, "system:") {
+		actorType = "system"
+	}
 	_, err := o.tx.Exec(ctx, `INSERT INTO audit_events(id,actor_type,actor_id,site_id,object_type,object_id,action,reason,result,created_at)
-        VALUES($1,'operator',$2,$3,$4,$5,$6,$7,'succeeded',$8)`, uuid.New(), o.mutation.Actor, databaseUUID(siteID), objectType, id.String(), o.mutation.Kind, reason, o.now)
+        VALUES($1,$2,$3,$4,$5,$6,$7,$8,'succeeded',$9)`, uuid.New(), actorType, o.mutation.Actor, databaseUUID(siteID), objectType, id.String(), o.mutation.Kind, reason, o.now)
 	return err
 }
 
